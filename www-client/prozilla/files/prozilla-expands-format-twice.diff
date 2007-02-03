@@ -1,0 +1,51 @@
+diff -ruN prozilla-1.3.7.3.orig/src/curses.c prozilla-1.3.7.3/src/curses.c
+--- prozilla-1.3.7.3.orig/src/curses.c	2005-01-15 21:59:14.000000000 +0000
++++ prozilla-1.3.7.3/src/curses.c	2005-02-10 12:08:08.598509472 +0000
+@@ -510,10 +510,8 @@
+ 
+ 
+ /* Message: prints a message to the screen */
+-void curses_message(const char *args, ...)
++void curses_message(const char *msg)
+ {
+-    char p[MAX_MSG_SIZE];
+-    va_list vp;
+     attr_t attrs;
+     short i;
+     int x, y;
+@@ -522,13 +520,10 @@
+      * Lock the mutex 
+      */
+     pthread_mutex_lock(&curses_msg_mutex);
+-    va_start(vp, args);
+-    vsnprintf(p, sizeof(p), args, vp);
+-    va_end(vp);
+ 
+     if (rt.in_curses_display_loop == TRUE)
+     {
+-	strncpy(message_buffer, p, MAX_MSG_SIZE);
++	strncpy(message_buffer, msg, MAX_MSG_SIZE);
+ 	pthread_mutex_unlock(&curses_msg_mutex);
+ 	return;
+     } else
+@@ -545,7 +540,7 @@
+ 	move(21, 0);
+ 	clrtoeol();
+ 	attrset(COLOR_PAIR(MSG_PAIR) | A_BOLD);
+-	mvprintw(19, 0, "%s", p);
++	mvprintw(19, 0, "%s", msg);
+ 	attrset(COLOR_PAIR(NULL_PAIR));
+ 	/*
+ 	 * Unlock the mutex 
+diff -ruN prozilla-1.3.7.3.orig/src/interface.h prozilla-1.3.7.3/src/interface.h
+--- prozilla-1.3.7.3.orig/src/interface.h	2001-05-29 17:01:18.000000000 +0100
++++ prozilla-1.3.7.3/src/interface.h	2005-02-10 12:05:08.383906256 +0000
+@@ -26,7 +26,7 @@
+ interface_ret curses_do_interface(connection_data * cons,
+ 				  int num_cons, ftp_mirror * mirrors,
+ 				  int num_servers);
+-void curses_message(const char *args, ...);
++void curses_message(const char *msg);
+ /* Displays the mesasge and gets the users input for overwriting files*/
+ int curses_query_user_input(const char *args, ...);
+ 

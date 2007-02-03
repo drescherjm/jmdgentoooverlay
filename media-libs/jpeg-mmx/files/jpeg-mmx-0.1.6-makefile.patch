@@ -1,0 +1,28 @@
+--- makefile.cfg
++++ makefile.cfg
+@@ -11,13 +11,13 @@
+ # Where to install the programs and man pages.
+ prefix = @prefix@
+ exec_prefix = @exec_prefix@
+-bindir = $(exec_prefix)/bin
+-libdir = $(exec_prefix)/lib
+-includedir = $(prefix)/include
++bindir = @bindir@
++libdir = @libdir@
++includedir = @includedir@
+ binprefix =
+ manprefix =
+ manext = 1
+-mandir = $(prefix)/man/man$(manext)
++mandir = @mandir@/man$(manext)
+ 
+ # The name of your C compiler:
+ CC= @CC@
+@@ -251,6 +251,7 @@
+ 
+ 
+ %.o: %.s ; 	$(AS) $(ASFLAGS) -o $@ $<
++%.lo: %.s ; 	$(AS) $(ASFLAGS) -o $@ $< ; cp $@ $(patsubst %.lo, %.o, $@)
+ 
+ # Mistake catcher:
+ 

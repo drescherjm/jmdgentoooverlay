@@ -1,0 +1,11 @@
+diff -Nurb net-tools-1.60.orig/lib/fddi.c net-tools-1.60/lib/fddi.c
+--- net-tools-1.60.orig/lib/fddi.c	2000-03-05 11:26:02.000000000 +0000
++++ net-tools-1.60/lib/fddi.c	2004-12-01 10:16:23.000000000 +0000
+@@ -26,6 +26,7 @@
+ #error "No FDDI Support in your current Kernelsource Tree."
+ #error "Disable HW Type FDDI"
+ #endif
++#include <linux/netdevice.h>
+ #if __GLIBC__ >= 2
+ #include <netinet/if_fddi.h>
+ #else

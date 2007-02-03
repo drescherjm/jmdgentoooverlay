@@ -1,0 +1,50 @@
+--- mytharchive/archivesettings.cpp	2006-12-23 10:45:21.000000000 -0500
++++ mytharchive/archivesettings.cpp	2007-01-01 23:51:27.000000000 -0500
+@@ -115,6 +115,16 @@
+     return gc;
+ };
+ 
++static HostCheckBox *MythArchiveCutUsingProjectX()
++{
++    HostCheckBox *gc = new HostCheckBox("MythArchiveCutUsingProjectX");
++    gc->setLabel(QObject::tr("Cut mpegs using ProjectX"));
++    gc->setValue(true);
++    gc->setHelpText(QObject::tr("If set mpeg2 files will be cut using ProjectX"
++            " instead of mythtranscode."));
++    return gc;
++};
++
+ static HostComboBox *MainMenuAspectRatio()
+ {
+     HostComboBox *gc = new HostComboBox("MythArchiveMainMenuAR");
+@@ -268,6 +278,15 @@
+     return gc;
+ };
+ 
++static HostLineEdit *MythArchiveProjectXCmd()
++{
++    HostLineEdit *gc = new HostLineEdit("MythArchiveProjectXCmd");
++    gc->setLabel(QObject::tr("ProjectX command"));
++    gc->setValue("projectx");
++    gc->setHelpText(QObject::tr("Command to run ProjectX. Optional - leave blank if you don't have ProjectX installed.")); 
++    return gc;
++};
++
+ ArchiveSettings::ArchiveSettings()
+ {
+     VerticalConfigurationGroup* vcg1 = new VerticalConfigurationGroup(false);
+@@ -286,6 +305,7 @@
+     vcg2->addChild(MythArchiveCopyRemoteFiles());
+     vcg2->addChild(MythArchiveAlwaysUseMythTranscode());
+     vcg2->addChild(MythArchiveUseFIFO());
++    vcg2->addChild(MythArchiveCutUsingProjectX());
+     vcg2->addChild(MainMenuAspectRatio());
+     vcg2->addChild(ChapterMenuAspectRatio());
+     vcg2->addChild(MythArchiveDateFormat());
+@@ -307,5 +327,6 @@
+     vcg4->addChild(MythArchiveGrowisofsCmd());
+     vcg4->addChild(MythArchiveTcrequantCmd());
+     vcg4->addChild(MythArchiveJpeg2yuvCmd());
++    vcg4->addChild(MythArchiveProjectXCmd());
+     addChild(vcg4);
+ }

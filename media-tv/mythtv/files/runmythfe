@@ -1,0 +1,5 @@
+#!/bin/sh
+
+if ! pgrep mythfrontend >& /dev/null ; then
+	DISPLAY=":0.0" mythfrontend 2&> /dev/null & 
+fi

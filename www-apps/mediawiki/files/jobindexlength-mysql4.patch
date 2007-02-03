@@ -1,0 +1,17 @@
+--- mediawiki-1.7.1/maintenance/tables.sql.orig	2006-08-31 16:37:41.000000000 +0300
++++ mediawiki-1.7.1/maintenance/tables.sql	2006-08-31 16:38:18.000000000 +0300
+@@ -967,12 +967,12 @@
+   job_id int(9) unsigned NOT NULL auto_increment,
+   
+   -- Command name, currently only refreshLinks is defined
+-  job_cmd varchar(255) NOT NULL default '',
++  job_cmd varchar(128) NOT NULL default '',
+ 
+   -- Namespace and title to act on
+   -- Should be 0 and '' if the command does not operate on a title
+   job_namespace int NOT NULL,
+-  job_title varchar(255) binary NOT NULL,
++  job_title varchar(128) binary NOT NULL,
+ 
+   -- Any other parameters to the command
+   -- Presently unused, format undefined

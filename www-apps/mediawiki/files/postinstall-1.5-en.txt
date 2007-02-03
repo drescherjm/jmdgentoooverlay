@@ -1,0 +1,58 @@
+
+Completing setup:
+
+To complete installation cd into the MediaWiki install location, but
+make sure to start mysql first with:
+
+$ /etc/init.d/mysql start
+
+$ cd /var/www/localhost/htdocs/mediawiki/
+
+The host directory, localhost, may change depending on your installation.
+
+Then temporarily make the MediaWiki /config directory writable
+to the  user the web server is running as. The quickest way is 
+to make  the directory world writable.  For example:
+
+$ chmod a+w config
+ 
+Then access it, for example:
+
+lynx http://localhost/mediawiki/config/
+ 
+After setup move the newly created LocalSettings.php from the config/
+directory to the main mediawiki directory, for example:
+  
+$ mv config/LocalSettings.php .
+
+    Remember to restore safe permissions to the MediaWiki config/ and
+    LocalSettings.php (which contains clear-text passwords).
+    chmod a-w config
+    chmod ug=r,o=  LocalSettings.php
+    chown root:apache LocalSettings.php
+
+After these steps MediaWiki should be accesable at
+http://localhost/mediawiki/
+ 
+Enabling Optional Features:
+
+If you wish to enable image uploads then you must manually edit the
+LocalSettings.php file to uncomment the \$wgEnableUploads line.  
+If MediaWiki was built with the imagemagick USE-flag the directory
+permissions are correct, otherwise you must install ImageMagick and
+also adjust permissions on the images directory to allow the server
+to write.  For example:
+ 
+$ chown apache:apache /var/www/localhost/htdocs/mediawiki/images
+
+Math Support:
+
+If you wish to enable the math support then you must manually edit" 
+the LocalSettings.php file to uncomment the \$wgUseTeX line.
+MediaWiki must have been built with the math USE-flag enabled or the
+necessary support executable will not be present.
+You may also have to execute
+
+$ texconfig dvips printcmd -
+
+if you have not configured tetex before.

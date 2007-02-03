@@ -1,0 +1,351 @@
+diff -rNu pristine/mythtvburn.sh applied/mythtvburn.sh
+--- pristine/mythtvburn.sh	2005-11-06 03:34:17.000000000 -0700
++++ applied/mythtvburn.sh	2005-12-15 14:11:26.532613538 -0700
+@@ -206,17 +206,6 @@
+ 	alert_text="Creating MythTV BurnDVD at $datetime. Expected DVD size $filesize Mbytes" > /dev/null
+ checkreturnvalue
+ 
+-factor=0
+-
+-if [[ $filesize -gt 4450 ]]; 
+-then
+-factor=`perl -e "printf \"%f\", $filesize / 4300;"`
+-echo "***************************************************************"
+-echo "******  WARNING - DVD may not fit onto a recordable DVD  ******"
+-echo "******  Requantizing with factor $factor to fit onto DVD ******"
+-echo "***************************************************************"
+-fi
+-
+ # write out lock file
+ echo lockfile > ${tempdir}/mythtvburn.lck
+ 
+@@ -249,8 +238,53 @@
+ 	pageresolution=720x480
+ fi
+ 
++echo determining sizes
++filesize=0
++# Test all files exist before we begin and work out size of DVD
++idx=0
++for file in ${filenames[*]};
++do
++	checkstopflag $tempdir
++	datestamp
++	echo $file
+ 
+-echo Multiplexing MPEG2 video files to DVD format and applying cutlists
++	# Check if we're cutting commercials
++	if [ "${cutflags[$idx]}" == "cut" ]; then
++		echo "getting size with commercial cuts"
++		# Obtain information about MPEG2 files from MythTV database
++		${scripts}/getmyth.sh $myfolder $mythtvlocation $file
++		if [ -s ${tempdir}/cutlist.txt ]; then
++			echo "cutlist found, applying cuts"
++			raw=$(${scripts}/getcutsize.sh ${myfolder} $videoformat $recode_ntsc ${mythtvlocation}/${file} ${tempdir}/${file} $factor)
++			size=$(echo "$raw" | grep 'size = ' | cut -f 3)
++		else
++			echo "no cutlist found, using file size"
++			size=`ls -s --size --block-size=M "${tempdir}/$file" | cut --delimiter=M --fields=1`
++		fi
++	else
++		# remux to get DVD VOBUs inserted and fix potential audio sync issues
++		echo "commerical cut disabled, using file size"
++			size=`ls -s --size --block-size=M "${mythtvlocation}/$file" | cut --delimiter=M --fields=1`
++	fi
++	filesize=$(( filesize + size ))
++	echo "size of ${mythtvlocation}/${file} is $size"
++	idx=$((idx+1))
++done
++datestamp
++
++factor=0
++if [[ $filesize -gt 4450 ]]; 
++then
++	factor=`perl -e "printf \"%f\", ($filesize * (1 + ($idx / 100))) / 4300;"`
++	echo "***************************************************************"
++	echo "******  WARNING - DVD may not fit onto a recordable DVD  ******"
++	echo "******  Requantizing $filesize with factor $factor to    ******"
++	echo "******  fit onto DVD                                     ******"
++	echo "***************************************************************"
++
++fi
++
++echo applying cutlists
+ idx=0
+ for file in ${filenames[*]};
+ do
+@@ -292,8 +326,11 @@
+ 
+ if [ ! -e "${tempdir}/${file}.tcindex" ];
+ then
++        echo "creating ${tempdir}/${file}.tcindex"
+ 	tcdemux -i ${tempdir}/$file -W > ${tempdir}/$file.tcindex
+ 	checkreturnvalue
++else
++        echo "${tempdir}/${file}.tcindex exists"
+ fi
+ done
+ 
+@@ -813,9 +850,10 @@
+ 	checkreturnvalue
+ 
+ 	# growisofs -Z /dev/dvd=${tempdir}/mythburndvd.iso
+-	growisofs -Z /dev/dvd -dvd-video -V "MythTV BurnDVD" ${dvddir}
++	echo growisofs -use-the-force-luke=tty -Z /dev/dvd -dvd-video -V "MythTV BurnDVD" ${dvddir}
++	growisofs -use-the-force-luke=tty -Z /dev/dvd -dvd-video -V "MythTV BurnDVD" ${dvddir}
+ 	checkreturnvalue
+-	eject /dev/dvd
++	# eject /dev/dvd
+ fi
+ 
+ checkstopflag ${tempdir}
+diff -rNu pristine/scripts/getcutsize.sh applied/scripts/getcutsize.sh
+--- pristine/scripts/getcutsize.sh	1969-12-31 17:00:00.000000000 -0700
++++ applied/scripts/getcutsize.sh	2005-12-15 14:12:12.381330495 -0700
+@@ -0,0 +1,122 @@
++#! /bin/sh
++#
++# vim:ts=4:sw=4:ai:et:si:sts=4
++#
++# Cut MPEG2 files to remove cutlists...
++#
++# Prerequisites:
++#    projectx
++#    mplex
++#    Xvfb
++#
++# warning: won't make frame accurate cuts - cutpoints get rounded to the nearest GOP boundry
++#
++# Usage: mpeg2cut_px basedir inputfile outputfile
++#        basedir/temp/cutlist.txt is a cutlist as returned by getmyth.sh
++function cutlist_x {
++        #generate project x cutlist
++	#cutlist is just a sequence of cutpoints
++	#first entry is cut-in, i.e start recording
++        line=0
++        rm ${tempdir}/cutlist_x.txt 2>/dev/null
++        cat ${tempdir}/cutlist.txt | while read
++        do
++                first=$(echo $REPLY|cut -f1 -d-)
++                second=$(echo $REPLY|cut -f2 -d-)
++
++                if [ "$line" -eq "0" ]; then
++                        echo "CollectionPanel.CutMode=2" > ${tempdir}/cutlist_x.txt
++                        if [ "$first" -ne "0" -a "$first" != "" ]; then
++                                echo "0" >> ${tempdir}/cutlist_x.txt
++                        fi
++                fi
++                line=$((line+1))
++                if [ "$first" != "" -a "${first}0" -ne "0" ]; then
++                        echo $first >> ${tempdir}/cutlist_x.txt
++                fi
++                if [ "$second" != "" ]; then
++                        echo $second >> ${tempdir}/cutlist_x.txt
++                fi
++        done
++}
++
++XVFB=`which Xvfb`
++if [ -n "$XVFB" ]; then
++	mode=XVFB
++	export DISPLAY=:33.0
++	${XVFB} :33 -screen 0 640x480x8 2> /dev/null > /dev/null &
++	XVFB_PID=$!
++else
++	if [ -n "$DISPLAY" ]; then
++		mode=X
++	else
++		echo "Neither Xvfb nor DISPLAY varibale found, can't run projectx"
++		exit 1
++	fi
++fi
++pushd . > /dev/null 
++
++myfolder=$1
++shift
++videoformat=$1
++shift
++recode_ntsc=$1
++shift
++file=$1
++shift
++outfile=$1
++shift
++factor=$1
++shift
++
++base=`basename ${file} .nuv`
++
++# read config file
++cfg=${myfolder}/mythburn.conf
++if ! [ -r "$cfg" ]; then
++        echo "Error: can't read config file $cfg; program stopped"
++        exit 1
++fi
++. $cfg
++
++
++if [ -z "$projectx" ]; then
++	echo "projectx not defined, can't cut commercials"
++	exit 1
++fi
++
++cd ${tempdir}
++
++#echo Filename \"${file}\"
++#echo OutFile \"${outfile}\"
++
++#echo Cutting out commercials + demultiplexing with projectx
++cutlist_x
++#echo Now running projectx
++#echo ${projectx} -out ${tempdir} -cut ${tempdir}/cutlist_x.txt $file
++nice -n 19 ${projectx} -out ${tempdir} -cut ${tempdir}/cutlist_x.txt $file
++#echo Done running projectx
++
++
++if ! [ -f "${base}_log.txt" ]; then
++	echo "Error running projectx, no log file created. giving up"
++	exit 1
++fi
++
++# sort audiofiles, optionaly reencode first track to ac3 for NTSC
++audio=`${myfolder}/scripts/prepare_audio.sh ${myfolder} ${base}_log.txt ${videoformat} ${recode_ntsc}`
++
++vidsize=`ls -s --size --block-size=M "${base}.m2v" | cut --delimiter=M --fields=1`
++audsize=`ls -s --size --block-size=M "${audio}" | cut --delimiter=M --fields=1`
++size=$(($audsize + $vidsize))
++
++#echo Cleaning up
++rm ${base}.m2v ${audio} cutlist_x.txt
++if [ "$mode" == "XVFB" ]; then
++	# Shut down Xvfb if we used it
++	kill ${XVFB_PID} 2>/dev/null
++fi
++popd > /dev/null
++# return the size
++echo "size = $size"
++exit 0
+diff -rNu pristine/scripts/mpeg2cut-px.sh applied/scripts/mpeg2cut-px.sh
+--- pristine/scripts/mpeg2cut-px.sh	2005-11-06 03:34:19.000000000 -0700
++++ applied/scripts/mpeg2cut-px.sh	2005-12-15 14:11:48.308954065 -0700
+@@ -92,14 +92,27 @@
+ 
+ echo Cutting out commercials + demultiplexing with projectx
+ cutlist_x
+-nice -n 19 ${projectx} -out . -cut cutlist_x.txt $file
++echo Now running projectx
++echo ${projectx} -out ${tempdir} -cut ${tempdir}/cutlist_x.txt $file
++nice -n 19 ${projectx} -out ${tempdir} -cut ${tempdir}/cutlist_x.txt $file
++echo Done running projectx
+ 
+-if ! [ -f "${base}_log.txt" ]; then
++
++if ! [ -f "${base}_log.txt" ]; then
+ 	echo "Error running projectx, no log file created. giving up"
+ 	exit 1
+ fi
+ 
++# sort audiofiles, optionaly reencode first track to ac3 for NTSC
++audio=`${myfolder}/scripts/prepare_audio.sh ${myfolder} ${base}_log.txt ${videoformat} ${recode_ntsc}`
++
+ #As suggested by Les Gondor
++echo " " 
++echo "====================================== "
++echo "Requant factor for this movie is:"  "$factor"
++echo "====================================== "
++echo " "
++
+ if [ "$factor" != "0" ]
+ then
+    mv ${base}.m2v ${base}.m2v.big
+@@ -109,9 +122,6 @@
+    rm ${base}.m2v.big
+ fi
+ 
+-# sort audiofiles, optionaly reencode first track to ac3 for NTSC
+-audio=`${myfolder}/scripts/prepare_audio.sh ${myfolder} ${base}_log.txt ${videoformat} ${recode_ntsc}`
+-
+ echo Remultiplexing video
+ echo mplex -o ${outfile} -f 8 ${base}.m2v ${audio}
+ nice -n 19 mplex -o ${outfile} -f 8 ${base}.m2v ${audio} > /dev/null
+diff -rNu pristine/scripts/remplex.sh applied/scripts/remplex.sh
+--- pristine/scripts/remplex.sh	2005-11-06 03:34:19.000000000 -0700
++++ applied/scripts/remplex.sh	2005-12-15 14:12:00.091138308 -0700
+@@ -29,8 +29,8 @@
+ 
+ if [ -f $dst ];
+ then
+-	echo "Skipped multiplex - file $dst already exists"
+-	exit
++	echo "$dst file already exists.  Exiting"
++	exit 1
+ fi
+ 
+ if [ ! -f $src ];
+@@ -63,6 +63,23 @@
+ 	rm ${tempdir}/vid0 2>/dev/null
+ }
+ 
++function tcresize () {
++  local src=$1 dst=$2
++	base=`basename $src .nuv`
++	mpeg2desc -m < "$src"
++	mpeg2desc -a0 -s < "$src" > ${base}.m2v
++	mpeg2desc -v0 -s < "$src" > ${base}.mp2
++	mv ${base}.m2v ${base}.m2v.big
++	echo "Requantizing with factor $factor to fit onto DVD";
++        echo "${tcrequant} -i ${base}.m2v.big -o ${base}.m2v -d 2 -f $factor"
++        nice -n 19 ${tcrequant} -i ${base}.m2v.big -o ${base}.m2v -d 2 -f $factor
++        rm ${base}.m2v.big
++	mplex -f 8 -v0 -o "$dst" ${base}.mp2 ${base}.m2v
++	checkreturnvalue
++	rm ${base}.m2v
++	rm ${base}.mp2
++}
++
+ function remux_projectx() {
+   local src=$1 dst=$2
+ 	base=`basename $src .nuv`
+@@ -86,19 +103,22 @@
+ 	fi
+ 	pushd . > /dev/null
+ 	cd ${tempdir}
+-	${projectx} -out . ${src}
++	echo "running Projectx -out ${tempdir} ${src}"
++	${projectx} -out ${tempdir} ${src}
++	echo "done running Projectx"
++
+ 	checkreturnvalue
+ 
+-	if ! [ -f "${base}_log.txt" ]; then
++	if ! [ -f "${base}_log.txt" ]; then
+ 		echo "Error Running project X, no log file created. giving up."
+ 		exit 1
+ 	fi
+ 	
+   	# sort audiofiles, optionaly reencode first track to ac3 for NTSC
+-  	audio=`${myfolder}/scripts/prepare_audio.sh ${myfolder} ${base}_log.txt ${videoformat} ${recode_ntsc}`
++  	audio=`${myfolder}/scripts/prepare_audio.sh ${myfolder} ${base}_log.txt ${videoformat} ${recode_ntsc}`
+ 
+ 	#As suggested by Les Gondor
+-	if [ "$factor" != "0" ]
++	if [ $factor != "0" ]
+ 	then
+ 	   mv ${base}.m2v ${base}.m2v.big
+ 	   echo "Requantizing with factor $factor to fit onto DVD";
+@@ -173,6 +193,13 @@
+ #	cp "$dst" "$src"
+ 
+ else
+-	echo "MPEG file does not need to be multiplexed, creating link instead"
+-	ln -s "$src" "$dst"
++#        if [ "$factor" != "0" ]
++#	then
++#		echo "running tcrequant to resize file"
++#		tcresize $src $dst
++#	else
++		echo "MPEG file does not need to be multiplexed, creating link instead"
++		ln -s "$src" "$dst"
++#	fi
+ fi
++

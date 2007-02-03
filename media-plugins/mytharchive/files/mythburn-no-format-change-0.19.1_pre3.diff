@@ -1,0 +1,43 @@
+--- mytharchive/mythburn/scripts/mythburn.py	2006-06-04 13:10:33.000000000 -0400
++++ mytharchive/mythburn/scripts/mythburn.py	2006-06-04 22:10:25.000000000 -0400
+@@ -2569,26 +2569,26 @@
+                         write("Failed to run mythtrancode to fix any errors")
+ 
+     #do we need to re-encode the file to make it DVD compliant?
+-    if not isFileOkayForDVD(folder):
+-        #we need to re-encode the file, make sure we get the right video/audio streams
+-        #would be good if we could also split the file at the same time
+-        getStreamInformation(mediafile, os.path.join(folder, "streaminfo.xml"))
++    #if not isFileOkayForDVD(folder):
++    #    #we need to re-encode the file, make sure we get the right video/audio streams
++    #    #would be good if we could also split the file at the same time
++    #    getStreamInformation(mediafile, os.path.join(folder, "streaminfo.xml"))
+ 
+-        #choose which streams we need
+-        video, audio1, audio2 = selectStreams(folder)
++    #    #choose which streams we need
++    #    video, audio1, audio2 = selectStreams(folder)
+ 
+-        #choose which aspect ratio we should use
+-        aspectratio = selectAspectRatio(folder)
++    #    #choose which aspect ratio we should use
++    #    aspectratio = selectAspectRatio(folder)
+ 
+-        write("File is not DVD compliant - Re-encoding audio and video")
++    #    write("File is not DVD compliant - Re-encoding audio and video")
+ 
+         # Run from local file?
+-        if file.hasAttribute("localfilename"):
+-            mediafile = file.attributes["localfilename"].value
++    #    if file.hasAttribute("localfilename"):
++    #        mediafile = file.attributes["localfilename"].value
+ 
+-        #do the re-encode 
+-        encodeVideoToMPEG2(mediafile, os.path.join(folder, "newfile2.mpg"), video, audio1, audio2, aspectratio)
+-        mediafile = os.path.join(folder, 'newfile2.mpg')
++    #    #do the re-encode 
++    #    encodeVideoToMPEG2(mediafile, os.path.join(folder, "newfile2.mpg"), video, audio1, audio2, aspectratio)
++    #    mediafile = os.path.join(folder, 'newfile2.mpg')
+ 
+     #remove an intermediate file
+     if os.path.exists(os.path.join(folder, "newfile1.mpg")):

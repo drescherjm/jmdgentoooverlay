@@ -1,0 +1,11 @@
+--- unionfs-1.0.14/Makefile.with-unneccessary-call-to-ctags	2005-09-27 20:04:53.975345632 +0200
++++ unionfs-1.0.14/Makefile	2005-09-27 20:05:04.155797968 +0200
+@@ -48,7 +48,7 @@
+ 
+ BINS	:=	unionctl uniondbg unionimap
+ 
+-all:	readthereadme tags unionfs$(KERNELVERSION) ${BINS}
++all:	readthereadme unionfs$(KERNELVERSION) ${BINS}
+ 
+ readthereadme:
+ 	@echo "******************************************************************************"

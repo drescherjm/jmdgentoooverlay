@@ -1,0 +1,11 @@
+--- uigtk2.ml.old	2005-03-12 17:17:59.000000000 +0100
++++ uigtk2.ml	2005-07-13 19:55:34.856959280 +0200
+@@ -1314,7 +1314,7 @@
+     mainWindow#scroll_vertical `JUMP (min p 1.) in
+ 
+   ignore (mainWindow#connect#unselect_row ~callback:
+-      (fun ~row ~column ~event -> current := None; updateDetails ()));
++      (fun ~row ~column ~event -> current := None));
+   ignore (mainWindow#connect#select_row ~callback:
+       (fun ~row ~column ~event -> current := Some row; updateDetails ()));
+ 

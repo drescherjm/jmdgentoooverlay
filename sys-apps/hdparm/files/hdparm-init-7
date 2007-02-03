@@ -1,0 +1,132 @@
+#!/sbin/runscript
+# METHOD
+# ------
+# if /dev/ide exists, find all block devices beneath it named disc, cd, or
+# generic.
+#
+# for the disc and cd ones, if there is a a matching /dev/hdX symlink and
+# hdX_args is set in the config file, use hdX_args.  otherwise, if there is a
+# matching /dev/discs/discX or /dev/cdroms/cdromX symlink, and discX_args or
+# cdromX_args is set in the config file, use discX_args / cdromX_args.  finally,
+# if all_args is set in the config file, use that.
+#
+# for the generic ones, sort them and look for genericX_args in the config file
+# or use all_args.
+#
+# if /dev/ide does not exist, check the /dev/hdX entries, and see which ones
+# correspond to real devices by opening them for reading.  then check hdX_args
+# and all_args in the config file.
+#
+# for each device considered, if no args are found in the config file, do not
+# run hdparm.
+
+depend() {
+	before bootmisc
+}
+
+do_hdparm() {
+	if [[ ${args:=$all_args} ]]
+	then
+		orgdevice=`readlink -f $device`
+		if [ -b $orgdevice ]; then
+			ebegin "Running hdparm on $device"
+			hdparm $args $device > /dev/null || ewarn "Failed to run hdparm on $device"
+		fi
+	fi
+}
+
+start() {
+
+	ebegin 'Starting hdparm'
+
+	which hdparm &>/dev/null
+	eend $? 'hdparm executable not found'
+
+	if [ -d /dev/ide ]
+	then
+
+		# devfs compatible systems
+		for device in $(find /dev/ide -name disc)
+		do
+
+			args=''
+
+			for alias in /dev/hd?
+			do
+				if [ $alias -ef $device ]
+				then
+					device=$alias
+					eval args=\${`basename $alias`_args}
+					break
+				fi
+			done
+
+			[ -z "$args" ] && for alias in /dev/discs/*
+			do
+				if [ $alias/disc -ef $device ]
+				then
+					device=$alias/disc
+					eval args=\${`basename $alias`_args}
+					break
+				fi
+			done
+
+			do_hdparm
+
+		done
+
+		for device in $(find /dev/ide -name cd)
+		do
+
+			args=''
+
+			for alias in /dev/hd?
+			do
+				if [ $alias -ef $device ]
+				then
+					device=$alias
+					eval args=\${`basename $alias`_args}
+					break
+				fi
+			done
+
+			[ -z "$args" ] && for alias in /dev/cdroms/*
+			do
+				if [ $alias -ef $device ]
+				then
+					device=$alias
+					eval args=\${`basename $alias`_args}
+					break
+				fi
+			done
+
+			do_hdparm
+
+		done
+
+		let count=0
+		# of course, the sort approach would fail here if any of the
+		# host/bus/target/lun numbers reached 2 digits..
+		for device in $(find /dev/ide -name generic | sort)
+		do
+			eval args=\${generic${count}_args}
+			do_hdparm
+			let count=count+1
+		done
+
+	else
+
+		# non-devfs compatible system
+		for device in /dev/hd?
+		do
+			# check that the block device really exists
+			# by opening it for reading
+			if [ -b $device ] && ( : <$device ) 2>/dev/null
+			then
+				eval args=\${`basename $device`_args}
+				do_hdparm
+			fi
+		done
+
+	fi
+}

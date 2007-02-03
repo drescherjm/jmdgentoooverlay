@@ -1,0 +1,60 @@
+--- partimage-0.6.4/src/client/fs/fs_xfs.h.LP64-fixes	2004-02-03 19:57:36.000000000 -0500
++++ partimage-0.6.4/src/client/fs/fs_xfs.h	2005-02-21 10:25:06.220053947 -0500
+@@ -19,6 +19,7 @@
+ #define FS_XFS_H
+ 
+ #include <ctype.h>
++#include <stdint.h>
+ 
+ #include "partimage.h"
+ #include "common.h"
+@@ -99,22 +100,14 @@ class CRestoringWindow;
+ #define	XFS_BTNUM_INO	((xfs_btnum_t)XFS_BTNUM_INOi)
+ 
+ #define	XFS_SB_MAGIC		0x58465342	// 'XFSB'
+-typedef signed char	__int8_t;
+-typedef unsigned char	__uint8_t;
+-typedef signed short int	__int16_t;
+-typedef unsigned short int	__uint16_t;
+-typedef signed int	__int32_t;
+-typedef unsigned int	__uint32_t;
+-#ifdef __ia64__
+-typedef signed long int	__int64_t;
+-typedef unsigned long int	__uint64_t;
+-#elif __alpha__
+-typedef signed long int    __int64_t;
+-typedef unsigned long int  __uint64_t;
+-#else
+-typedef signed long long int    __int64_t;
+-typedef unsigned long long int  __uint64_t;
+-#endif
++typedef int8_t __int8_t;
++typedef uint8_t __uint8_t;
++typedef int16_t __int16_t;
++typedef uint16_t __uint16_t;
++typedef int32_t __int32_t;
++typedef uint32_t __uint32_t;
++typedef int64_t __int64_t;
++typedef uint64_t __uint64_t;
+ 
+ // POSIX Extensions
+ typedef unsigned char	uchar_t;
+@@ -157,16 +150,8 @@ typedef	__uint64_t	xfs_drtbno_t;	// exte
+ typedef	__uint64_t	xfs_dfiloff_t;	// block number in a file 
+ typedef	__uint64_t	xfs_dfilblks_t;	// number of blocks in a file 
+ 
+-#ifdef __ia64__
+-typedef unsigned long  __u64; 
+-typedef signed long    __s64; 
+-#elif __alpha__
+-typedef unsigned long  __u64; 
+-typedef signed long    __s64; 
+-#else
+-typedef unsigned long long  __u64; 
+-typedef signed long long    __s64; 
+-#endif
++typedef uint64_t __u64;
++typedef int64_t  __s64;
+ 
+ typedef __u64	xfs_off_t;
+ //typedef __s32	xfs32_off_t;

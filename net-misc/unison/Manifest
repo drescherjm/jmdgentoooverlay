@@ -1,0 +1,4 @@
+MD5 ae535acbfe18c19f09ad48bee2cad483 unison-2.13.16.ebuild 1639
+MD5 5abcf068ada1ab9eedbe3dfa16ad15fb files/ocaml-3.08-extnames.patch 748
+MD5 402b704e5c7c71a69fd6400c395834ec files/unison-2.12.0-gtk2-bug.patch 490
+MD5 8460e19d63be5381b1ccf5e6505b83d4 files/digest-unison-2.13.16 66

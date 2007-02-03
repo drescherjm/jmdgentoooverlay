@@ -1,0 +1,6 @@
+MD5 d41d8cd98f00b204e9800998ecf8427e files/digest-mythtv-svn-0.18 0
+MD5 f61ed76cd0d4dab547459acb1ee99882 files/mythbackend.conf 902
+MD5 42fa0fc7989526cab3de95cd34b7b931 files/mythbackend.rc6 1680
+MD5 b3a4780890d53640604812b8069a8297 files/mythfilldatabase.cron 74
+MD5 20e2255501865de5b568424821abf69d metadata.xml 161
+MD5 3620f281449d5b431ef766fc975de08a mythtv-svn-0.18.ebuild 3984

@@ -1,0 +1,20 @@
+--- ../Displays/FTB/FTBdisk_gauge.display	2005-11-26 11:49:14.000000000 -0500
++++ ../Displays/FTB/FTBdisk_gauge.display	2006-10-31 22:32:53.000000000 -0500
+@@ -19,7 +19,7 @@
+       <image id="face" uri="gfx/black/base.png"
+            image-width="100%" image-height="100%" height="100%" width="100%"/>
+ 
+-      <gauge id="data" fill="50" anchor="sw" y="100%">
++      <gauge id="data" fill="50" anchor="se" y="100%">
+         <group id="data_fill" width="100" height="10" bg-color="red"/>
+       </gauge>
+ 
+@@ -113,7 +113,7 @@
+         Dsp.title.value = dir
+         Dsp.total.value = "Total: " + mem_format(sys.fsusage.total)
+         Dsp.free.value = "Free: " + mem_format(sys.fsusage.avail)
+-        disk_fill = (float(sys.fsusage.total) - float(sys.fsusage.avail)) / float(sys.fsusage.total) * 100
++        disk_fill = 100 - ((float(sys.fsusage.total) - float(sys.fsusage.avail)) / float(sys.fsusage.total) * 100)
+         Dsp.data.fill = int(disk_fill)
+         add_timer(int(update*1000), get_data)
+         return 0

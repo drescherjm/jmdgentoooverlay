@@ -1,0 +1,318 @@
+diff -urN unionfs-1.1.3.old/copyup.c unionfs-1.1.3.new/copyup.c
+--- unionfs-1.1.3.old/copyup.c	2006-02-20 19:47:06.000000000 -0300
++++ unionfs-1.1.3.new/copyup.c	2006-04-03 22:35:26.413786991 -0300
+@@ -64,7 +64,11 @@
+ 	name_list_orig = name_list;
+ 	while (*name_list) {
+ 		ssize_t size;
++#if LINUX_VERSION_CODE > KERNEL_VERSION(2,6,15)
++		mutex_lock(&old_hidden_dentry->d_inode->i_mutex);
++#else
+ 		down(&old_hidden_dentry->d_inode->i_sem);
++#endif
+ 		err = security_inode_getxattr(old_hidden_dentry, name_list);
+ 		if (err)
+ 			size = err;
+@@ -73,7 +77,11 @@
+ 			    old_hidden_dentry->d_inode->i_op->
+ 			    getxattr(old_hidden_dentry, name_list, attr_value,
+ 				     XATTR_SIZE_MAX);
++#if LINUX_VERSION_CODE > KERNEL_VERSION(2,6,15)
++		mutex_unlock(&old_hidden_dentry->d_inode->i_mutex);
++#else
+ 		up(&old_hidden_dentry->d_inode->i_sem);
++#endif		
+ 		if (size < 0) {
+ 			err = size;
+ 			goto out;
+@@ -84,7 +92,11 @@
+ 			goto out;
+ 		}
+ 
++#if LINUX_VERSION_CODE > KERNEL_VERSION(2,6,15)
++		mutex_lock(&new_hidden_dentry->d_inode->i_mutex);
++#else
+ 		down(&new_hidden_dentry->d_inode->i_sem);
++#endif
+ 
+ 		err =
+ 		    security_inode_setxattr(old_hidden_dentry, name_list,
+@@ -101,7 +113,11 @@
+ 							     attr_value, size,
+ 							     0);
+ 		}
++#if LINUX_VERSION_CODE > KERNEL_VERSION(2,6,15)
++		mutex_unlock(&new_hidden_dentry->d_inode->i_mutex);
++#else
+ 		up(&new_hidden_dentry->d_inode->i_sem);
++#endif
+ 
+ 		if (err < 0)
+ 			goto out;
+diff -urN unionfs-1.1.3.old/dentry.c unionfs-1.1.3.new/dentry.c
+--- unionfs-1.1.3.old/dentry.c	2006-02-20 19:47:06.000000000 -0300
++++ unionfs-1.1.3.new/dentry.c	2006-04-03 22:35:36.633885836 -0300
+@@ -108,7 +108,12 @@
+ 		interpose_flag = INTERPOSE_REVAL_NEG;
+ 		if (positive) {
+ 			interpose_flag = INTERPOSE_REVAL;
++#if LINUX_VERSION_CODE > KERNEL_VERSION(2,6,15)
++			mutex_lock(&dentry->d_inode->i_mutex);
++#else
+ 			down(&dentry->d_inode->i_sem);
++#endif
++
+ 			bstart = ibstart(dentry->d_inode);
+ 			bend = ibend(dentry->d_inode);
+ 			if (bstart >= 0) {
+@@ -126,7 +131,11 @@
+ 			itohi_ptr(dentry->d_inode) = NULL;
+ 			ibstart(dentry->d_inode) = -1;
+ 			ibend(dentry->d_inode) = -1;
++#if LINUX_VERSION_CODE > KERNEL_VERSION(2,6,15)
++			mutex_unlock(&dentry->d_inode->i_mutex);
++#else
+ 			up(&dentry->d_inode->i_sem);
++#endif
+ 		}
+ 
+ 		result = unionfs_lookup_backend(dentry, interpose_flag);
+diff -urN unionfs-1.1.3.old/dirhelper.c unionfs-1.1.3.new/dirhelper.c
+--- unionfs-1.1.3.old/dirhelper.c	2006-02-20 19:47:06.000000000 -0300
++++ unionfs-1.1.3.new/dirhelper.c	2006-04-03 22:35:45.579217856 -0300
+@@ -78,11 +78,19 @@
+ 				continue;
+ 			}
+ 
++#if LINUX_VERSION_CODE > KERNEL_VERSION(2,6,15)
++			mutex_lock(&hidden_dir_dentry->d_inode->i_mutex);
++#else
+ 			down(&hidden_dir_dentry->d_inode->i_sem);
++#endif
+ 			err =
+ 			    vfs_unlink(hidden_dir_dentry->d_inode,
+ 				       hidden_dentry);
+-			up(&hidden_dir_dentry->d_inode->i_sem);
++#if LINUX_VERSION_CODE > KERNEL_VERSION(2,6,15)
++			mutex_unlock(&hidden_dir_dentry->d_inode->i_mutex);
++#else
++			down(&hidden_dir_dentry->d_inode->i_sem);
++#endif
+ 			DPUT(hidden_dentry);
+ 
+ 			if (err && !IS_COPYUP_ERR(err))
+diff -urN unionfs-1.1.3.old/file.c unionfs-1.1.3.new/file.c
+--- unionfs-1.1.3.old/file.c	2006-02-20 19:47:06.000000000 -0300
++++ unionfs-1.1.3.new/file.c	2006-04-03 22:42:17.319560146 -0300
+@@ -264,10 +264,18 @@
+ 	if (!hidden_file->f_op || !hidden_file->f_op->fsync)
+ 		goto out;
+ 
++#if LINUX_VERSION_CODE > KERNEL_VERSION(2,6,15)
++	mutex_lock(&hidden_file->f_dentry->d_inode->i_mutex);
++#else
+ 	down(&hidden_file->f_dentry->d_inode->i_sem);
++#endif
+ 	err = hidden_file->f_op->fsync(hidden_file, hidden_file->f_dentry,
+ 				       datasync);
++#if LINUX_VERSION_CODE > KERNEL_VERSION(2,6,15)
++	mutex_unlock(&hidden_file->f_dentry->d_inode->i_mutex);
++#else
+ 	up(&hidden_file->f_dentry->d_inode->i_sem);
++#endif
+ 
+       out:
+ 	print_exit_status(err);
+diff -urN unionfs-1.1.3.old/inode.c unionfs-1.1.3.new/inode.c
+--- unionfs-1.1.3.old/inode.c	2006-02-20 19:47:06.000000000 -0300
++++ unionfs-1.1.3.new/inode.c	2006-04-03 22:42:17.346555567 -0300
+@@ -81,7 +81,11 @@
+ 		struct dentry *hidden_dir_dentry;
+ 		struct iattr newattrs;
+ 
++#if LINUX_VERSION_CODE > KERNEL_VERSION(2,6,15)
++		mutex_lock(&whiteout_dentry->d_inode->i_mutex);
++#else
+ 		down(&whiteout_dentry->d_inode->i_sem);
++#endif
+ 		newattrs.ia_valid = ATTR_CTIME | ATTR_MODE | ATTR_ATIME
+ 		    | ATTR_MTIME | ATTR_UID | ATTR_GID | ATTR_FORCE
+ 		    | ATTR_KILL_SUID | ATTR_KILL_SGID;
+@@ -97,7 +101,11 @@
+ 
+ 		err = notify_change(whiteout_dentry, &newattrs);
+ 
++#if LINUX_VERSION_CODE > KERNEL_VERSION(2,6,15)
++		mutex_unlock(&whiteout_dentry->d_inode->i_mutex);
++#else
+ 		up(&whiteout_dentry->d_inode->i_sem);
++#endif
+ 
+ 		if (err)
+ 			printk(KERN_WARNING
+@@ -594,10 +602,20 @@
+ 				err = PTR_ERR(whiteout_dentry);
+ 				goto out;
+ 			}
++#if LINUX_VERSION_CODE > KERNEL_VERSION(2,6,15)
++			mutex_lock(&hidden_dentry->d_inode->i_mutex);
++#else
+ 			down(&hidden_dentry->d_inode->i_sem);
++#endif
++
+ 			err = vfs_create(hidden_dentry->d_inode,
+ 					 whiteout_dentry, 0600, NULL);
++#if LINUX_VERSION_CODE > KERNEL_VERSION(2,6,15)
++			mutex_unlock(&hidden_dentry->d_inode->i_mutex);
++#else
+ 			up(&hidden_dentry->d_inode->i_sem);
++#endif
++
+ 			DPUT(whiteout_dentry);
+ 
+ 			if (err) {
+diff -urN unionfs-1.1.3.old/main.c unionfs-1.1.3.new/main.c
+--- unionfs-1.1.3.old/main.c	2006-02-20 19:47:06.000000000 -0300
++++ unionfs-1.1.3.new/main.c	2006-04-03 22:42:17.365552345 -0300
+@@ -103,7 +103,12 @@
+ 		}
+ 	}
+ 
++#if LINUX_VERSION_CODE > KERNEL_VERSION(2,6,15)
++	mutex_lock(&inode->i_mutex);
++#else
+ 	down(&inode->i_sem);
++#endif
++
+ 	if (atomic_read(&inode->i_count) > 1)
+ 		goto skip;
+ 
+@@ -172,7 +177,11 @@
+ 
+ 	fist_print_dentry("Leaving unionfs_interpose", dentry);
+ 	fist_print_inode("Leaving unionfs_interpose", inode);
++#if LINUX_VERSION_CODE > KERNEL_VERSION(2,6,15)
++	mutex_unlock(&inode->i_mutex);
++#else
+ 	up(&inode->i_sem);
++#endif
+ 
+       out:
+ 	print_exit_status(err);
+diff -urN unionfs-1.1.3.old/unionfs.h unionfs-1.1.3.new/unionfs.h
+--- unionfs-1.1.3.old/unionfs.h	2006-02-20 19:47:06.000000000 -0300
++++ unionfs-1.1.3.new/unionfs.h	2006-04-03 22:42:17.385548953 -0300
+@@ -776,13 +776,22 @@
+ {
+ 	struct dentry *dir = DGET(dentry->d_parent);
+ 
++#if LINUX_VERSION_CODE > KERNEL_VERSION(2,6,15)
++	mutex_lock(&dir->d_inode->i_mutex);
++#else
+ 	down(&dir->d_inode->i_sem);
++#endif
++
+ 	return dir;
+ }
+ 
+ static inline void unlock_dir(struct dentry *dir)
+ {
++#if LINUX_VERSION_CODE > KERNEL_VERSION(2,6,15)
++	mutex_unlock(&dir->d_inode->i_mutex);
++#else
+ 	up(&dir->d_inode->i_sem);
++#endif
+ 	DPUT(dir);
+ }
+ 
+diff -urN unionfs-1.1.3.old/xattr.c unionfs-1.1.3.new/xattr.c
+--- unionfs-1.1.3.old/xattr.c	2006-02-20 19:47:06.000000000 -0300
++++ unionfs-1.1.3.new/xattr.c	2006-04-03 22:42:17.394547426 -0300
+@@ -77,14 +77,22 @@
+ 
+ 		encoded_value = (char *)value;
+ 
++#if LINUX_VERSION_CODE > KERNEL_VERSION(2,6,15)
++		mutex_lock(&hidden_dentry->d_inode->i_mutex);
++#else
+ 		down(&hidden_dentry->d_inode->i_sem);
++#endif
+ 		/* lock_kernel() already done by caller. */
+ 		err =
+ 		    hidden_dentry->d_inode->i_op->getxattr(hidden_dentry,
+ 							   encoded_name,
+ 							   encoded_value, size);
+ 		/* unlock_kernel() will be done by caller. */
++#if LINUX_VERSION_CODE > KERNEL_VERSION(2,6,15)
++		mutex_unlock(&hidden_dentry->d_inode->i_mutex);
++#else
+ 		up(&hidden_dentry->d_inode->i_sem);
++#endif
+ 
+ 	}
+ 
+@@ -112,12 +120,20 @@
+ 		    name, (unsigned long)size, flags);
+ 
+ 	if (hidden_dentry->d_inode->i_op->setxattr) {
++#if LINUX_VERSION_CODE > KERNEL_VERSION(2,6,15)
++		mutex_lock(&hidden_dentry->d_inode->i_mutex);
++#else
+ 		down(&hidden_dentry->d_inode->i_sem);
++#endif
+ 		/* lock_kernel() already done by caller. */
+ 		err = hidden_dentry->d_inode->i_op->
+ 		    setxattr(hidden_dentry, name, value, size, flags);
+ 		/* unlock_kernel() will be done by caller. */
++#if LINUX_VERSION_CODE > KERNEL_VERSION(2,6,15)
++		mutex_unlock(&hidden_dentry->d_inode->i_mutex);
++#else
+ 		up(&hidden_dentry->d_inode->i_sem);
++#endif
+ 	}
+ 
+ 	unlock_dentry(dentry);
+@@ -143,13 +159,21 @@
+ 	if (hidden_dentry->d_inode->i_op->removexattr) {
+ 		encoded_name = (char *)name;
+ 
++#if LINUX_VERSION_CODE > KERNEL_VERSION(2,6,15)
++		mutex_lock(&hidden_dentry->d_inode->i_mutex);
++#else
+ 		down(&hidden_dentry->d_inode->i_sem);
++#endif
+ 		/* lock_kernel() already done by caller. */
+ 		err =
+ 		    hidden_dentry->d_inode->i_op->removexattr(hidden_dentry,
+ 							      encoded_name);
+ 		/* unlock_kernel() will be done by caller. */
++#if LINUX_VERSION_CODE > KERNEL_VERSION(2,6,15)
++		mutex_unlock(&hidden_dentry->d_inode->i_mutex);
++#else
+ 		up(&hidden_dentry->d_inode->i_sem);
++#endif
+ 	}
+ 
+ 	unlock_dentry(dentry);
+@@ -173,13 +197,21 @@
+ 
+ 	if (hidden_dentry->d_inode->i_op->listxattr) {
+ 		encoded_list = list;
++#if LINUX_VERSION_CODE > KERNEL_VERSION(2,6,15)
++		mutex_lock(&hidden_dentry->d_inode->i_mutex);
++#else
+ 		down(&hidden_dentry->d_inode->i_sem);
++#endif
+ 		/* lock_kernel() already done by caller. */
+ 		err =
+ 		    hidden_dentry->d_inode->i_op->listxattr(hidden_dentry,
+ 							    encoded_list, size);
+ 		/* unlock_kernel() will be done by caller. */
++#if LINUX_VERSION_CODE > KERNEL_VERSION(2,6,15)
++		mutex_unlock(&hidden_dentry->d_inode->i_mutex);
++#else
+ 		up(&hidden_dentry->d_inode->i_sem);
++#endif
+ 	}
+ 
+ 	unlock_dentry(dentry);

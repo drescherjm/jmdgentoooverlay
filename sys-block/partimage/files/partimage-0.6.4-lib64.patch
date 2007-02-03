@@ -1,0 +1,44 @@
+--- partimage-0.6.4/src/client/Makefile.am.chris	2005-03-29 13:34:39.129627648 +0200
++++ partimage-0.6.4/src/client/Makefile.am	2005-03-29 13:34:49.238090928 +0200
+@@ -33,7 +33,7 @@
+     mbr_backup.cpp 
+ 
+ # all libs are added in LIBS, we needn't add them to partimage_LDADD 
+-partimage_LDADD = -L/usr/lib -lslang fs/libfs.a ../shared/libshared.a
++partimage_LDADD = -L$(libdir) -lslang fs/libfs.a ../shared/libshared.a
+ partimage_LDFLAGS = @PARTIMAGE_LDFLAGS@
+ 
+ DEFS=@DEFS@ -DLOCALEDIR=\"${localedir}\" -D_REENTRANT -D_FILE_OFFSET_BITS=64
+--- partimage-0.6.4/src/client/Makefile.in.chris	2005-03-29 13:33:23.625106080 +0200
++++ partimage-0.6.4/src/client/Makefile.in	2005-03-29 13:33:53.689535592 +0200
+@@ -253,7 +253,7 @@
+ 
+ 
+ # all libs are added in LIBS, we needn't add them to partimage_LDADD 
+-partimage_LDADD = -L/usr/lib -lslang fs/libfs.a ../shared/libshared.a
++partimage_LDADD = -L$(libdir) -lslang fs/libfs.a ../shared/libshared.a
+ partimage_LDFLAGS = @PARTIMAGE_LDFLAGS@
+ MAINTAINERCLEANFILES = Makefile.in
+ all: all-recursive
+--- partimage-0.6.4/src/server/Makefile.am.chris	2005-03-29 13:34:55.995063712 +0200
++++ partimage-0.6.4/src/server/Makefile.am	2005-03-29 13:35:05.279652240 +0200
+@@ -21,7 +21,7 @@
+                  partimaged-gui_dummy.h partimaged-gui_newt.h partimaged.h
+ 
+ #partimaged_LDADD = -L/usr/lib -lz -lbz2 -lnewt -lpthread -lcrypt -lslang -lcom_err -lext2fs ../shared/libshared.a
+-partimaged_LDADD = -L/usr/lib -lslang ../shared/libshared.a
++partimaged_LDADD = -L$(libdir) -lslang ../shared/libshared.a
+ 
+ partimaged_LDFLAGS = @PARTIMAGE_LDFLAGS@
+ 
+--- partimage-0.6.4/src/server/Makefile.in.chris	2005-03-29 13:34:10.496980472 +0200
++++ partimage-0.6.4/src/server/Makefile.in	2005-03-29 13:34:32.172685264 +0200
+@@ -231,7 +231,7 @@
+ 
+ 
+ #partimaged_LDADD = -L/usr/lib -lz -lbz2 -lnewt -lpthread -lcrypt -lslang -lcom_err -lext2fs ../shared/libshared.a
+-partimaged_LDADD = -L/usr/lib -lslang ../shared/libshared.a
++partimaged_LDADD = -L$(libdir) -lslang ../shared/libshared.a
+ partimaged_LDFLAGS = @PARTIMAGE_LDFLAGS@
+ MAINTAINERCLEANFILES = Makefile.in
+ all: all-am

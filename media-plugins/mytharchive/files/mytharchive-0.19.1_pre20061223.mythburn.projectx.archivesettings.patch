@@ -1,0 +1,25 @@
+--- mytharchive/mytharchive/archivesettings.cpp	2006-12-23 10:45:21.000000000 -0500
++++ mytharchive/mytharchive/archivesettings.cpp	2006-12-24 00:16:29.000000000 -0500
+@@ -268,6 +268,15 @@
+     return gc;
+ };
+ 
++static HostLineEdit *MythArchiveProjectXCmd()
++{
++    HostLineEdit *gc = new HostLineEdit("MythArchiveProjectXCmd");
++    gc->setLabel(QObject::tr("ProjectX command"));
++    gc->setValue("projectx");
++    gc->setHelpText(QObject::tr("Command to run ProjectX. Optional - leave blank if you don't have ProjectX installed.")); 
++    return gc;
++};
++
+ ArchiveSettings::ArchiveSettings()
+ {
+     VerticalConfigurationGroup* vcg1 = new VerticalConfigurationGroup(false);
+@@ -307,5 +316,6 @@
+     vcg4->addChild(MythArchiveGrowisofsCmd());
+     vcg4->addChild(MythArchiveTcrequantCmd());
+     vcg4->addChild(MythArchiveJpeg2yuvCmd());
++    vcg4->addChild(MythArchiveProjectXCmd());
+     addChild(vcg4);
+ }

@@ -1,0 +1,11 @@
+--- ivtv-0.4.1/driver/ivtv-driver.old.h	2006-01-04 00:27:30.000000000 -0500
++++ ivtv-0.4.1/driver/ivtv-driver.h	2006-01-04 00:27:44.000000000 -0500
+@@ -188,7 +188,7 @@
+ 
+ /* Decoder DMA or PIO, 1=PIO, 0=DMA */
+ #define IVTV_VBI_PIO		0
+-#define IVTV_ENC_PIO		0
++#define IVTV_ENC_PIO		1
+ #define IVTV_DEC_PIO		0
+ /* This sometimes times out, seems to  kill
+ 					   encoding sometimes */

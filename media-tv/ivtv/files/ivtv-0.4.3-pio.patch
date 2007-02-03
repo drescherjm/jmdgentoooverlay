@@ -1,0 +1,11 @@
+--- ivtv-0.4.3/driver/ivtv-driver.old.h	2006-01-15 14:03:04.000000000 -0500
++++ ivtv-0.4.3/driver/ivtv-driver.h	2006-03-07 03:07:54.000000000 -0500
+@@ -197,7 +197,7 @@
+ #define IVTV_DEC_PIO		1
+ #else
+ #define IVTV_VBI_PIO		0
+-#define IVTV_ENC_PIO		0
++#define IVTV_ENC_PIO		1
+ #define IVTV_DEC_PIO		0
+ #endif
+ /* This sometimes times out, seems to  kill

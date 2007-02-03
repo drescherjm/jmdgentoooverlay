@@ -1,0 +1,4 @@
+MD5 67b0d8f805a4eb00c9eb9ff568917ee4 files/digest-hdparm-6.3 61
+MD5 5246893ec7894ece9bf7a851d11fa18d files/hdparm-conf.d.3 491
+MD5 f6e1664cbc73c956c98ba69f05c23615 files/hdparm-init-7 2708
+MD5 80ca0963812c5c976a84b5a843b48ece hdparm-6.3.ebuild 988

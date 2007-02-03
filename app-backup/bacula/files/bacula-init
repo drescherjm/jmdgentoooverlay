@@ -1,0 +1,62 @@
+#!/sbin/runscript
+# Copyright 1999-2004 Gentoo Foundation
+# Distributed under the terms of the GNU General Public License v2
+# $Header: /var/cvsroot/gentoo-x86/app-backup/bacula/files/bacula-init,v 1.1 2005/07/04 01:52:06 robbat2 Exp $
+
+depend() {
+	need net
+	use mysql
+}
+
+opts="test"
+
+# A client would only need to run the file daemon, so if thats the
+# case for this machine just comment the other two out below here...
+start() {
+	ebegin "Starting bacula storage daemon"
+	start-stop-daemon --start --quiet --exec /usr/sbin/bacula-sd \
+		-- -c /etc/bacula/bacula-sd.conf
+	result=$?
+
+	ebegin "Starting bacula file daemon"
+	start-stop-daemon --start --quiet --exec /usr/sbin/bacula-fd \
+		-- -c /etc/bacula/bacula-fd.conf
+	result=$(( $result + $? ))
+	sleep 2
+
+	ebegin "Starting bacula director"
+	start-stop-daemon --start --quiet --exec /usr/sbin/bacula-dir \
+		-- -c /etc/bacula/bacula-dir.conf
+	result=$(( $result + $? ))
+
+	eend $result
+}
+
+# The default port numbers appear in the pidfile paths below.
+# Might wanna programmatically grab them from the config files
+# or something...
+stop() {
+	ebegin "Stopping bacula file daemon"
+	start-stop-daemon --stop --quiet --pidfile /var/run/bacula-fd.9102.pid
+	result=$?
+	ebegin "Stopping bacula storage daemon"
+	start-stop-daemon --stop --quiet --pidfile /var/run/bacula-sd.9103.pid
+	result=$(( $result + $? ))
+	ebegin "Stopping bacula director"
+	start-stop-daemon --stop --quiet --pidfile /var/run/bacula-dir.9101.pid
+	result=$(( $result + $? ))
+	eend $result
+}
+
+test() {
+	ebegin "Testing bacula storage daemon configuration"
+	/usr/sbin/bacula-sd -t -c /etc/bacula/bacula-sd.conf
+	result=$?
+	ebegin "Testing bacula file daemon configuration"
+	/usr/sbin/bacula-fd -t -c /etc/bacula/bacula-fd.conf
+	result=$(( $result + $? ))
+	ebegin "Testing bacula director configuration"
+	/usr/sbin/bacula-dir -t -c /etc/bacula/bacula-dir.conf
+	result=$(( $result + $? ))
+	eend $result
+}

@@ -1,0 +1,3 @@
+#!/bin/bash
+source /etc/conf.d/amd64-chroot
+chroot ${CHROOT_LOCATION} /bin/bash

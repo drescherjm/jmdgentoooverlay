@@ -1,0 +1,5 @@
+MD5 a25c6db6fe28c745e18a9780d7036843 qemu-softmmu-0.7.2.ebuild 4033
+MD5 cc5c9529eecf67b3b9075faef545833f files/digest-qemu-softmmu-0.7.2 125
+MD5 3202f7445799cce82ccaac9749e1443d files/qemu-softmmu-0.7.0-errno.patch 487
+MD5 1d5ef12a594467dced5bfce6c07ed893 files/kqemu-0.7.1-sysfs.patch 1631
+MD5 87ec2e1fa832612fb834d7dd49cf7e5c files/kqemu-sysfs.patch 2094

@@ -1,0 +1,28 @@
+diff -Naru postgresql-7.4.7.org/configure postgresql-7.4.7/configure
+--- postgresql-7.4.7.org/configure	2004-08-18 04:11:24.000000000 +0100
++++ postgresql-7.4.7/configure	2004-09-15 20:28:46.933631781 +0100
+@@ -6003,7 +6003,7 @@
+   echo $ECHO_N "(cached) $ECHO_C" >&6
+ else
+   pgac_cv_check_readline=no
+-for pgac_lib in "" " -ltermcap" " -lncurses" " -lcurses" ; do
++for pgac_lib in "" " -lncurses" " -lcurses" ; do
+   for pgac_rllib in -lreadline -ledit ; do
+     pgac_save_LIBS=$LIBS
+     LIBS="${pgac_rllib}${pgac_lib} $LIBS"
+diff -Naru postgresql-7.4.7.org/src/bin/initdb/initdb.sh postgresql-7.4.7/src/bin/initdb/initdb.sh
+--- postgresql-7.4.7.org/src/bin/initdb/initdb.sh	2004-05-05 17:09:56.000000000 +0100
++++ postgresql-7.4.7/src/bin/initdb/initdb.sh	2004-09-15 20:28:35.507026977 +0100
+@@ -1145,11 +1145,7 @@
+ echo
+ echo "Success. You can now start the database server using:"
+ echo ""
+-echo "    $PGPATH/postmaster -D $PGDATA"
+-echo "or"
+-# (Advertise -l option here, otherwise we have a background
+-#  process writing to the terminal.)
+-echo "    $PGPATH/pg_ctl -D $PGDATA -l logfile start"
++echo "    /etc/init.d/postgresql start"
+ echo
+ 
+ exit 0

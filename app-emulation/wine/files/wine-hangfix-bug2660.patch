@@ -1,0 +1,16 @@
+Index: dlls/user/painting.c
+===================================================================
+RCS file: /home/wine/wine/dlls/user/painting.c,v
+retrieving revision 1.29
+diff -u -r1.29 painting.c
+--- dlls/user/painting.c	13 May 2005 14:03:06 -0000	1.29
++++ dlls/user/painting.c	21 May 2005 06:54:26 -0000
+@@ -345,6 +345,7 @@
+                 send_erase( child, erase_flags, hrgn, NULL, NULL );
+ 
+             prev = 0;
++            break;
+         }
+         else
+         {
+

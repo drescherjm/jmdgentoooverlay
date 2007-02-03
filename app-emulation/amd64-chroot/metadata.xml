@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+<herd>amd64</herd>
+<maintainer>
+	<email>blubb@gentoo.org</email>
+</maintainer>
+<longdescription lang="en">
+x86-chroot is aimed at amd64 users that need to run 32bit software. The tool
+installs the latest Gentoo release, sets up all the needed mounts and files and
+applies the X hack to get apps using X running in the chroot.
+</longdescription>
+</pkgmetadata>
+

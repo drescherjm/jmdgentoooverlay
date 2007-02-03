@@ -1,0 +1,39 @@
+http://bugs.gentoo.org/show_bug.cgi?id=88715
+
+===================================================================
+RCS file: /home/wine/wine/dlls/x11drv/dib.c,v
+retrieving revision 1.27
+retrieving revision 1.28
+diff -u -p -r1.27 -r1.28
+--- wine/dlls/x11drv/dib.c	2005/03/31 19:13:03	1.27
++++ wine/dlls/x11drv/dib.c	2005/04/11 12:57:10	1.28
+@@ -418,18 +418,24 @@ static RGBQUAD *X11DRV_DIB_BuildColorTab
+     else
+     {
+         HPALETTE hpal = GetCurrentObject(physDev->hdc, OBJ_PAL);
+-        PALETTEENTRY pal_ents[256];
++        PALETTEENTRY * pal_ents;
+         WORD *index = (WORD*) ((LPBYTE) info + (WORD) info->bmiHeader.biSize);
++        int logcolors, entry;
+ 
+-        GetPaletteEntries(hpal, 0, 256, pal_ents);
++        logcolors = GetPaletteEntries( hpal, 0, 0, NULL );
++        pal_ents = HeapAlloc(GetProcessHeap(), 0, logcolors * sizeof(*pal_ents));
++        logcolors = GetPaletteEntries( hpal, 0, logcolors, pal_ents );
+ 
+         for(i = 0; i < colors; i++, index++)
+         {
+-            colorTable[i].rgbRed = pal_ents[*index].peRed;
+-            colorTable[i].rgbGreen = pal_ents[*index].peGreen;
+-            colorTable[i].rgbBlue = pal_ents[*index].peBlue;
++            entry = *index % logcolors;
++            colorTable[i].rgbRed = pal_ents[entry].peRed;
++            colorTable[i].rgbGreen = pal_ents[entry].peGreen;
++            colorTable[i].rgbBlue = pal_ents[entry].peBlue;
+             colorTable[i].rgbReserved = 0;
+         }
++
++        HeapFree(GetProcessHeap(), 0, pal_ents);
+     }
+     return colorTable;
+ }

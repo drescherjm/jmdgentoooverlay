@@ -1,0 +1,12 @@
+diff -Nau qemu-0.7.1.orig/ppc.ld qemu-0.7.1/ppc.ld
+--- qemu-0.7.1.orig/ppc.ld	2005-07-24 19:52:08.000000000 +0100
++++ qemu-0.7.1/ppc.ld	2005-08-06 01:03:46.000000000 +0100
+@@ -8,7 +8,7 @@
+ SECTIONS
+ {
+   /* Read-only sections, merged into text segment: */
+-  . = 0x60000000 + SIZEOF_HEADERS;
++  . = 0x60000000 + 0x400;
+   .interp     : { *(.interp) 	}
+   .hash          : { *(.hash)		}
+   .dynsym        : { *(.dynsym)		}

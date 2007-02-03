@@ -1,0 +1,51 @@
+diff -Naru postgresql-7.4.9.org/configure postgresql-7.4.9/configure
+--- postgresql-7.4.9.org/configure	2004-08-18 04:11:24.000000000 +0100
++++ postgresql-7.4.9/configure	2004-09-15 20:28:46.933631781 +0100
+@@ -6003,7 +6003,7 @@
+   echo $ECHO_N "(cached) $ECHO_C" >&6
+ else
+   pgac_cv_check_readline=no
+-for pgac_lib in "" " -ltermcap" " -lncurses" " -lcurses" ; do
++for pgac_lib in "" " -lncurses" " -lcurses" ; do
+   for pgac_rllib in -lreadline -ledit ; do
+     pgac_save_LIBS=$LIBS
+     LIBS="${pgac_rllib}${pgac_lib} $LIBS"
+diff -Naru postgresql-7.4.9.org/src/interfaces/Makefile postgresql-7.4.9/src/interfaces/Makefile
+--- postgresql-7.4.9.org/src/interfaces/Makefile	2004-04-20 01:33:51.000000000 +0100
++++ postgresql-7.4.9/src/interfaces/Makefile	2005-05-09 21:59:15.000000000 +0100
+@@ -12,7 +12,7 @@
+ top_builddir = ../..
+ include $(top_builddir)/src/Makefile.global
+ 
+-DIRS := libpq ecpg 
++DIRS := ecpg 
+ 
+ ALLDIRS := $(DIRS) 
+ 
+diff -Naru postgresql-7.4.9.org/src/Makefile postgresql-7.4.9/src/Makefile
+--- postgresql-7.4.9.org/src/Makefile	2005-01-13 18:23:21.000000000 +0000
++++ postgresql-7.4.9/src/Makefile	2005-05-09 21:59:54.000000000 +0100
+@@ -18,7 +18,6 @@
+ 	$(MAKE) -C timezone $@
+ 	$(MAKE) -C backend $@
+ 	$(MAKE) -C backend/utils/mb/conversion_procs $@
+-	$(MAKE) -C include $@
+ 	$(MAKE) -C interfaces $@
+ 	$(MAKE) -C bin $@
+ 	$(MAKE) -C pl $@
+@@ -47,7 +46,6 @@
+ 	$(MAKE) -C port $@
+ 	$(MAKE) -C timezone $@
+ 	$(MAKE) -C backend $@
+-	$(MAKE) -C include $@
+ 	$(MAKE) -C interfaces $@
+ 	$(MAKE) -C bin $@
+ 	$(MAKE) -C pl $@
+@@ -61,7 +59,6 @@
+ 	-$(MAKE) -C port $@
+ 	-$(MAKE) -C timezone $@
+ 	-$(MAKE) -C backend $@
+-	-$(MAKE) -C include $@
+ 	-$(MAKE) -C interfaces $@
+ 	-$(MAKE) -C bin $@
+ 	-$(MAKE) -C pl $@

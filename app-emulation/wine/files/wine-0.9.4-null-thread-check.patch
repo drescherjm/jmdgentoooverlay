@@ -1,0 +1,25 @@
+http://bugs.gentoo.org/116679
+http://bugs.winehq.org/show_bug.cgi?id=4128
+http://www.winehq.org/pipermail/wine-patches/2005-December/023021.html
+
+Index: dlls/msvcrt/main.c
+===================================================================
+RCS file: /home/wine/wine/dlls/msvcrt/main.c,v
+retrieving revision 1.24
+diff -u -r1.24 main.c
+--- dlls/msvcrt/main.c	21 Dec 2005 20:29:03 -0000	1.24
++++ dlls/msvcrt/main.c	23 Dec 2005 11:34:38 -0000
+@@ -70,8 +70,11 @@
+   case DLL_THREAD_DETACH:
+     /* Free TLS */
+     tls = TlsGetValue(msvcrt_tls_index);
+-    HeapFree(GetProcessHeap(),0,tls->efcvt_buffer);
+-    HeapFree(GetProcessHeap(),0,tls->wasctime_buffer);
++    if (tls)
++    {
++	HeapFree(GetProcessHeap(),0,tls->efcvt_buffer);
++	HeapFree(GetProcessHeap(),0,tls->wasctime_buffer);
++    }
+     HeapFree(GetProcessHeap(), 0, tls);
+     TRACE("finished thread free\n");
+     break;

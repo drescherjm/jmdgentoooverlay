@@ -1,0 +1,24 @@
+Upstream fix for WMF security issues.
+http://bugs.gentoo.org/118101
+
+===================================================================
+RCS file: /home/wine/wine/dlls/gdi/metafile.c,v
+retrieving revision 1.11
+retrieving revision 1.12
+diff -u -p -r1.11 -r1.12
+--- wine/dlls/gdi/metafile.c	2006/01/03 12:43:52	1.11
++++ wine/dlls/gdi/metafile.c	2006/01/06 20:52:46	1.12
+@@ -863,6 +863,13 @@ BOOL WINAPI PlayMetaFileRecord( HDC hdc,
+         break;
+ 
+     case META_ESCAPE:
++        switch (mr->rdParm[0]) {
++        case GETSCALINGFACTOR: /* get function ... would just NULL dereference */
++             return FALSE;
++        case SETABORTPROC:
++             FIXME("Filtering Escape(SETABORTPROC), possible virus?\n");
++             return FALSE;
++        }
+         Escape(hdc, mr->rdParm[0], mr->rdParm[1], (LPCSTR)&mr->rdParm[2], NULL);
+         break;
+ 

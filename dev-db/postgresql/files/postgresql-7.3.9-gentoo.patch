@@ -1,0 +1,12 @@
+diff -Naru postgresql-7.3.9.org/configure postgresql-7.3.9/configure
+--- postgresql-7.3.9.org/configure	2004-08-15 01:51:58.000000000 +0100
++++ postgresql-7.3.9/configure	2004-10-03 00:24:38.477010826 +0100
+@@ -5871,7 +5871,7 @@
+   echo $ECHO_N "(cached) $ECHO_C" >&6
+ else
+   pgac_cv_check_readline=no
+-for pgac_lib in "" " -ltermcap" " -lncurses" " -lcurses" ; do
++for pgac_lib in "" " -lncurses" " -lcurses" ; do
+   for pgac_rllib in -lreadline -ledit ; do
+     pgac_save_LIBS=$LIBS
+     LIBS="${pgac_rllib}${pgac_lib} $LIBS"

@@ -1,0 +1,4 @@
+MD5 4af0f0b4cf2b13fc6dfbf3c770d5be6c qemu-user-0.7.2.ebuild 2254
+MD5 297287b50341a53d302b58ab9ee73a5f files/qemu-ppc-dirty-hack.patch 422
+MD5 19c26d3c7d68ccd1ed3a0f74b7ab467e files/digest-qemu-user-0.7.2 63
+MD5 3202f7445799cce82ccaac9749e1443d files/qemu-user-0.7.0-errno.patch 487

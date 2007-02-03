@@ -1,0 +1,16 @@
+# Copyright 1999-2005 Gentoo Foundation
+# Distributed under the terms of the GNU General Public License v2
+# $Header: /var/cvsroot/gentoo-x86/app-backup/bacula/files/bacula-conf,v 1.1 2005/07/04 01:52:06 robbat2 Exp $
+
+# Config file for /etc/init.d/bacula
+
+# Add on SERVICES the daemons you want to run
+# sd -
+# fd -
+# dir - 
+SERVICES="%%SERVICES%%"
+
+# Options for each daemon
+SD_OPTIONS="-u root -g bacula -c /etc/bacula/bacula-sd.conf"
+FD_OPTIONS="-u root -g bacula -c /etc/bacula/bacula-fd.conf"
+DIR_OPTIONS="-u root -g bacula -c /etc/bacula/bacula-dir.conf"

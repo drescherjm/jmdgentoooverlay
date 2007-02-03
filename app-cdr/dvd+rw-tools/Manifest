@@ -1,0 +1,32 @@
+AUX 01_all_samsung-media-fix.patch 701 RMD160 d82e6a4135a67b46e9c0ce61a979e2e5995af4aa SHA1 da17027b0733bb18c3c77784b02a79728af68230 SHA256 a987638e7d83adff588d9445a36d5a59d52bb98f7b50311ff0a0eabe6812b299
+MD5 fce4ae0aea831d5b1f176e8dcff5059f files/01_all_samsung-media-fix.patch 701
+RMD160 d82e6a4135a67b46e9c0ce61a979e2e5995af4aa files/01_all_samsung-media-fix.patch 701
+SHA256 a987638e7d83adff588d9445a36d5a59d52bb98f7b50311ff0a0eabe6812b299 files/01_all_samsung-media-fix.patch 701
+AUX dvd+rw-tools-5.21.4.10.8.bacula.patch 3155 RMD160 affbbcb7e2dc2dad306bf72550be111a5e5fee45 SHA1 bd5879d22a8e3933d51bcf36b0d93dd23a04cf10 SHA256 aeba030c19f20ef464d9310839c7583fba893aa36e168ba13eb77d013faa1fe5
+MD5 949d91881149941db7dcae64205caf2c files/dvd+rw-tools-5.21.4.10.8.bacula.patch 3155
+RMD160 affbbcb7e2dc2dad306bf72550be111a5e5fee45 files/dvd+rw-tools-5.21.4.10.8.bacula.patch 3155
+SHA256 aeba030c19f20ef464d9310839c7583fba893aa36e168ba13eb77d013faa1fe5 files/dvd+rw-tools-5.21.4.10.8.bacula.patch 3155
+AUX dvd+rw-tools-6.1.bacula.patch 3120 RMD160 041f4cc34394dd083c3690ee0fa6d9f4f4086fb2 SHA1 555a259e3d58afa46b19df3ee7a02df14727602f SHA256 18f13f065a7ad18c1194d7b0c651f37b9f0c447e74a48682e9a9fa843ea407dd
+MD5 f0a8b1c4779e8a134b0afdd5b28c6d9e files/dvd+rw-tools-6.1.bacula.patch 3120
+RMD160 041f4cc34394dd083c3690ee0fa6d9f4f4086fb2 files/dvd+rw-tools-6.1.bacula.patch 3120
+SHA256 18f13f065a7ad18c1194d7b0c651f37b9f0c447e74a48682e9a9fa843ea407dd files/dvd+rw-tools-6.1.bacula.patch 3120
+AUX dvd+rw-tools-6.1.bacula.segfault.patch 3145 RMD160 ab23bfe1edbf49e09ebe8371a06d2da04d197dc9 SHA1 f10a49f01b5b10889aab5b24792e2ae8bdad33db SHA256 3f701e528b6d8d99c0d9f1466d3448b96dcbcb938ef609a277d185c4757de783
+MD5 da0f8f7e50cf3df65a94f29013c58c08 files/dvd+rw-tools-6.1.bacula.segfault.patch 3145
+RMD160 ab23bfe1edbf49e09ebe8371a06d2da04d197dc9 files/dvd+rw-tools-6.1.bacula.segfault.patch 3145
+SHA256 3f701e528b6d8d99c0d9f1466d3448b96dcbcb938ef609a277d185c4757de783 files/dvd+rw-tools-6.1.bacula.segfault.patch 3145
+DIST dvd+rw-tools-5.21.4.10.8.tar.gz 107045 RMD160 638f67ddfc24f89a4c2bc2abced652e679f4400f SHA1 319a4529db3748f595aa9dc8f2e54564bb32a0e3 SHA256 6d233df4429583c5a36df3328cd74e71e39aed6bb90586998fe6a8dcd3ba514b
+DIST dvd+rw-tools-6.1.tar.gz 121425 RMD160 d06eb401fc53bf11df39ba89d508b67f3a0b915f SHA1 ff63b6c6ee33cd777164d5ad72ab5c1c12430916 SHA256 43ddf89a5aaafcf4725337c107d0dfa659132541696c8ba1ed74bea19c4e33f1
+EBUILD dvd+rw-tools-5.21.4.10.8.ebuild 1014 RMD160 acb203e9042e58ada6de9a082ed9dd728a9e6746 SHA1 281ae8a9f6c1541a1e9c54adfd1c2dcc037a7d06 SHA256 d795ae6a32f02cb8aff150bea85fff4477e01e0c2a3a83426b689b5b4b9ff613
+MD5 9c5f52b38cc96f17db7d8e09950572a9 dvd+rw-tools-5.21.4.10.8.ebuild 1014
+RMD160 acb203e9042e58ada6de9a082ed9dd728a9e6746 dvd+rw-tools-5.21.4.10.8.ebuild 1014
+SHA256 d795ae6a32f02cb8aff150bea85fff4477e01e0c2a3a83426b689b5b4b9ff613 dvd+rw-tools-5.21.4.10.8.ebuild 1014
+EBUILD dvd+rw-tools-6.1.ebuild 1187 RMD160 29c4fbd1f8350cb529c59dbc273f612cf0ec1dee SHA1 367476da4c9e91149d56ede9b419dcafb4cc0621 SHA256 a566654afe71f57b004922b159dbf31f2b3512bf8c1ec80d9bf4a1a9a0723b7a
+MD5 1ac06a4d146c681b6916362b4c84d6d9 dvd+rw-tools-6.1.ebuild 1187
+RMD160 29c4fbd1f8350cb529c59dbc273f612cf0ec1dee dvd+rw-tools-6.1.ebuild 1187
+SHA256 a566654afe71f57b004922b159dbf31f2b3512bf8c1ec80d9bf4a1a9a0723b7a dvd+rw-tools-6.1.ebuild 1187
+MD5 55903156e6324cc02fc3dc4795ca481c files/digest-dvd+rw-tools-5.21.4.10.8 274
+RMD160 797c9a43cc1cd888d08249fdc9ec245da2acf828 files/digest-dvd+rw-tools-5.21.4.10.8 274
+SHA256 e1cccbf06b8e3a8e33941375efff4be1ae35585f47dca68daab753b4b313179b files/digest-dvd+rw-tools-5.21.4.10.8 274
+MD5 44cb1fe04575e80237eed2d303a41a98 files/digest-dvd+rw-tools-6.1 250
+RMD160 95e0e0e369e95f087b777c2380e9f9885b9c5fd8 files/digest-dvd+rw-tools-6.1 250
+SHA256 b4730bc6e5bdd3439275af9ec102e6773043427f748c0f0fff66ba2d933fd794 files/digest-dvd+rw-tools-6.1 250

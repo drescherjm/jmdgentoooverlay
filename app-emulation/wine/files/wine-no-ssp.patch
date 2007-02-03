@@ -1,0 +1,20 @@
+Index: loader/preloader.c
+===================================================================
+RCS file: /home/wine/wine/loader/preloader.c,v
+retrieving revision 1.18
+retrieving revision 1.19
+diff -u -p -r1.18 -r1.19
+--- loader/preloader.c	14 Dec 2005 11:26:30 -0000	1.18
++++ loader/preloader.c	26 Jan 2006 12:45:33 -0000	1.19
+@@ -155,6 +155,11 @@ struct wld_link_map {
+  */
+ void __bb_init_func() { return; }
+ 
++/* similar to the above but for -fstack-protector */
++void *__stack_chk_guard = 0;
++void *__guard = 0;
++void __stack_chk_fail(void) { return; }
++void __stack_smash_handler(void) { return; }
+ 
+ /*
+  * The _start function is the entry and exit point of this program

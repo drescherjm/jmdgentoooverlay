@@ -1,0 +1,38 @@
+#!/sbin/runscript
+# Copyright 1999-2006 Gentoo Foundation
+# Distributed under the terms of the GNU General Public License v2
+
+CHROOT_LOCATION=${CHROOT_LOCATION:-/opt/amd64-chroot}
+
+depend() {
+	need localmount
+	need bootmisc
+}
+
+start() {
+	ebegin "Mounting 64bits chroot dirs to ${CHROOT_LOCATION}"
+	for loc in /dev /dev/pts /dev/shm /proc /proc/bus/usb /sys /tmp ; do
+	    mount -o bind ${loc} ${CHROOT_LOCATION}${loc} >/dev/null
+	done
+	eval "$(portageq envvar -v PORTDIR DISTDIR)"
+	[[ -d ${PORTDIR}/distfiles ]] || mkdir ${PORTDIR}/distfiles
+	mount -o bind ${PORTDIR} ${CHROOT_LOCATION}/usr/portage >/dev/null
+	mount -o bind ${DISTDIR} ${CHROOT_LOCATION}/usr/portage/distfiles >/dev/null
+	eend $? "An error occured while attempting to mount 64bit chroot directories"
+
+	ebegin "Copying 64bits chroot files"
+	for conffile in resolv.conf passwd shadow group gshadow hosts ; do
+		[[ -f /etc/${conffile} ]] && cp -pf /etc/${conffile} ${CHROOT_LOCATION}/etc >/dev/null &
+	done
+	cp -Ppf /etc/localtime ${CHROOT_LOCATION}/etc >/dev/null &
+	which xhost &>/dev/null && xhost local:localhost &>/dev/null
+	eend $? "An error occured while attempting to copy 64 bits chroot files."
+}
+
+stop() {
+	ebegin "Unmounting 64bits chroot dirs"
+	for loc in /dev/pts /dev/shm /dev /proc/bus/usb /proc /sys /tmp /usr/portage/distfiles /usr/portage; do
+		umount -f ${CHROOT_LOCATION}${loc} >/dev/null
+	done
+	eend $? "An error occured while attempting to unmount 64bits chroot directories"
+}

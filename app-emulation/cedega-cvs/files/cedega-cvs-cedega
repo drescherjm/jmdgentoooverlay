@@ -1,0 +1,48 @@
+#!/bin/bash
+# The cedega wrapper
+
+# Kindly distributed by Martin Schlemmer
+# Modified by phoen][x
+
+export INSTALLDIR="/usr/lib/cedega-cvs"
+
+export WINEPREFIX="$HOME/.cedega-cvs"
+
+export LD_LIBRARY_PATH="$INSTALLDIR/lib/wine:$INSTALLDIR/lib:$LD_LIBRARY_PATH"
+export WINEDLLPATH="$LD_LIBRARY_PATH"
+
+export WINE_LOADER=wine
+
+export RUNWINE="$INSTALLDIR/bin/wine" 
+export REGAPI="$INSTALLDIR/bin/regapi" 
+
+if [ ! -f $WINEPREFIX/config ]
+then
+	echo "!! ~/.cedega-cvs/config misses"
+	echo "!! Setting up a config file"
+
+	mkdir -p $WINEPREFIX/fake_windows
+
+	# First copy in the new config file.
+	cp "$INSTALLDIR/.data/config" "$WINEPREFIX/config"
+
+	echo "!! Setting up ~/.cedega-cvs/fake_windows/"
+	cp -R $INSTALLDIR/.data/fake_windows/* $WINEPREFIX/fake_windows
+
+	echo "!! Setting up default registry."	
+	"$REGAPI" setValue < "$INSTALLDIR/.data/winedefault.reg" &> /dev/null
+
+	echo "!! Installation complete."
+	echo "!! Modify ~/.cedega-cvs/config to reflect your systems setup."
+	exit
+fi
+
+# Force the use of the more memory-efficient MSVC 5 allocator with
+# any programs that use MSVCRT.  This reduces memory consumption
+# significantly.
+export __MSVCRT_HEAP_SELECT=__GLOBAL_HEAP_SELECTED,2
+
+
+PATH="$INSTALLDIR/bin:$PATH"
+
+"$RUNWINE" --debugmsg -all "$@"

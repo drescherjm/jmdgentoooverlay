@@ -1,0 +1,29 @@
+Reorder the alsa includes so the wine defines dont stomp
+the alsa prototypes.
+
+Patch by Ed Catmur
+
+http://bugs.gentoo.org/94272
+
+--- dlls/winmm/winealsa/audio.c
++++ dlls/winmm/winealsa/audio.c
+@@ -45,6 +45,9 @@
+ # include <sys/mman.h>
+ #endif
+ #include "windef.h"
++#define ALSA_PCM_NEW_HW_PARAMS_API
++#define ALSA_PCM_NEW_SW_PARAMS_API
++#include "alsa.h"
+ #include "winbase.h"
+ #include "wingdi.h"
+ #include "winerror.h"
+@@ -58,9 +61,6 @@
+ #include "ks.h"
+ #include "ksguid.h"
+ #include "ksmedia.h"
+-#define ALSA_PCM_NEW_HW_PARAMS_API
+-#define ALSA_PCM_NEW_SW_PARAMS_API
+-#include "alsa.h"
+ #include "wine/library.h"
+ #include "wine/unicode.h"
+ #include "wine/debug.h"

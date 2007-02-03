@@ -1,0 +1,22 @@
+Hide warning so users don't freak out and do stupid stuff.
+
+http://bugs.gentoo.org/107971
+
+--- wine/Makefile.in
++++ wine/Makefile.in
+@@ -86,6 +86,7 @@
+ install-dev:: $(INSTALLDEVSUBDIRS:%=%/__install__) $(INSTALLBOTHSUBDIRS:%=%/__install-dev__) install-aclocal
+ 
+ install:: install-lib install-dev install-aclocal
++ifeq (dont,warn) #($(DESTDIR),)
+ 	-$(LDCONFIG)
+ 	@if test -n "`LANG=C $(LDD) $(bindir)/wine|grep not.found`";	\
+ 	then								\
+@@ -98,6 +99,7 @@
+ 		echo "*************************************************" ; \
+ 		echo "*************************************************" ; \
+ 	fi
++endif
+ 
+ uninstall:: $(INSTALLBOTHSUBDIRS:%=%/__uninstall__)
+ 	$(RM) $(datadir)/aclocal/wine.m4

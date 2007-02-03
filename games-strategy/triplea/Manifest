@@ -1,0 +1,4 @@
+MD5 2b0752bd4dc08d0f3e5ba86be45b0873 files/digest-triplea-0.7.3 70
+MD5 c8d37e2b98977adc8b30d8ff6249486f files/triplea-0.6.0.1-gentoo.patch 1956
+MD5 2d2b22a4926751b86122a93c53fefcfb files/triplea-0.7.3-gentoo.patch 2115
+MD5 2ec1b9180e5b6b2aaeccda9d04f8ba29 triplea-0.7.3.ebuild 1874

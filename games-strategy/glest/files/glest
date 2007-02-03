@@ -1,0 +1,24 @@
+#!/bin/bash
+
+GAMESDIR="GENTOO_DATADIR"
+GLESTDIR="$GAMESDIR/glest"
+
+if [ ! -d ~/.glest ]; then
+	mkdir ~/.glest
+fi
+for d in "${GLESTDIR}"/* lib/glest ; do
+	s=${d##*/}
+	if [ ! -L ~/.glest/${s} ] ; then
+		ln -s "${d}" ~/.glest/${s}
+	fi
+done
+if [ ! -e ~/.glest/glest.ini ] ; then
+	cp "${GLESTDIR}"/config/glest.ini ~/.glest/glest.ini
+fi
+if [ ! -e ~/.glest/glest.log ] ; then
+	touch ~/.glest/glest.log
+fi
+
+export LD_LIBRARY_PATH=${GLESTDIR}/lib:${LD_LIBRARY_PATH}
+cd ~/.glest
+exec ./glest "$@"

@@ -1,0 +1,5 @@
+MD5 77fda12a372abfd55040151b84dd2d7b files/1.1.1-netbsd-audio.patch 813
+MD5 0e5d0d2981d32103d3140326eed34165 files/digest-lgeneral-1.2_beta10 131
+MD5 f2c419f911adaaeba361f9916408a108 files/digest-lgeneral-1.2_beta11 131
+MD5 b6626ce67e0587374eee4b4a962005e5 lgeneral-1.2_beta10.ebuild 1617
+MD5 c92bcf37b49f4d6be349583487e658df lgeneral-1.2_beta11.ebuild 1616

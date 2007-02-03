@@ -1,0 +1,6 @@
+MD5 c0fcab3d3da44aca8924f6334d80647b files/digest-openrts-0.2 241
+RMD160 5d3e3bd3d14ab0e4dcc429b5bddbbaeabeac03d8 files/digest-openrts-0.2 241
+SHA256 2e7f1b4c66c072ed2e0e63d00f544021d39b27948ce7f2dc792cf68cbcb810f3 files/digest-openrts-0.2 241
+MD5 d0f10a07c1fd7f177d17a645feda0fcc openrts-0.2.ebuild 335
+RMD160 38aba1805f62b3a136ae9af7e6c63081f95f5391 openrts-0.2.ebuild 335
+SHA256 6f904c6f3f27515f6686cf333d379a07b2f73ac1af1de4946d9cafe5469a8dbb openrts-0.2.ebuild 335

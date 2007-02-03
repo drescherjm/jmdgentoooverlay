@@ -1,0 +1,16 @@
+diff -Naurp webmin-1.260.orig/virtual-server/virtual-server-lib.pl webmin-1.260/virtual-server/virtual-server-lib.pl
+--- webmin-1.260.orig/virtual-server/virtual-server-lib.pl	2005-12-18 14:42:40.000000000 -0800
++++ webmin-1.260/virtual-server/virtual-server-lib.pl	2006-03-18 02:15:48.000000000 -0800
+@@ -2080,7 +2080,12 @@ if (!$config{'iface_manual'}) {
+ 		$vmax = $b->{'virtual'}
+ 			if ($b->{'name'} eq $iface->{'name'} &&
+ 			    $b->{'virtual'} > $vmax);
++
++		if($b->{'address'} eq $_[0]->{'ip'}) {
++			print "IP address is already active.<p>\n";
++			return;
+ 		}
++	}
+ 	local $virt = { 'address' => $_[0]->{'ip'},
+ 			'netmask' => $net::virtual_netmask || $iface->{'netmask'},
+ 			'broadcast' =>

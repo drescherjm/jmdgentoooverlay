@@ -1,0 +1,15 @@
+diff -Naur virtual-server.orig/domain_setup.cgi virtual-server/domain_setup.cgi
+--- virtual-server.orig/domain_setup.cgi	2004-10-10 16:25:43.000000000 -0700
++++ virtual-server/domain_setup.cgi	2004-11-17 22:41:50.285398317 -0800
+@@ -70,6 +70,11 @@
+ 		$user =~ /^[^\t :]+$/ || &error($text{'setup_euser2'});
+ 		defined(getpwnam($user)) && &error($text{'setup_euser'});
+ 		}
++
++	if ($config{'postgres'} && $in{'postgres'}) {
++		$user =~ /^[A-Za-z]/ || &error("Username must begin with a letter if you are using postgres.");
++	}
++
+ 	if ($in{'mgroup_def'}) {
+ 		$group = $user;
+ 		}

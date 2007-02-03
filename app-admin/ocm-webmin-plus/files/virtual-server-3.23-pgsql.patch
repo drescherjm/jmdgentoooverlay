@@ -1,0 +1,14 @@
+diff -Naurp webmin-1.300.orig/virtual-server/domain_setup.cgi webmin-1.300/virtual-server/domain_setup.cgi
+--- webmin-1.300.orig/virtual-server/domain_setup.cgi	2006-10-01 17:21:42.000000000 -0700
++++ webmin-1.300/virtual-server/domain_setup.cgi	2006-10-16 12:07:09.000000000 -0700
+@@ -81,6 +81,10 @@ if (!$parentuser) {
+ 		defined(getpwnam($user)) && &error($text{'setup_euser'});
+ 		}
+ 
++	if ($config{'postgres'} && $in{'postgres'}) {
++		$user =~ /^[A-Za-z]/ || &error("Username must begin with a letter if you are using postgres.");
++		}
++
+ 	# Parse mail group name
+ 	if ($in{'mgroup_def'}) {
+ 		$in{'dom'} =~ /^([^\.]+)/;

@@ -1,0 +1,62 @@
+diff -Naur virtual-server.orig/feature-ssl.pl virtual-server/feature-ssl.pl
+--- virtual-server.orig/feature-ssl.pl	2004-09-11 00:34:25.000000000 -0700
++++ virtual-server/feature-ssl.pl	2004-11-17 22:48:20.000000000 -0800
+@@ -10,6 +10,24 @@
+ local $web_sslport = $tmpl->{'web_sslport'} || 443;
+ &require_apache();
+ local $conf = &apache::get_config();
++
++# add NameVirtualHost if needed
++if ($_[0]->{'name'}) {
++	local $found;
++	local @nv = &apache::find_directive("NameVirtualHost", $conf);
++	foreach $nv (@nv) {
++		$found++ if ($nv eq $_[0]->{'ip'} ||
++			$nv =~ /^(\S+):(\S+)/ && $1 eq $_[0]->{'ip'} && $2 eq "443" ||
++			$nv eq '*');
++	}
++	if(!$foundssl) {
++		&apache::save_directive("NameVirtualHost",
++		                        [ @nv, $_[0]->{'ip'}.":443" ],
++		                        $conf, $conf);
++		&flush_file_lines();
++		}
++	}
++
+ if ($apache::config{'virt_file'}) {
+ 	$f = -d $apache::config{'virt_file'} ?
+ 		"$apache::config{'virt_file'}/www.$_[0]->{'dom'}.conf" :
+diff -Naur virtual-server.orig/feature-web.pl virtual-server/feature-web.pl
+--- virtual-server.orig/feature-web.pl	2004-10-07 17:07:06.000000000 -0700
++++ virtual-server/feature-web.pl	2004-11-17 22:52:13.024826263 -0800
+@@ -40,7 +40,7 @@
+ 	local @nv = &apache::find_directive("NameVirtualHost", $conf);
+ 	foreach $nv (@nv) {
+ 		$found++ if ( #$nv eq $_[0]->{'ip'} ||
+-			     $nv =~ /^(\S+):(\S+)/ && $1 eq $_[0]->{'ip'} ||
++			     $nv =~ /^(\S+):(\S+)/ && $1 eq $_[0]->{'ip'} && $2 eq $web_port ||
+ 			     $nv eq '*');
+ 		$found_no_port++ if $nv eq $_[0]->{'ip'};
+ 		$nvstar++ if ($nv eq "*");
+@@ -248,7 +248,7 @@
+ 		&$first_print($text{'save_apache'});
+ 		local $lref = &read_file_lines($virt->{'file'});
+ 		$lref->[$virt->{'line'}] =
+-			$_[0]->{'name'} ? "<VirtualHost *>" :
++			$_[0]->{'name'} && !$config{'all_namevirtual'} ? "<VirtualHost *>" :
+ 				"<VirtualHost $_[0]->{'ip'}:$_[1]->{'web_port'}>";
+ 		&flush_file_lines();
+ 		$rv++;
+diff -Naur virtual-server.orig/help/iface.html virtual-server/help/iface.html
+--- virtual-server.orig/help/iface.html	2004-02-09 23:13:33.000000000 -0800
++++ virtual-server/help/iface.html	2004-11-17 22:53:18.404198519 -0800
+@@ -1,5 +1,9 @@
+ <header>Network Interface</header>
+ 
++If you chose 'Create all webs as NameVirtualHost?' in the module configuration, this option will let you select the IP address to use for this site. <p>
++
++If you did not choose 'Create all webs as NameVirtualHost?' in the module configuration, you will have two options here: <p>
++
+ If you want to set up an IP-based virtual host (required for SSL websites or virtual FTP hosting), this option must be set to <b>Virtual interface with IP</b> and an un-used address entered. Virtualmin will activate this IP on your system when the server is created, and associate it with the server. <p>
+ 
+ If the <b>Shared</b> option is selected, the system's primary network interface address will be used for this server's website and DNS domain instead. <p>

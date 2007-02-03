@@ -1,0 +1,13 @@
+diff -Naurp webmin-1.300.orig/virtual-server/feature-dir.pl webmin-1.300/virtual-server/feature-dir.pl
+--- webmin-1.300.orig/virtual-server/feature-dir.pl	2006-10-01 17:21:42.000000000 -0700
++++ webmin-1.300/virtual-server/feature-dir.pl	2006-10-16 12:01:09.000000000 -0700
+@@ -262,8 +262,8 @@ sub virtual_server_directories
+ {
+ local $tmpl = &get_template($_[0]->{'template'});
+ local $perms = $tmpl->{'web_html_perms'};
++#         [ 'cgi-bin', $perms ],
+ return ( [ &public_html_dir($_[0], 1), $perms ],
+-         [ 'cgi-bin', $perms ],
+          [ 'logs', '750' ],
+          [ $config{'homes_dir'}, '755' ] );
+ }

@@ -1,0 +1,26 @@
+diff -Naurp webmin-1.210.orig/virtual-server/feature-dir.pl webmin-1.210/virtual-server/feature-dir.pl
+--- webmin-1.210.orig/virtual-server/feature-dir.pl	2005-04-12 17:27:34.000000000 -0700
++++ webmin-1.210/virtual-server/feature-dir.pl	2005-06-24 10:00:03.000000000 -0700
+@@ -38,8 +38,8 @@ if ($tmpl->{'skel'} ne "none") {
+ # Setup web directories
+ local $d;
+ local $perms = $tmpl->{'web_html_perms'};
++#             [ 'cgi-bin', '755' ],
+ foreach $d ( [ &public_html_dir($_[0], 1), $perms ],
+-             [ 'cgi-bin', '755' ],
+              [ 'logs', '755' ],
+              [ $config{'homes_dir'}, '755' ] ) {
+         &system_logged("mkdir -p $qh/$d->[0] 2>/dev/null");
+diff -Naurp webmin-1.210.orig/virtual-server/import.cgi webmin-1.210/virtual-server/import.cgi
+--- webmin-1.210.orig/virtual-server/import.cgi	2005-02-21 21:01:02.000000000 -0800
++++ webmin-1.210/virtual-server/import.cgi	2005-06-24 10:00:24.000000000 -0700
+@@ -164,8 +164,8 @@ if ($in{'confirm'}) {
+ 
+ 	# Setup web directories
+ 	print $text{'import_dirs'},"<br>\n";
++#		     [ 'cgi-bin', '755' ],
+ 	foreach $d ( [ $config{'html_dir'} || 'public_html', '755' ],
+-		     [ 'cgi-bin', '755' ],
+ 		     [ 'logs', '755' ],
+ 		     [ $config{'homes_dir'}, '755' ] ) {
+ 		if (!-d "$uinfo{'home'}/$d->[0]") {

@@ -1,0 +1,19 @@
+diff -Naur webmin-1.170.orig/postfix/postfix-lib.pl webmin-1.170/postfix/postfix-lib.pl
+--- webmin-1.170.orig/postfix/postfix-lib.pl	2004-11-12 20:00:28.000000000 -0800
++++ webmin-1.170/postfix/postfix-lib.pl	2004-11-17 22:10:48.298393107 -0800
+@@ -604,12 +604,12 @@
+ {
+ &get_maps($_[0], $_[2]);	# force cache init
+ my @maps_files = $_[2] ? @{$_[2]} : &get_maps_files(&get_real_value($_[0]));
+-local $lref = &read_file_lines($maps_files[0]);
++local $lref = &read_file_lines($maps_files[$#maps_files]);
+ push(@$lref, "$_[1]->{'name'}\t$_[1]->{'value'}");
+ &flush_file_lines();
+ 
+-$_[1]->{'map_file'} = $maps_files[0];
+-$_[1]->{'file'} = $maps_files[0];
++$_[1]->{'map_file'} = $maps_files[$#maps_files];
++$_[1]->{'file'} = $maps_files[$#maps_files];
+ $_[1]->{'line'} = @$lref - 1;
+ $_[1]->{'number'} = scalar(@{$maps_cache{$_[0]}});
+ push(@{$maps_cache{$_[0]}}, $_[1]);

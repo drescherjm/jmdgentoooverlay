@@ -1,0 +1,8 @@
+DIST brutalchess-alpha-0.5.2-src.tar.gz 4505686 RMD160 f69532df8a33ea8887af237103f1e448b7205fc4 SHA1 f5e9d66eb34406a8627e51a8dabbba9cb4cecf0a SHA256 67774ffb4865e1a3015c90e5d4abd0ef2f243c85608cfbec4bc3b59462e67622
+EBUILD brutalchess-0.5.2_alpha.ebuild 1229 RMD160 25a584f8b51a1e21a4419ccdce720554b16047be SHA1 a3338cf65b99b9fb39509215fe41345c919110d2 SHA256 b311563c5051dea813e7dd27aeb0495c8e2ef14c43763d124377588693e3e12b
+MD5 2826c0e2f2433db74961450bd14e6e95 brutalchess-0.5.2_alpha.ebuild 1229
+RMD160 25a584f8b51a1e21a4419ccdce720554b16047be brutalchess-0.5.2_alpha.ebuild 1229
+SHA256 b311563c5051dea813e7dd27aeb0495c8e2ef14c43763d124377588693e3e12b brutalchess-0.5.2_alpha.ebuild 1229
+MD5 ce873ffeeffd260464fccf5f75c1d42d files/digest-brutalchess-0.5.2_alpha 286
+RMD160 e97f3361c9dded1ed29f1ed2cbb736c5b0dd9973 files/digest-brutalchess-0.5.2_alpha 286
+SHA256 ed4ff1830856b7eb2118526d44f2ec6addb38a0945e6cdf7f40aa19c6cf8cafb files/digest-brutalchess-0.5.2_alpha 286

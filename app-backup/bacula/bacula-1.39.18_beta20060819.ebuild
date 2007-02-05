@@ -10,7 +10,8 @@ KEYWORDS="~sparc ~x86"
 DESCRIPTION="Featureful client/server network backup suite"
 HOMEPAGE="http://www.bacula.org/"
 
-MY_P=`echo ${P} | sed -e 's/_beta/-/g'`
+MY_P=${P/_beta/-}
+
 S=${WORKDIR}/${MY_P}
 DOC_VER="1.38.10"
 SRC_URI="mirror://sourceforge/bacula/${MY_P}.tar.gz

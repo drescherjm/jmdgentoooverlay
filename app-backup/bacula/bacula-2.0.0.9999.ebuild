@@ -2,7 +2,8 @@
 # Distributed under the terms of the GNU General Public License v2
 # $Header: /var/cvsroot/gentoo-x86/app-backup/bacula/bacula-1.38.9.ebuild,v 1.2 2006/09/21 22:22:11 blubb Exp $
 
-inherit eutils cvs
+#inherit eutils cvs
+inherit eutils subversion
 
 IUSE="bacula-clientonly bacula-console bacula-nodir bacula-nosd
 bacula-split-init doc gnome logrotate logwatch mysql postgres python readline
@@ -15,14 +16,17 @@ HOMEPAGE="http://www.bacula.org/"
 DOC_VER="2.0.0"
 SRC_URI="doc? ( mirror://sourceforge/bacula/${PN}-docs-${DOC_VER}.tar.gz )"
 
-ECVS_SERVER="bacula.cvs.sourceforge.net:/cvsroot/bacula"
-ECVS_USER="anonymous"
-ECVS_PASS=""
-ECVS_AUTH="pserver"
-ECVS_MODULE="bacula"
+#ECVS_SERVER="bacula.cvs.sourceforge.net:/cvsroot/bacula"
+#ECVS_USER="anonymous"
+#ECVS_PASS=""
+#ECVS_AUTH="pserver"
+#ECVS_MODULE="bacula"
 
 
-LICENSE="GPL-2"
+ESVN_REPO_URI="http://bacula.svn.sourceforge.net/svnroot/bacula/trunk/bacula/"
+
+LICENSE="FSFE"
+
 SLOT="0"
 
 S="${WORKDIR}/bacula"
@@ -116,10 +120,9 @@ pkg_setup() {
 }
 
 src_unpack() {
+#	cvs_src_unpack
 
-#	ECVS_TOP_DIR="${DISTDIR}/cvs-src/${ECVS_MODULE}"
-
-	cvs_src_unpack
+	subversion_src_unpack
 
 	cd ${S}
 	# adjusts default configuration files for several binaries

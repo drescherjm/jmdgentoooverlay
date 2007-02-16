@@ -1,5 +1,29 @@
-MD5 a25c6db6fe28c745e18a9780d7036843 qemu-softmmu-0.7.2.ebuild 4033
-MD5 cc5c9529eecf67b3b9075faef545833f files/digest-qemu-softmmu-0.7.2 125
-MD5 3202f7445799cce82ccaac9749e1443d files/qemu-softmmu-0.7.0-errno.patch 487
+AUX kqemu-0.7.1-sysfs.patch 1631 RMD160 bdf9514dbed1665afd4727a395830855ab400974 SHA1 d971de93120a70d202667117fb6b81a5a1d635a5 SHA256 c0d2f4fd263562117ed74adc1075d7de7cb0cbd1f4d6d8844acbaeac498a16a3
 MD5 1d5ef12a594467dced5bfce6c07ed893 files/kqemu-0.7.1-sysfs.patch 1631
+RMD160 bdf9514dbed1665afd4727a395830855ab400974 files/kqemu-0.7.1-sysfs.patch 1631
+SHA256 c0d2f4fd263562117ed74adc1075d7de7cb0cbd1f4d6d8844acbaeac498a16a3 files/kqemu-0.7.1-sysfs.patch 1631
+AUX kqemu-sysfs.patch 2094 RMD160 9b87cf9d9f8004a37f079fb3eda3d37275624eca SHA1 4fe3caa21a1261ca7b7b3bd354ac90f4df64a24f SHA256 4da7bb1363b9f93a1a4eec2db7c6a41febb1b0a5fa110f2bdfdadca408c67f19
 MD5 87ec2e1fa832612fb834d7dd49cf7e5c files/kqemu-sysfs.patch 2094
+RMD160 9b87cf9d9f8004a37f079fb3eda3d37275624eca files/kqemu-sysfs.patch 2094
+SHA256 4da7bb1363b9f93a1a4eec2db7c6a41febb1b0a5fa110f2bdfdadca408c67f19 files/kqemu-sysfs.patch 2094
+AUX qemu-softmmu-0.7.0-errno.patch 487 RMD160 0ba3efb79379c96652d0a08f33adef13695c75b7 SHA1 37317be3df18aa4843bb027d2d1e5b3ef1cf27cd SHA256 013031cd5c27de4dd4ab39f10a8be751813a313e006339a35b9722bb0939f193
+MD5 3202f7445799cce82ccaac9749e1443d files/qemu-softmmu-0.7.0-errno.patch 487
+RMD160 0ba3efb79379c96652d0a08f33adef13695c75b7 files/qemu-softmmu-0.7.0-errno.patch 487
+SHA256 013031cd5c27de4dd4ab39f10a8be751813a313e006339a35b9722bb0939f193 files/qemu-softmmu-0.7.0-errno.patch 487
+DIST kqemu-0.7.2.tar.gz 79314 RMD160 cdb154d51eb616d6ad9924da0175276a655edba7 SHA1 39dda2566a9c47bfc5e76c76cf9aa41500d708f3 SHA256 4158b2c67603f5256a78d0065d715bde068a457aa58bbfef12dda20fe7f7ad8b
+DIST qemu-0.7.2.tar.gz 1341993 RMD160 1d2dcc8f43ff4b4b9aa045c64e38c9a10140b13e SHA1 4daeccb57448eacc444152f30b5d84dfcca89dfe SHA256 a4982e991ebca255d53f0738d203afb9355d9d16aa1a89835a080fa5d6ba4766
+DIST qemu-0.9.0.tar.gz 1901741 RMD160 4296542b6da18a6ac93d20787330d3c1c2ac0a19 SHA1 1e57e48a06eb8729913d92601000466eecef06cb SHA256 491facf9335654967ee53d8fb3540a274bfcbdcc225506bd38c4ee8e9ab405c1
+EBUILD qemu-softmmu-0.7.2.ebuild 4033 RMD160 63f709523512e245ad5c09a8598dd0a63413ad14 SHA1 40ba6ccc0b4a4b773cfbb7eea2e76a1c2f7c97d6 SHA256 676ffe3e24fad17eea2ac80603693c5193af3398748b99e03236d2acbae06362
+MD5 a25c6db6fe28c745e18a9780d7036843 qemu-softmmu-0.7.2.ebuild 4033
+RMD160 63f709523512e245ad5c09a8598dd0a63413ad14 qemu-softmmu-0.7.2.ebuild 4033
+SHA256 676ffe3e24fad17eea2ac80603693c5193af3398748b99e03236d2acbae06362 qemu-softmmu-0.7.2.ebuild 4033
+EBUILD qemu-softmmu-0.9.0.ebuild 2681 RMD160 fb27ab9b2171cbd5b618e8fbb9ffb253b61d6e6c SHA1 784ae34da5eda66d08dea62cd59b7e00c8044abb SHA256 d4e68d42ee2011dd7b4140bbcecc6faa1af7cb4e5915cfe5675530ba57b4f3fe
+MD5 b2f106c1aa8ff22fbab85a17a47f94ba qemu-softmmu-0.9.0.ebuild 2681
+RMD160 fb27ab9b2171cbd5b618e8fbb9ffb253b61d6e6c qemu-softmmu-0.9.0.ebuild 2681
+SHA256 d4e68d42ee2011dd7b4140bbcecc6faa1af7cb4e5915cfe5675530ba57b4f3fe qemu-softmmu-0.9.0.ebuild 2681
+MD5 a48c5b24131c89fe37b5563b2afb887c files/digest-qemu-softmmu-0.7.2 467
+RMD160 da5c7f615693cedc3df6658fd4cd47400bd30f85 files/digest-qemu-softmmu-0.7.2 467
+SHA256 988adce1d1e2536e68b8a263960d27cad55f489419324358059f83e8589c1d16 files/digest-qemu-softmmu-0.7.2 467
+MD5 12025e3368dd7e9e6733b070be908e8e files/digest-qemu-softmmu-0.9.0 235
+RMD160 eed187813ce9061522dda5880b31158450d6a8a6 files/digest-qemu-softmmu-0.9.0 235
+SHA256 a4e31d23c1853b51c7fef0c61c6721243b5c949069578679b6b35d0d88fe90c5 files/digest-qemu-softmmu-0.9.0 235

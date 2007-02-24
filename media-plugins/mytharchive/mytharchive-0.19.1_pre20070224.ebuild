@@ -31,8 +31,8 @@ src_unpack()
   cd ${S}/mytharchive\
   
   if use projectx; then
-    epatch "${FILESDIR}/mytharchive-0.19.1_pre20061223.mythburn.projectx.patch"
-    epatch "${FILESDIR}/mytharchive-0.19.1_pre20061223.mythburn.projectx.archivesettings.patch"    
+    epatch "${FILESDIR}/mytharchive-0.19.1_pre20070101.mythburn.projectx.patch"
+    epatch "${FILESDIR}/mytharchive-0.19.1_pre20070101.mythburn.projectx.archivesettings.patch"    
   fi
 
   pwd

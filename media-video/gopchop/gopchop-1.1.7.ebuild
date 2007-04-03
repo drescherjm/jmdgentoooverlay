@@ -10,13 +10,14 @@ HOMEPAGE="http://gopchop.sourceforge.net/"
 SRC_URI="mirror://sourceforge/gopchop/${P}.tar.gz"
 LICENSE="GPL"
 SLOT="0"
-KEYWORDS="~x86"
+KEYWORDS="~x86 ~amd64"
 IUSE="sdl X"
 
 DEPEND=">=media-libs/libmpeg2-0.4.0
-		sdl? ( media-libs/libsdl )
-		X? ( virtual/x11
-			 >=x11-libs/gtk+-1.2* )"
+		sdl? ( media-libs/libsdl )"
+
+#		X? ( virtual/x11
+#	             >=x11-libs/gtk+-1.2 )"
 
 src_compile() {
 	econf $(use_enable sdl) $(use_with X x) || die "econf failed"

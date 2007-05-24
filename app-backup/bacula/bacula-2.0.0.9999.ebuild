@@ -16,13 +16,6 @@ HOMEPAGE="http://www.bacula.org/"
 DOC_VER="2.0.0"
 SRC_URI="doc? ( mirror://sourceforge/bacula/${PN}-docs-${DOC_VER}.tar.gz )"
 
-#ECVS_SERVER="bacula.cvs.sourceforge.net:/cvsroot/bacula"
-#ECVS_USER="anonymous"
-#ECVS_PASS=""
-#ECVS_AUTH="pserver"
-#ECVS_MODULE="bacula"
-
-
 ESVN_REPO_URI="http://bacula.svn.sourceforge.net/svnroot/bacula/trunk/bacula/"
 
 LICENSE="FSFE"
@@ -45,7 +38,7 @@ DEPEND="
 		wxwindows? ( >=x11-libs/wxGTK-2.4.2 )
 		gnome? (
 			>=gnome-base/libgnome-2
-			app-admin/gnomesu
+			x11-libs/gksu
 		)
 	)
 	bacula-bat? (
@@ -55,7 +48,12 @@ DEPEND="
 	logrotate? ( app-admin/logrotate )
 	logwatch? ( sys-apps/logwatch )
 	tcpd? ( >=sys-apps/tcp-wrappers-7.6 )
-	readline? ( >=sys-libs/readline-4.1 )"
+	readline? ( >=sys-libs/readline-4.1 )
+	doc? (
+		virtual/ghostscript
+                dev-tex/latex2html
+        )"
+
 RDEPEND="${DEPEND}
 	!bacula-clientonly? (
 		sys-block/mtx
@@ -65,20 +63,20 @@ RDEPEND="${DEPEND}
 pkg_setup() {
 	export mydb=""
 	dbcnt=0
-	if ! use bacula-clientonly ; then
-		if use mysql ; then
+	if ! useq bacula-clientonly ; then
+		if useq mysql ; then
 			mydb="mysql"
 			dbcnt="$((${dbcnt} + 1))"
 		fi
-		if use postgres ; then
+		if useq postgres ; then
 			mydb="postgresql"
 			dbcnt="$((${dbcnt} + 1))"
 		fi
-		if use sqlite ; then
+		if useq sqlite ; then
 			mydb="sqlite"
 			dbcnt="$((${dbcnt} + 1))"
 		fi
-		if use sqlite3 ; then
+		if useq sqlite3 ; then
 			mydb="sqlite3"
 			dbcnt="$((${dbcnt} + 1))"
 		fi
@@ -90,7 +88,7 @@ pkg_setup() {
 			die "You must set a supported database type."
 		fi
 	fi
-	if ! use bacula-clientonly ; then
+	if ! useq bacula-clientonly ; then
 		if [[ "${dbcnt}" -gt 1 ]] ; then
 			eerror "You have set ${P} to use multiple database types."
 			eerror "I don't know which to set as the default!"
@@ -108,7 +106,7 @@ pkg_setup() {
 		einfo "group have access to files created by the daemons."
 		einfo ""
 	fi
-	if ! use bacula-clientonly ; then
+	if ! useq bacula-clientonly ; then
 		HAVE_BACULA_USER="`id -u bacula 2>/dev/null`"
 		if [ -z "${HAVE_BACULA_USER}" ] ; then
 			enewuser "bacula" -1 -1 "/var/lib/bacula" "bacula,disk,tape,cdrom,cdrw"
@@ -132,12 +130,12 @@ src_unpack() {
 
 src_compile() {
 	local myconf=""
-	if use bacula-clientonly ; then
+	if useq bacula-clientonly ; then
 		myconf="${myconf} \
 			`use_enable bacula-clientonly client-only` \
 			`use_enable static static-fd`"
 	fi
-	if use bacula-console ; then
+	if useq bacula-console ; then
 		myconf="${myconf} \
 			`use_with X x` \
 			`use_enable gnome` \
@@ -151,7 +149,7 @@ src_compile() {
 		`use_with ssl openssl` \
 		`use_with tcpd tcp-wrappers`"
 
-	if ! use bacula-clientonly; then
+	if ! useq bacula-clientonly; then
 		# select database support
 		if [ ${mydb} == "postgresql" ]; then
 			myconf="${myconf} `use_with postgres postgresql`"
@@ -163,10 +161,10 @@ src_compile() {
 			`use_enable static static-fd` \
 			`use_enable !bacula-nodir build-dird` \
 			`use_enable !bacula-nosd build-stored`"
-		if ! use bacula-nodir ; then
+		if ! useq bacula-nodir ; then
 			myconf="${myconf} `use_enable static static-dir`"
 		fi
-		if ! use bacula-nosd ; then
+		if ! useq bacula-nosd ; then
 			myconf="${myconf} `use_enable static static-sd`"
 		fi
 
@@ -192,7 +190,7 @@ src_compile() {
 
 	emake || die "Failed primary build!"
 
-	if use bacula-bat; then
+	if useq bacula-bat; then
 		cd src/qt-console
 		rm Makefile
 		qmake
@@ -204,38 +202,31 @@ src_compile() {
 src_install() {
 	emake DESTDIR=${D} install || die "Failed install to ${D} !"
 
-	if use static ; then
+	if useq static ; then
 		cd ${D}/usr/sbin
 		mv static-bacula-fd bacula-fd
 		mv static-bconsole bconsole
-		if ! use bacula-clientonly ; then
+		if ! useq bacula-clientonly ; then
 			mv static-bacula-dir bacula-dir
 			mv static-bacula-sd bacula-sd
 		fi
-		if use gnome ; then
+		if useq bacula-console && useq gnome ; then
 			mv static-gnome-console gnome-console
 		fi
 		cd ${S}
 	fi
 
-	if use bacula-console ; then
-		if use gnome ; then
+	if useq bacula-console && useq gnome ; then
 			emake DESTDIR=${D} \
-				install-menu \
-				install-menu-xsu || die "Failed to install gnome menu files to ${D}" \
-			make_desktop_entry \
-				"gnome-console -c /etc/bacula/gnome-console.conf" \
-				"Bacula Console" /usr/share/pixmaps/bacula.png "app-admin" \
-				"/usr/sbin"
-		fi
+				install-menu-xsu || die "Failed to install gnome menu files to ${D}" 
 	fi
 
-	if use bacula-bat; then
+	if useq bacula-bat; then
 		cp ${S}/src/qt-console/bat ${D}/usr/sbin
 	fi
 
 	# extra files which 'make install' doesn't cover
-	if ! use bacula-clientonly ; then
+	if ! useq bacula-clientonly ; then
 	    # the database update scripts
 		diropts -m0750
 		dodir /usr/libexec/bacula/updatedb
@@ -245,7 +236,7 @@ src_install() {
 		fperms 0640 /usr/libexec/bacula/updatedb/README
 
 		# the logrotate configuration
-		if use logrotate ; then
+		if useq logrotate ; then
 			diropts -m0755
 			dodir /etc/logrotate.d
 			insinto /etc/logrotate.d
@@ -254,7 +245,7 @@ src_install() {
 		fi
 
 		# the logwatch scripts
-		if use logwatch ; then
+		if useq logwatch ; then
 			diropts -m0750
 			dodir /etc/log.d/scripts/services
 			dodir /etc/log.d/conf/logfiles
@@ -270,7 +261,7 @@ src_install() {
 	do
 		dodoc ${my_doc}
 	done
-	if use doc ; then
+	if useq doc ; then
 		dodoc ${WORKDIR}/${PN}-docs-${DOC_VER}/developers/developers.pdf
 		dodoc ${WORKDIR}/${PN}-docs-${DOC_VER}/manual/bacula.pdf
 		diropts -m0755
@@ -289,17 +280,17 @@ src_install() {
 
 	# setup init scripts
 	my_services="fd"
-	if ! use bacula-clientonly ; then
-		if ! use bacula-no-dir ; then
+	if ! useq bacula-clientonly ; then
+		if ! useq bacula-no-dir ; then
 			my_services="${my_services} dir"
 		fi
-		if ! use bacula-no-sd ; then
+		if ! useq bacula-no-sd ; then
 			my_services="${my_services} sd"
 		fi
 	fi
 	exeinto /etc/init.d/
 	insinto /etc/conf.d/
-	if use bacula-split-init ; then
+	if useq bacula-split-init ; then
 		my_scripts=""
 		for service in ${my_services} ; do
 			my_scripts="${my_scripts} bacula-${service}"
@@ -326,13 +317,13 @@ src_install() {
 }
 
 pkg_postinst() {
-	if use bacula-clientonly ; then
+	if useq bacula-clientonly ; then
 		fowners root:bacula /var/lib/bacula
 	else
 		fowners bacula:bacula /var/lib/bacula
 	fi
 
-	if ! use bacula-clientonly && ! use bacula-no-dir ; then
+	if ! useq bacula-clientonly && ! useq bacula-no-dir ; then
 		einfo "If this is a new install, you must create the ${mydb} databases with:"
 		einfo " /usr/libexec/bacula/create_${mydb}_database"
 		einfo " /usr/libexec/bacula/make_${mydb}_tables"

@@ -19,7 +19,7 @@
 
 inherit eutils
 
-IUSE="bacula-clientonly bacula-console bacula-nodir bacula-nosd bacula-split-init doc gnome logrotate logwatch mysql postgres python readline sqlite sqlite3 ssl static tcpd wxwindows X"
+IUSE="bacula-clientonly bacula-console bacula-nodir bacula-nosd bacula-split-init doc gnome logrotate logwatch mysql postgres python readline sqlite sqlite3 ssl static tcpd wxwindows X bacula-bat"
 KEYWORDS="~amd64 ~hppa ~ppc ~sparc ~x86"
 
 DESCRIPTION="Featureful client/server network backup suite"
@@ -49,6 +49,9 @@ DEPEND="
 			x11-libs/gksu
 		)
 	)
+	bacula-bat? (
+                >=x11-libs/qt-4.2.0
+        )
 	ssl? ( dev-libs/openssl )
 	logrotate? ( app-admin/logrotate )
 	logwatch? ( sys-apps/logwatch )
@@ -160,8 +163,9 @@ src_compile() {
 			$(use_with X x) \
 			$(use_enable gnome) \
 			$(use_enable gnome tray-monitor) \
-			$(use_enable wxwindows wx-console) \
-			$(use_enable static static-cons)"
+			$(use_enable wxwindows bwx-console) \
+			$(use_enable static static-cons) \
+			$(use_enable bacula-bat bat)"
 	fi
 
 	myconf="${myconf} \

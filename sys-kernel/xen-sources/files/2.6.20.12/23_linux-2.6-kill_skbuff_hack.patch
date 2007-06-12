@@ -1,0 +1,429 @@
+From: Herbert Xu <herbert.xu@redhat.com>
+Subject: [4/4] [XEN]: Kill skbuff hack
+
+Hi:
+
+This patch is based on the FC6 kernel.
+
+[XEN]: Kill skbuff hack
+
+Now that the Linux stack can accept packets with partial checksums and
+relay them back out again, we can eliminate the skbuff hacks.
+
+Signed-off-by: Herbert Xu <herbert@gondor.apana.org.au>
+
+Cheers,
+-- 
+Visit Openswan at http://www.openswan.org/
+Email: Herbert Xu ~{PmV>HI~} <herbert@gondor.apana.org.au>
+Home Page: http://gondor.apana.org.au/~herbert/
+PGP Key: http://gondor.apana.org.au/~herbert/pubkey.txt
+--
+diff -ur linux-2.6.20.i386.orig/drivers/xen/core/skbuff.c linux-2.6.20.i386/drivers/xen/core/skbuff.c
+--- linux-2.6.20.i386.orig/drivers/xen/core/skbuff.c	2007-04-24 13:18:41.000000000 +1000
++++ linux-2.6.20.i386/drivers/xen/core/skbuff.c	2007-04-24 15:50:03.000000000 +1000
+@@ -9,6 +9,10 @@
+ #include <linux/etherdevice.h>
+ #include <linux/skbuff.h>
+ #include <linux/init.h>
++#include <linux/if_ether.h>
++#include <linux/tcp.h>
++#include <linux/udp.h>
++#include <net/ip.h>
+ #include <asm/io.h>
+ #include <asm/page.h>
+ #include <asm/hypervisor.h>
+@@ -78,6 +82,37 @@
+ 	return skb;
+ }
+ 
++int skb_checksum_setup(struct sk_buff *skb)
++{
++	if (skb->protocol != htons(ETH_P_IP))
++		goto out;
++	skb->h.raw = (unsigned char *)skb->nh.iph + 4*skb->nh.iph->ihl;
++	if (skb->h.raw >= skb->tail)
++		goto out;
++	switch (skb->nh.iph->protocol) {
++	case IPPROTO_TCP:
++		skb->csum_offset = offsetof(struct tcphdr, check);
++		break;
++	case IPPROTO_UDP:
++		skb->csum_offset = offsetof(struct udphdr, check);
++		break;
++	default:
++		if (net_ratelimit())
++			printk(KERN_ERR "Attempting to checksum a non-"
++			       "TCP/UDP packet, dropping a protocol"
++			       " %d packet", skb->nh.iph->protocol);
++		goto out;
++	}
++	if ((skb->h.raw + skb->csum_offset + 2) > skb->tail)
++		goto out;
++	skb->ip_summed = CHECKSUM_PARTIAL;
++
++	return 0;
++out:
++	return -EPROTO;
++}
++EXPORT_SYMBOL(skb_checksum_setup);
++
+ static void skbuff_ctor(void *buf, struct kmem_cache *cachep, unsigned long unused)
+ {
+ 	int order = 0;
+diff -ur linux-2.6.20.i386.orig/drivers/xen/netback/loopback.c linux-2.6.20.i386/drivers/xen/netback/loopback.c
+--- linux-2.6.20.i386.orig/drivers/xen/netback/loopback.c	2007-04-24 13:18:41.000000000 +1000
++++ linux-2.6.20.i386/drivers/xen/netback/loopback.c	2007-04-24 15:50:03.000000000 +1000
+@@ -149,16 +149,6 @@
+ 	np->stats.rx_bytes += skb->len;
+ 	np->stats.rx_packets++;
+ 
+-	if (skb->ip_summed == CHECKSUM_PARTIAL) {
+-		/* Defer checksum calculation. */
+-		skb->proto_csum_blank = 1;
+-		/* Must be a local packet: assert its integrity. */
+-		skb->proto_data_valid = 1;
+-	}
+-
+-	skb->ip_summed = skb->proto_data_valid ?
+-		CHECKSUM_UNNECESSARY : CHECKSUM_NONE;
+-
+ 	skb->pkt_type = PACKET_HOST; /* overridden by eth_type_trans() */
+ 	skb->protocol = eth_type_trans(skb, dev);
+ 	skb->dev      = dev;
+diff -ur linux-2.6.20.i386.orig/drivers/xen/netback/netback.c linux-2.6.20.i386/drivers/xen/netback/netback.c
+--- linux-2.6.20.i386.orig/drivers/xen/netback/netback.c	2007-04-24 13:18:41.000000000 +1000
++++ linux-2.6.20.i386/drivers/xen/netback/netback.c	2007-04-24 15:50:03.000000000 +1000
+@@ -293,7 +293,6 @@
+ 		/* Copy only the header fields we use in this driver. */
+ 		nskb->dev = skb->dev;
+ 		nskb->ip_summed = skb->ip_summed;
+-		nskb->proto_data_valid = skb->proto_data_valid;
+ 		dev_kfree_skb(skb);
+ 		skb = nskb;
+ 	}
+@@ -677,9 +676,11 @@
+ 		id = meta[npo.meta_cons].id;
+ 		flags = nr_frags ? NETRXF_more_data : 0;
+ 
+-		if (skb->ip_summed == CHECKSUM_PARTIAL) /* local packet? */
++		if (skb->ip_summed == CHECKSUM_PARTIAL)
++			/* local packet? */
+ 			flags |= NETRXF_csum_blank | NETRXF_data_validated;
+-		else if (skb->proto_data_valid) /* remote but checksummed? */
++		else if (skb->ip_summed == CHECKSUM_UNNECESSARY)
++			/* remote but checksummed? */
+ 			flags |= NETRXF_data_validated;
+ 
+ 		if (meta[npo.meta_cons].copy)
+@@ -1318,23 +1319,19 @@
+ 			netif_idx_release(pending_idx);
+ 		}
+ 
+-		/*
+-		 * Old frontends do not assert data_validated but we
+-		 * can infer it from csum_blank so test both flags.
+-		 */
+-		if (txp->flags & (NETTXF_data_validated|NETTXF_csum_blank)) {
+-			skb->ip_summed = CHECKSUM_UNNECESSARY;
+-			skb->proto_data_valid = 1;
+-		} else {
+-			skb->ip_summed = CHECKSUM_NONE;
+-			skb->proto_data_valid = 0;
+-		}
+-		skb->proto_csum_blank = !!(txp->flags & NETTXF_csum_blank);
+-
+ 		netbk_fill_frags(skb);
+ 
+ 		skb->dev      = netif->dev;
+ 		skb->protocol = eth_type_trans(skb, skb->dev);
++		skb->nh.raw   = skb->data;
++
++		if (txp->flags & NETTXF_csum_blank) {
++			if (skb_checksum_setup(skb)) {
++				kfree_skb(skb);
++				continue;
++			}
++		} else if (txp->flags & NETTXF_data_validated)
++			skb->ip_summed = CHECKSUM_UNNECESSARY;
+ 
+ 		netif->stats.rx_bytes += skb->len;
+ 		netif->stats.rx_packets++;
+diff -ur linux-2.6.20.i386.orig/drivers/xen/netfront/netfront.c linux-2.6.20.i386/drivers/xen/netfront/netfront.c
+--- linux-2.6.20.i386.orig/drivers/xen/netfront/netfront.c	2007-04-24 13:18:41.000000000 +1000
++++ linux-2.6.20.i386/drivers/xen/netfront/netfront.c	2007-04-24 15:50:03.000000000 +1000
+@@ -962,12 +962,12 @@
+ 	tx->flags = 0;
+ 	extra = NULL;
+ 
+-	if (skb->ip_summed == CHECKSUM_PARTIAL) /* local packet? */
++	if (skb->ip_summed == CHECKSUM_PARTIAL)
++		/* local packet? */
+ 		tx->flags |= NETTXF_csum_blank | NETTXF_data_validated;
+-#ifdef CONFIG_XEN
+-	if (skb->proto_data_valid) /* remote but checksummed? */
++	else if (skb->ip_summed == CHECKSUM_UNNECESSARY)
++		/* remote but checksummed? */
+ 		tx->flags |= NETTXF_data_validated;
+-#endif
+ 
+ #ifdef HAVE_TSO
+ 	if (skb_is_gso(skb)) {
+@@ -1388,20 +1388,10 @@
+ 		skb->truesize += skb->data_len - (RX_COPY_THRESHOLD - len);
+ 		skb->len += skb->data_len;
+ 
+-		/*
+-		 * Old backends do not assert data_validated but we
+-		 * can infer it from csum_blank so test both flags.
+-		 */
+-		if (rx->flags & (NETRXF_data_validated|NETRXF_csum_blank))
++		if (rx->flags & NETRXF_csum_blank)
++			skb->ip_summed = CHECKSUM_PARTIAL;
++		else if (rx->flags & NETRXF_data_validated)
+ 			skb->ip_summed = CHECKSUM_UNNECESSARY;
+-		else
+-			skb->ip_summed = CHECKSUM_NONE;
+-#ifdef CONFIG_XEN
+-		skb->proto_data_valid = (skb->ip_summed != CHECKSUM_NONE);
+-		skb->proto_csum_blank = !!(rx->flags & NETRXF_csum_blank);
+-#endif
+-		np->stats.rx_packets++;
+-		np->stats.rx_bytes += skb->len;
+ 
+ 		__skb_queue_tail(&rxq, skb);
+ 
+@@ -1441,6 +1431,19 @@
+ 
+ 		/* Ethernet work: Delayed to here as it peeks the header. */
+ 		skb->protocol = eth_type_trans(skb, dev);
++		skb->nh.raw = skb->data;
++
++		if (skb->ip_summed == CHECKSUM_PARTIAL) {
++			if (skb_checksum_setup(skb)) {
++				work_done--;
++				kfree_skb(skb);
++				np->stats.rx_errors++;
++				continue;
++			}
++		}
++
++		np->stats.rx_packets++;
++		np->stats.rx_bytes += skb->len;
+ 
+ 		/* Pass it up. */
+ 		netif_receive_skb(skb);
+diff -ur linux-2.6.20.i386.orig/include/linux/skbuff.h linux-2.6.20.i386/include/linux/skbuff.h
+--- linux-2.6.20.i386.orig/include/linux/skbuff.h	2007-04-24 15:16:44.000000000 +1000
++++ linux-2.6.20.i386/include/linux/skbuff.h	2007-04-24 15:50:03.000000000 +1000
+@@ -205,8 +205,6 @@
+  *	@local_df: allow local fragmentation
+  *	@cloned: Head may be cloned (check refcnt to be sure)
+  *	@nohdr: Payload reference only, must not modify header
+- *	@proto_data_valid: Protocol data validated since arriving at localhost
+- *	@proto_csum_blank: Protocol csum must be added before leaving localhost
+  *	@pkt_type: Packet class
+  *	@fclone: skbuff clone status
+  *	@ip_summed: Driver fed us an IP checksum
+@@ -292,13 +290,7 @@
+ 				nfctinfo:3;
+ 	__u8			pkt_type:3,
+ 				fclone:2,
+-#ifndef CONFIG_XEN
+ 				ipvs_property:1;
+-#else
+-				ipvs_property:1,
+-				proto_data_valid:1,
+-				proto_csum_blank:1;
+-#endif
+ 	__be16			protocol;
+ 
+ 	void			(*destructor)(struct sk_buff *skb);
+@@ -1351,6 +1343,8 @@
+ 
+ extern struct sk_buff *skb_segment(struct sk_buff *skb, int features);
+ 
++extern int skb_checksum_setup(struct sk_buff *skb);
++
+ static inline void *skb_header_pointer(const struct sk_buff *skb, int offset,
+ 				       int len, void *buffer)
+ {
+diff -ur linux-2.6.20.i386.orig/net/core/dev.c linux-2.6.20.i386/net/core/dev.c
+--- linux-2.6.20.i386.orig/net/core/dev.c	2007-04-24 15:14:04.000000000 +1000
++++ linux-2.6.20.i386/net/core/dev.c	2007-04-24 15:50:03.000000000 +1000
+@@ -117,12 +117,6 @@
+ #include <linux/err.h>
+ #include <linux/ctype.h>
+ 
+-#ifdef CONFIG_XEN
+-#include <net/ip.h>
+-#include <linux/tcp.h>
+-#include <linux/udp.h>
+-#endif
+-
+ /*
+  *	The list of packet types we will receive (as opposed to discard)
+  *	and the routines to invoke.
+@@ -1400,43 +1394,6 @@
+ 	}						\
+ }
+ 
+-#ifdef CONFIG_XEN
+-inline int skb_checksum_setup(struct sk_buff *skb)
+-{
+-	if (skb->proto_csum_blank) {
+-		if (skb->protocol != htons(ETH_P_IP))
+-			goto out;
+-		skb->h.raw = (unsigned char *)skb->nh.iph + 4*skb->nh.iph->ihl;
+-		if (skb->h.raw >= skb->tail)
+-			goto out;
+-		switch (skb->nh.iph->protocol) {
+-		case IPPROTO_TCP:
+-			skb->csum = offsetof(struct tcphdr, check);
+-			break;
+-		case IPPROTO_UDP:
+-			skb->csum = offsetof(struct udphdr, check);
+-			break;
+-		default:
+-			if (net_ratelimit())
+-				printk(KERN_ERR "Attempting to checksum a non-"
+-				       "TCP/UDP packet, dropping a protocol"
+-				       " %d packet", skb->nh.iph->protocol);
+-			goto out;
+-		}
+-		if ((skb->h.raw + skb->csum + 2) > skb->tail)
+-			goto out;
+-		skb->ip_summed = CHECKSUM_PARTIAL;
+-		skb->proto_csum_blank = 0;
+-	}
+-	return 0;
+-out:
+-	return -EPROTO;
+-}
+-#else
+-inline int skb_checksum_setup(struct sk_buff *skb) { return 0; }
+-#endif
+-
+-
+ /**
+  *	dev_queue_xmit - transmit a buffer
+  *	@skb: buffer to transmit
+@@ -1469,12 +1426,6 @@
+ 	struct Qdisc *q;
+ 	int rc = -ENOMEM;
+ 
+- 	/* If a checksum-deferred packet is forwarded to a device that needs a
+- 	 * checksum, correct the pointers and force checksumming.
+- 	 */
+- 	if (skb_checksum_setup(skb))
+- 		goto out_kfree_skb;
+-
+ 	/* GSO will handle the following emulations directly. */
+ 	if (netif_needs_gso(dev, skb))
+ 		goto gso;
+@@ -1853,19 +1804,6 @@
+ 	}
+ #endif
+ 
+-#ifdef CONFIG_XEN
+-	switch (skb->ip_summed) {
+-	case CHECKSUM_UNNECESSARY:
+-		skb->proto_data_valid = 1;
+-		break;
+-	case CHECKSUM_PARTIAL:
+-		/* XXX Implement me. */
+-	default:
+-		skb->proto_data_valid = 0;
+-		break;
+-	}
+-#endif
+-
+ 	list_for_each_entry_rcu(ptype, &ptype_all, list) {
+ 		if (!ptype->dev || ptype->dev == skb->dev) {
+ 			if (pt_prev) 
+@@ -3630,7 +3568,6 @@
+ EXPORT_SYMBOL(net_enable_timestamp);
+ EXPORT_SYMBOL(net_disable_timestamp);
+ EXPORT_SYMBOL(dev_get_flags);
+-EXPORT_SYMBOL(skb_checksum_setup);
+ 
+ #if defined(CONFIG_BRIDGE) || defined(CONFIG_BRIDGE_MODULE)
+ EXPORT_SYMBOL(br_handle_frame_hook);
+diff -ur linux-2.6.20.i386.orig/net/core/skbuff.c linux-2.6.20.i386/net/core/skbuff.c
+--- linux-2.6.20.i386.orig/net/core/skbuff.c	2007-04-24 15:08:07.000000000 +1000
++++ linux-2.6.20.i386/net/core/skbuff.c	2007-04-24 15:50:03.000000000 +1000
+@@ -483,10 +483,6 @@
+ 	C(local_df);
+ 	n->cloned = 1;
+ 	n->nohdr = 0;
+-#ifdef CONFIG_XEN
+-	C(proto_data_valid);
+-	C(proto_csum_blank);
+-#endif
+ 	C(pkt_type);
+ 	C(ip_summed);
+ 	C(priority);
+diff -ur linux-2.6.20.i386.orig/net/ipv4/netfilter/ip_nat_proto_tcp.c linux-2.6.20.i386/net/ipv4/netfilter/ip_nat_proto_tcp.c
+--- linux-2.6.20.i386.orig/net/ipv4/netfilter/ip_nat_proto_tcp.c	2007-04-24 13:18:41.000000000 +1000
++++ linux-2.6.20.i386/net/ipv4/netfilter/ip_nat_proto_tcp.c	2007-04-24 15:50:03.000000000 +1000
+@@ -129,15 +129,8 @@
+ 	if (hdrsize < sizeof(*hdr))
+ 		return 1;
+ 
+-#ifdef CONFIG_XEN
+-	if ((*pskb)->proto_csum_blank)
+-		nf_csum_replace4(&hdr->check, oldip, newip);
+-	else
+-#endif
+-	{
+ 	nf_proto_csum_replace4(&hdr->check, *pskb, oldip, newip, 1);
+ 	nf_proto_csum_replace2(&hdr->check, *pskb, oldport, newport, 0);
+-	}
+ 	return 1;
+ }
+ 
+diff -ur linux-2.6.20.i386.orig/net/ipv4/netfilter/ip_nat_proto_udp.c linux-2.6.20.i386/net/ipv4/netfilter/ip_nat_proto_udp.c
+--- linux-2.6.20.i386.orig/net/ipv4/netfilter/ip_nat_proto_udp.c	2007-04-24 13:18:41.000000000 +1000
++++ linux-2.6.20.i386/net/ipv4/netfilter/ip_nat_proto_udp.c	2007-04-24 15:50:03.000000000 +1000
+@@ -115,16 +115,8 @@
+ 	}
+ 
+ 	if (hdr->check || (*pskb)->ip_summed == CHECKSUM_PARTIAL) {
+-#ifdef CONFIG_XEN
+-		if ((*pskb)->proto_csum_blank)
+-			nf_csum_replace4(&hdr->check, oldip, newip);
+-		else
+-#endif
+-		{
+ 		nf_proto_csum_replace4(&hdr->check, *pskb, oldip, newip, 1);
+ 		nf_proto_csum_replace2(&hdr->check, *pskb, *portptr, newport, 0);
+-		}
+-
+ 		if (!hdr->check)
+ 			hdr->check = CSUM_MANGLED_0;
+ 	}
+diff -ur linux-2.6.20.i386.orig/net/ipv4/xfrm4_output.c linux-2.6.20.i386/net/ipv4/xfrm4_output.c
+--- linux-2.6.20.i386.orig/net/ipv4/xfrm4_output.c	2007-04-24 13:18:41.000000000 +1000
++++ linux-2.6.20.i386/net/ipv4/xfrm4_output.c	2007-04-24 15:50:03.000000000 +1000
+@@ -18,8 +18,6 @@
+ #include <net/xfrm.h>
+ #include <net/icmp.h>
+ 
+-extern int skb_checksum_setup(struct sk_buff *skb);
+-
+ static int xfrm4_tunnel_check_size(struct sk_buff *skb)
+ {
+ 	int mtu, ret = 0;
+@@ -49,10 +47,6 @@
+ 	struct dst_entry *dst = skb->dst;
+ 	struct xfrm_state *x = dst->xfrm;
+ 	int err;
+-	
+-	err = skb_checksum_setup(skb);
+-	if (err)
+-		goto error_nolock;
+ 
+ 	if (skb->ip_summed == CHECKSUM_PARTIAL) {
+ 		err = skb_checksum_help(skb);
+
+

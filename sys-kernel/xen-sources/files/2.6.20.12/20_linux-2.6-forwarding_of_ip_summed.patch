@@ -1,0 +1,89 @@
+From: Herbert Xu <herbert.xu@redhat.com>
+Subject: [1/4] [NET]: Allow forwarding of ip_summed except CHECKSUM_COMPLETE
+
+Hi:
+
+[NET]: Allow forwarding of ip_summed except CHECKSUM_COMPLETE
+
+Right now Xen has a horrible hack that lets it forward packets with
+partial checksums.  One of the reasons that CHECKSUM_PARTIAL and
+CHECKSUM_COMPLETE were added is so that we can get rid of this hack
+(where it creates two extra bits in the skbuff to essentially mirror
+ip_summed without being destroyed by the forwarding code).
+
+I had forgotten that I've already gone through all the deivce drivers
+last time around to make sure that they're looking at ip_summed ==
+CHECKSUM_PARTIAL rather than ip_summed != 0 on transmit.  In any case,
+I've now done that again so it should definitely be safe.
+
+Unfortunately nobody has yet added any code to update CHECKSUM_COMPLETE
+values on forward so we I'm setting that to CHECKSUM_NONE.  This should
+be safe to remove for bridging but I'd like to check that code path
+first.
+
+So here is the patch that lets us get rid of the hack by preserving
+ip_summed (mostly) on forwarded packets.
+
+Signed-off-by: Herbert Xu <herbert@gondor.apana.org.au>
+
+Cheers,
+-- 
+Visit Openswan at http://www.openswan.org/
+Email: Herbert Xu ~{PmV>HI~} <herbert@gondor.apana.org.au>
+Home Page: http://gondor.apana.org.au/~herbert/
+PGP Key: http://gondor.apana.org.au/~herbert/pubkey.txt
+--
+diff -ur linux-2.6.20.i386.orig/include/linux/skbuff.h linux-2.6.20.i386/include/linux/skbuff.h
+--- linux-2.6.20.i386.orig/include/linux/skbuff.h	2007-04-24 13:18:41.000000000 +1000
++++ linux-2.6.20.i386/include/linux/skbuff.h	2007-04-24 13:31:01.000000000 +1000
+@@ -1494,5 +1494,12 @@
+ 	return skb_shinfo(skb)->gso_size;
+ }
+ 
++static inline void skb_forward_csum(struct sk_buff *skb)
++{
++	/* Unfortunately we don't support this one.  Any brave souls? */
++	if (skb->ip_summed == CHECKSUM_COMPLETE)
++		skb->ip_summed = CHECKSUM_NONE;
++}
++
+ #endif	/* __KERNEL__ */
+ #endif	/* _LINUX_SKBUFF_H */
+diff -ur linux-2.6.20.i386.orig/net/bridge/br_forward.c linux-2.6.20.i386/net/bridge/br_forward.c
+--- linux-2.6.20.i386.orig/net/bridge/br_forward.c	2007-03-30 13:39:09.000000000 +1000
++++ linux-2.6.20.i386/net/bridge/br_forward.c	2007-04-24 13:31:01.000000000 +1000
+@@ -71,7 +71,7 @@
+ 
+ 	indev = skb->dev;
+ 	skb->dev = to->dev;
+-	skb->ip_summed = CHECKSUM_NONE;
++	skb_forward_csum(skb);
+ 
+ 	NF_HOOK(PF_BRIDGE, NF_BR_FORWARD, skb, indev, skb->dev,
+ 			br_forward_finish);
+diff -ur linux-2.6.20.i386.orig/net/ipv4/ip_forward.c linux-2.6.20.i386/net/ipv4/ip_forward.c
+--- linux-2.6.20.i386.orig/net/ipv4/ip_forward.c	2007-03-30 13:39:10.000000000 +1000
++++ linux-2.6.20.i386/net/ipv4/ip_forward.c	2007-04-24 13:31:20.000000000 +1000
+@@ -68,7 +68,7 @@
+ 	if (skb->pkt_type != PACKET_HOST)
+ 		goto drop;
+ 
+-	skb->ip_summed = CHECKSUM_NONE;
++	skb_forward_csum(skb);
+ 	
+ 	/*
+ 	 *	According to the RFC, we must first decrease the TTL field. If
+diff -ur linux-2.6.20.i386.orig/net/ipv6/ip6_output.c linux-2.6.20.i386/net/ipv6/ip6_output.c
+--- linux-2.6.20.i386.orig/net/ipv6/ip6_output.c	2007-03-30 13:39:11.000000000 +1000
++++ linux-2.6.20.i386/net/ipv6/ip6_output.c	2007-04-24 13:31:01.000000000 +1000
+@@ -372,7 +372,7 @@
+ 		goto drop;
+ 	}
+ 
+-	skb->ip_summed = CHECKSUM_NONE;
++	skb_forward_csum(skb);
+ 
+ 	/*
+ 	 *	We DO NOT make any processing on
+
+

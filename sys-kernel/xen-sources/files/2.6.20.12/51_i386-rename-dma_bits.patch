@@ -1,0 +1,71 @@
+diff --git a/arch/i386/kernel/pci-dma-xen.c b/arch/i386/kernel/pci-dma-xen.c
+index cf384e9..70257f4 100644
+--- a/arch/i386/kernel/pci-dma-xen.c
++++ b/arch/i386/kernel/pci-dma-xen.c
+@@ -236,7 +236,7 @@ void *dma_alloc_coherent(struct device *dev, size_t size,
+ 
+ 	if (ret != NULL) {
+ 		if (xen_create_contiguous_region(vstart, order,
+-						 dma_bits) != 0) {
++						 swiotlb_dma_bits) != 0) {
+ 			free_pages(vstart, order);
+ 			return NULL;
+ 		}
+diff --git a/arch/i386/kernel/swiotlb.c b/arch/i386/kernel/swiotlb.c
+index 304211d..72800fa 100644
+--- a/arch/i386/kernel/swiotlb.c
++++ b/arch/i386/kernel/swiotlb.c
+@@ -98,11 +98,11 @@ static struct phys_addr {
+  */
+ static DEFINE_SPINLOCK(io_tlb_lock);
+ 
+-unsigned int dma_bits = DEFAULT_DMA_BITS;
++unsigned int swiotlb_dma_bits = DEFAULT_DMA_BITS;
+ static int __init
+ setup_dma_bits(char *str)
+ {
+-	dma_bits = simple_strtoul(str, NULL, 0);
++	swiotlb_dma_bits = simple_strtoul(str, NULL, 0);
+ 	return 0;
+ }
+ __setup("dma_bits=", setup_dma_bits);
+@@ -167,7 +167,7 @@ swiotlb_init_with_default_size (size_t default_size)
+ 		int rc = xen_create_contiguous_region(
+ 			(unsigned long)iotlb_virt_start + (i << IO_TLB_SHIFT),
+ 			get_order(IO_TLB_SEGSIZE << IO_TLB_SHIFT),
+-			dma_bits);
++			swiotlb_dma_bits);
+ 		BUG_ON(rc);
+ 	}
+ 
+@@ -197,7 +197,7 @@ swiotlb_init_with_default_size (size_t default_size)
+ 	       bytes >> 20,
+ 	       (unsigned long)iotlb_virt_start,
+ 	       (unsigned long)iotlb_virt_start + bytes,
+-	       dma_bits);
++	       swiotlb_dma_bits);
+ }
+ 
+ void
+@@ -665,7 +665,7 @@ swiotlb_dma_mapping_error(dma_addr_t dma_addr)
+ int
+ swiotlb_dma_supported (struct device *hwdev, u64 mask)
+ {
+-	return (mask >= ((1UL << dma_bits) - 1));
++	return (mask >= ((1UL << swiotlb_dma_bits) - 1));
+ }
+ 
+ EXPORT_SYMBOL(swiotlb_init);
+diff --git a/include/asm-i386/mach-xen/asm/swiotlb.h b/include/asm-i386/mach-xen/asm/swiotlb.h
+index c897f1c..f409930 100644
+--- a/include/asm-i386/mach-xen/asm/swiotlb.h
++++ b/include/asm-i386/mach-xen/asm/swiotlb.h
+@@ -32,7 +32,7 @@ extern void swiotlb_unmap_page(struct device *hwdev, dma_addr_t dma_address,
+ extern int swiotlb_dma_supported(struct device *hwdev, u64 mask);
+ extern void swiotlb_init(void);
+ 
+-extern unsigned int dma_bits;
++extern unsigned int swiotlb_dma_bits;
+ 
+ #ifdef CONFIG_SWIOTLB
+ extern int swiotlb;

@@ -1,0 +1,275 @@
+From: Herbert Xu <herbert.xu@redhat.com>
+Subject: [3/4] [NET]: Treat CHECKSUM_PARTIAL as CHECKSUM_UNNECESSARY
+
+Hi:
+
+[NET]: Treat CHECKSUM_PARTIAL as CHECKSUM_UNNECESSARY
+
+When a transmitted packet is looped back directly, CHECKSUM_PARTIAL
+maps to the semantics of CHECKSUM_UNNECESSARY.  Therefore we should
+treat it as such in the stack.
+
+Signed-off-by: Herbert Xu <herbert@gondor.apana.org.au>
+
+Cheers,
+-- 
+Visit Openswan at http://www.openswan.org/
+Email: Herbert Xu ~{PmV>HI~} <herbert@gondor.apana.org.au>
+Home Page: http://gondor.apana.org.au/~herbert/
+PGP Key: http://gondor.apana.org.au/~herbert/pubkey.txt
+--
+diff -ur linux-2.6.20.i386.orig/include/linux/skbuff.h linux-2.6.20.i386/include/linux/skbuff.h
+--- linux-2.6.20.i386.orig/include/linux/skbuff.h	2007-04-24 13:42:01.000000000 +1000
++++ linux-2.6.20.i386/include/linux/skbuff.h	2007-04-24 15:16:44.000000000 +1000
+@@ -31,10 +31,11 @@
+ #define HAVE_ALLOC_SKB		/* For the drivers to know */
+ #define HAVE_ALIGNABLE_SKB	/* Ditto 8)		   */
+ 
++/* Don't change this without changing skb_csum_unnecessary! */
+ #define CHECKSUM_NONE 0
+-#define CHECKSUM_PARTIAL 1
+-#define CHECKSUM_UNNECESSARY 2
+-#define CHECKSUM_COMPLETE 3
++#define CHECKSUM_UNNECESSARY 1
++#define CHECKSUM_COMPLETE 2
++#define CHECKSUM_PARTIAL 3
+ 
+ #define SKB_DATA_ALIGN(X)	(((X) + (SMP_CACHE_BYTES - 1)) & \
+ 				 ~(SMP_CACHE_BYTES - 1))
+@@ -1401,6 +1402,11 @@
+ 
+ extern __sum16 __skb_checksum_complete(struct sk_buff *skb);
+ 
++static inline int skb_csum_unnecessary(const struct sk_buff *skb)
++{
++	return skb->ip_summed & CHECKSUM_UNNECESSARY;
++}
++
+ /**
+  *	skb_checksum_complete - Calculate checksum of an entire packet
+  *	@skb: packet to process
+@@ -1419,8 +1425,8 @@
+  */
+ static inline unsigned int skb_checksum_complete(struct sk_buff *skb)
+ {
+-	return skb->ip_summed != CHECKSUM_UNNECESSARY &&
+-		__skb_checksum_complete(skb);
++	return skb_csum_unnecessary(skb) ?
++	       0 : __skb_checksum_complete(skb);
+ }
+ 
+ #ifdef CONFIG_NETFILTER
+diff -ur linux-2.6.20.i386.orig/include/net/tcp.h linux-2.6.20.i386/include/net/tcp.h
+--- linux-2.6.20.i386.orig/include/net/tcp.h	2007-03-30 13:39:07.000000000 +1000
++++ linux-2.6.20.i386/include/net/tcp.h	2007-04-24 15:16:44.000000000 +1000
+@@ -816,7 +816,7 @@
+ 
+ static inline int tcp_checksum_complete(struct sk_buff *skb)
+ {
+-	return skb->ip_summed != CHECKSUM_UNNECESSARY &&
++	return !skb_csum_unnecessary(skb) &&
+ 		__tcp_checksum_complete(skb);
+ }
+ 
+diff -ur linux-2.6.20.i386.orig/include/net/udp.h linux-2.6.20.i386/include/net/udp.h
+--- linux-2.6.20.i386.orig/include/net/udp.h	2007-03-30 13:39:07.000000000 +1000
++++ linux-2.6.20.i386/include/net/udp.h	2007-04-24 15:16:44.000000000 +1000
+@@ -80,7 +80,7 @@
+ 
+ static inline int udp_lib_checksum_complete(struct sk_buff *skb)
+ {
+-	return skb->ip_summed != CHECKSUM_UNNECESSARY &&
++	return !skb_csum_unnecessary(skb) &&
+ 		__udp_lib_checksum_complete(skb);
+ }
+ 
+diff -ur linux-2.6.20.i386.orig/net/core/netpoll.c linux-2.6.20.i386/net/core/netpoll.c
+--- linux-2.6.20.i386.orig/net/core/netpoll.c	2007-03-30 13:39:09.000000000 +1000
++++ linux-2.6.20.i386/net/core/netpoll.c	2007-04-24 15:16:44.000000000 +1000
+@@ -86,7 +86,7 @@
+ {
+ 	__wsum psum;
+ 
+-	if (uh->check == 0 || skb->ip_summed == CHECKSUM_UNNECESSARY)
++	if (uh->check == 0 || skb_csum_unnecessary(skb))
+ 		return 0;
+ 
+ 	psum = csum_tcpudp_nofold(saddr, daddr, ulen, IPPROTO_UDP, 0);
+diff -ur linux-2.6.20.i386.orig/net/ipv4/ipvs/ip_vs_core.c linux-2.6.20.i386/net/ipv4/ipvs/ip_vs_core.c
+--- linux-2.6.20.i386.orig/net/ipv4/ipvs/ip_vs_core.c	2007-03-30 13:39:10.000000000 +1000
++++ linux-2.6.20.i386/net/ipv4/ipvs/ip_vs_core.c	2007-04-24 15:16:44.000000000 +1000
+@@ -680,8 +680,7 @@
+ 	}
+ 
+ 	/* Ensure the checksum is correct */
+-	if (skb->ip_summed != CHECKSUM_UNNECESSARY &&
+-	    ip_vs_checksum_complete(skb, ihl)) {
++	if (!skb_csum_unnecessary(skb) && ip_vs_checksum_complete(skb, ihl)) {
+ 		/* Failed checksum! */
+ 		IP_VS_DBG(1, "Forward ICMP: failed checksum from %d.%d.%d.%d!\n",
+ 			  NIPQUAD(iph->saddr));
+@@ -921,8 +920,7 @@
+ 	verdict = NF_DROP;
+ 
+ 	/* Ensure the checksum is correct */
+-	if (skb->ip_summed != CHECKSUM_UNNECESSARY &&
+-	    ip_vs_checksum_complete(skb, ihl)) {
++	if (!skb_csum_unnecessary(skb) && ip_vs_checksum_complete(skb, ihl)) {
+ 		/* Failed checksum! */
+ 		IP_VS_DBG(1, "Incoming ICMP: failed checksum from %d.%d.%d.%d!\n",
+ 			  NIPQUAD(iph->saddr));
+diff -ur linux-2.6.20.i386.orig/net/ipv4/tcp_input.c linux-2.6.20.i386/net/ipv4/tcp_input.c
+--- linux-2.6.20.i386.orig/net/ipv4/tcp_input.c	2007-03-30 13:39:10.000000000 +1000
++++ linux-2.6.20.i386/net/ipv4/tcp_input.c	2007-04-24 15:16:44.000000000 +1000
+@@ -3775,7 +3775,7 @@
+ 	int err;
+ 
+ 	local_bh_enable();
+-	if (skb->ip_summed==CHECKSUM_UNNECESSARY)
++	if (skb_csum_unnecessary(skb))
+ 		err = skb_copy_datagram_iovec(skb, hlen, tp->ucopy.iov, chunk);
+ 	else
+ 		err = skb_copy_and_csum_datagram_iovec(skb, hlen,
+@@ -3807,7 +3807,7 @@
+ 
+ static inline int tcp_checksum_complete_user(struct sock *sk, struct sk_buff *skb)
+ {
+-	return skb->ip_summed != CHECKSUM_UNNECESSARY &&
++	return !skb_csum_unnecessary(skb) &&
+ 		__tcp_checksum_complete_user(sk, skb);
+ }
+ 
+@@ -3825,7 +3825,7 @@
+ 	if (!tp->ucopy.dma_chan && tp->ucopy.pinned_list)
+ 		tp->ucopy.dma_chan = get_softnet_dma();
+ 
+-	if (tp->ucopy.dma_chan && skb->ip_summed == CHECKSUM_UNNECESSARY) {
++	if (tp->ucopy.dma_chan && skb_csum_unnecessary(skb)) {
+ 
+ 		dma_cookie = dma_skb_copy_datagram_iovec(tp->ucopy.dma_chan,
+ 			skb, hlen, tp->ucopy.iov, chunk, tp->ucopy.pinned_list);
+diff -ur linux-2.6.20.i386.orig/net/ipv4/tcp_ipv4.c linux-2.6.20.i386/net/ipv4/tcp_ipv4.c
+--- linux-2.6.20.i386.orig/net/ipv4/tcp_ipv4.c	2007-04-24 15:09:28.000000000 +1000
++++ linux-2.6.20.i386/net/ipv4/tcp_ipv4.c	2007-04-24 15:16:44.000000000 +1000
+@@ -1636,8 +1636,7 @@
+ 	 * Packet length and doff are validated by header prediction,
+ 	 * provided case of th->doff==0 is eliminated.
+ 	 * So, we defer the checks. */
+-	if ((skb->ip_summed != CHECKSUM_UNNECESSARY &&
+-	     tcp_v4_checksum_init(skb)))
++	if (!skb_csum_unnecessary(skb) && tcp_v4_checksum_init(skb))
+ 		goto bad_packet;
+ 
+ 	th = skb->h.th;
+diff -ur linux-2.6.20.i386.orig/net/ipv4/udp.c linux-2.6.20.i386/net/ipv4/udp.c
+--- linux-2.6.20.i386.orig/net/ipv4/udp.c	2007-04-24 15:10:23.000000000 +1000
++++ linux-2.6.20.i386/net/ipv4/udp.c	2007-04-24 15:18:08.000000000 +1000
+@@ -839,7 +839,7 @@
+ 	 * 	          (re-)compute it if message is truncated.
+ 	 * 	UDP-Lite: always needs to checksum, no HW support.
+ 	 */
+-	copy_only = (skb->ip_summed==CHECKSUM_UNNECESSARY);
++	copy_only = skb_csum_unnecessary(skb);
+ 
+ 	if (is_udplite  ||  (!copy_only  &&  msg->msg_flags&MSG_TRUNC)) {
+ 		if (__udp_lib_checksum_complete(skb))
+@@ -1095,7 +1095,7 @@
+ 		}
+ 	}
+ 
+-	if (sk->sk_filter && skb->ip_summed != CHECKSUM_UNNECESSARY) {
++	if (sk->sk_filter && !skb_csum_unnecessary(skb)) {
+ 		if (__udp_lib_checksum_complete(skb))
+ 			goto drop;
+ 		skb->ip_summed = CHECKSUM_UNNECESSARY;
+@@ -1175,7 +1175,7 @@
+ 				      skb->len, IPPROTO_UDP, skb->csum       ))
+ 			skb->ip_summed = CHECKSUM_UNNECESSARY;
+ 	}
+-	if (skb->ip_summed != CHECKSUM_UNNECESSARY)
++	if (!skb_csum_unnecessary(skb))
+ 		skb->csum = csum_tcpudp_nofold(skb->nh.iph->saddr,
+ 					       skb->nh.iph->daddr,
+ 					       skb->len, IPPROTO_UDP, 0);
+diff -ur linux-2.6.20.i386.orig/net/ipv6/raw.c linux-2.6.20.i386/net/ipv6/raw.c
+--- linux-2.6.20.i386.orig/net/ipv6/raw.c	2007-03-30 13:39:11.000000000 +1000
++++ linux-2.6.20.i386/net/ipv6/raw.c	2007-04-24 15:18:35.000000000 +1000
+@@ -369,7 +369,7 @@
+ 				     skb->len, inet->num, skb->csum))
+ 			skb->ip_summed = CHECKSUM_UNNECESSARY;
+ 	}
+-	if (skb->ip_summed != CHECKSUM_UNNECESSARY)
++	if (!skb_csum_unnecessary(skb))
+ 		skb->csum = ~csum_unfold(csum_ipv6_magic(&skb->nh.ipv6h->saddr,
+ 					     &skb->nh.ipv6h->daddr,
+ 					     skb->len, inet->num, 0));
+@@ -421,7 +421,7 @@
+   		msg->msg_flags |= MSG_TRUNC;
+   	}
+ 
+-	if (skb->ip_summed==CHECKSUM_UNNECESSARY) {
++	if (skb_csum_unnecessary(skb)) {
+ 		err = skb_copy_datagram_iovec(skb, 0, msg->msg_iov, copied);
+ 	} else if (msg->msg_flags&MSG_TRUNC) {
+ 		if (__skb_checksum_complete(skb))
+diff -ur linux-2.6.20.i386.orig/net/ipv6/tcp_ipv6.c linux-2.6.20.i386/net/ipv6/tcp_ipv6.c
+--- linux-2.6.20.i386.orig/net/ipv6/tcp_ipv6.c	2007-04-24 15:10:43.000000000 +1000
++++ linux-2.6.20.i386/net/ipv6/tcp_ipv6.c	2007-04-24 15:16:44.000000000 +1000
+@@ -1705,8 +1705,7 @@
+ 	if (!pskb_may_pull(skb, th->doff*4))
+ 		goto discard_it;
+ 
+-	if ((skb->ip_summed != CHECKSUM_UNNECESSARY &&
+-	     tcp_v6_checksum_init(skb)))
++	if (!skb_csum_unnecessary(skb) && tcp_v6_checksum_init(skb))
+ 		goto bad_packet;
+ 
+ 	th = skb->h.th;
+diff -ur linux-2.6.20.i386.orig/net/ipv6/udp.c linux-2.6.20.i386/net/ipv6/udp.c
+--- linux-2.6.20.i386.orig/net/ipv6/udp.c	2007-03-30 13:39:11.000000000 +1000
++++ linux-2.6.20.i386/net/ipv6/udp.c	2007-04-24 15:19:35.000000000 +1000
+@@ -144,7 +144,7 @@
+ 	/*
+ 	 * 	Decide whether to checksum and/or copy data.
+ 	 */
+-	copy_only = (skb->ip_summed==CHECKSUM_UNNECESSARY);
++	copy_only = skb_csum_unnecessary(skb);
+ 
+ 	if (is_udplite  ||  (!copy_only  &&  msg->msg_flags&MSG_TRUNC)) {
+ 		if (__udp_lib_checksum_complete(skb))
+@@ -382,7 +382,7 @@
+ 		    	     skb->len, IPPROTO_UDP, skb->csum             ))
+ 		skb->ip_summed = CHECKSUM_UNNECESSARY;
+ 
+-	if (skb->ip_summed != CHECKSUM_UNNECESSARY)
++	if (!skb_csum_unnecessary(skb))
+ 		skb->csum = ~csum_unfold(csum_ipv6_magic(&skb->nh.ipv6h->saddr,
+ 							 &skb->nh.ipv6h->daddr,
+ 							 skb->len, IPPROTO_UDP,
+diff -ur linux-2.6.20.i386.orig/net/sctp/input.c linux-2.6.20.i386/net/sctp/input.c
+--- linux-2.6.20.i386.orig/net/sctp/input.c	2007-03-30 13:39:11.000000000 +1000
++++ linux-2.6.20.i386/net/sctp/input.c	2007-04-24 15:16:44.000000000 +1000
+@@ -144,8 +144,7 @@
+ 	__skb_pull(skb, skb->h.raw - skb->data);
+ 	if (skb->len < sizeof(struct sctphdr))
+ 		goto discard_it;
+-	if ((skb->ip_summed != CHECKSUM_UNNECESSARY) &&
+-	    (sctp_rcv_checksum(skb) < 0))
++	if (!skb_csum_unnecessary(skb) && sctp_rcv_checksum(skb) < 0)
+ 		goto discard_it;
+ 
+ 	skb_pull(skb, sizeof(struct sctphdr));
+diff -ur linux-2.6.20.i386.orig/net/sunrpc/socklib.c linux-2.6.20.i386/net/sunrpc/socklib.c
+--- linux-2.6.20.i386.orig/net/sunrpc/socklib.c	2007-03-30 13:39:12.000000000 +1000
++++ linux-2.6.20.i386/net/sunrpc/socklib.c	2007-04-24 15:16:44.000000000 +1000
+@@ -154,7 +154,7 @@
+ 	desc.offset = sizeof(struct udphdr);
+ 	desc.count = skb->len - desc.offset;
+ 
+-	if (skb->ip_summed == CHECKSUM_UNNECESSARY)
++	if (skb_csum_unnecessary(skb))
+ 		goto no_checksum;
+ 
+ 	desc.csum = csum_partial(skb->data, desc.offset, skb->csum);
+
+

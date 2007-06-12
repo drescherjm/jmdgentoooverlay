@@ -1,0 +1,12 @@
+diff --git a/arch/x86_64/kernel/process-xen.c b/arch/x86_64/kernel/process-xen.c
+index 1c251c6..c41b068 100644
+--- a/arch/x86_64/kernel/process-xen.c
++++ b/arch/x86_64/kernel/process-xen.c
+@@ -72,6 +72,7 @@ EXPORT_SYMBOL(boot_option_idle_override);
+  * Powermanagement idle function, if any..
+  */
+ void (*pm_idle)(void);
++EXPORT_SYMBOL(pm_idle);
+ static DEFINE_PER_CPU(unsigned int, cpu_idle_state);
+ 
+ static ATOMIC_NOTIFIER_HEAD(idle_notifier);

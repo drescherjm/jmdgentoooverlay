@@ -1,0 +1,7 @@
+# /etc/conf.d/xendomains
+
+# Directory of domains to boot. AUTODIR should contain one or more symlinks
+# to domain config files in /etc/xen
+
+AUTODIR=/etc/xen/auto
+

@@ -1,0 +1,37 @@
+From: Herbert Xu <herbert.xu@redhat.com>
+Subject: Re: Final resolution for the checksum problems
+
+
+Daniel P. Berrange <berrange@redhat.com> wrote:
+>
+>> > Alternatively we could just make netback default tx checksums to off
+>> > which should have a similar effect as disabling it on virbr0.
+>> 
+>> This seems like a simpler path than introducing new infrastructure for
+>> scripts to run every time the interface is brought up/down.  And then
+>> it's even easier to remove the "trigger" when we get the functionality
+>> in the kernel
+> 
+> I agree - this would be even simpler. 
+
+Here is a patch which does just that.
+
+Cheers,
+-- 
+Visit Openswan at http://www.openswan.org/
+Email: Herbert Xu ~{PmV>HI~} <herbert@gondor.apana.org.au>
+Home Page: http://gondor.apana.org.au/~herbert/
+PGP Key: http://gondor.apana.org.au/~herbert/pubkey.txt
+--
+--- a/drivers/xen/netback/interface.c	2007-04-28 11:57:31.000000000 +1000
++++ b/drivers/xen/netback/interface.c	2007-05-02 19:58:16.000000000 +1000
+@@ -161,7 +161,6 @@
+ 	dev->open            = net_open;
+ 	dev->stop            = net_close;
+ 	dev->change_mtu	     = netbk_change_mtu;
+-	dev->features        = NETIF_F_IP_CSUM;
+ 
+ 	SET_ETHTOOL_OPS(dev, &network_ethtool_ops);
+ 
+
+

@@ -1,0 +1,13 @@
+diff -r 00cc4568f10f arch/x86_64/kernel/apic-xen.c
+--- a/arch/x86_64/kernel/apic-xen.c	Tue Jul 25 21:07:37 2006 +0200
++++ b/arch/x86_64/kernel/apic-xen.c	Tue Jul 25 21:17:54 2006 +0200
+@@ -174,7 +174,8 @@ asmlinkage void smp_error_interrupt(void
+ 	   6: Received illegal vector
+ 	   7: Illegal register address
+ 	*/
+-	printk (KERN_DEBUG "APIC error on CPU%d: %02x(%02x)\n",
++	if (num_online_cpus() > 1)
++		printk (KERN_DEBUG "APIC error on CPU%d: %02x(%02x)\n",
+ 	        smp_processor_id(), v , v1);
+ 	irq_exit();
+ }

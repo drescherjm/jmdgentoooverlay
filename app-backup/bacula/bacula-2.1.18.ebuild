@@ -243,6 +243,10 @@ src_install() {
 			|| die "Failed to install gnome menu files"
 	fi
 
+        if useq bacula-bat; then
+                cp ${S}/src/qt-console/bat ${D}/usr/sbin
+        fi
+
 	# extra files which 'make install' doesn't cover
 	if ! useq bacula-clientonly; then
 	    # the database update scripts

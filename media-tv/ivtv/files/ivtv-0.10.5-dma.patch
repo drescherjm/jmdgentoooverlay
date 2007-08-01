@@ -1,0 +1,43 @@
+--- driver/ivtv-driver.c.orig	2007-07-28 13:52:29.000000000 -0400
++++ driver/ivtv-driver.c	2007-07-28 14:00:43.000000000 -0400
+@@ -1103,7 +1103,7 @@
+         }
+ 	itv->params.video_gop_size = itv->is_60hz ? 15 : 12;
+ 
+-	itv->stream_buf_size[IVTV_ENC_STREAM_TYPE_MPG] = 0x08000;
++	itv->stream_buf_size[IVTV_ENC_STREAM_TYPE_MPG] = 0x1F000;
+ 	itv->stream_buf_size[IVTV_ENC_STREAM_TYPE_PCM] = 0x01200;
+ 	itv->stream_buf_size[IVTV_DEC_STREAM_TYPE_MPG] = 0x10000;
+         
+@@ -1309,7 +1309,7 @@
+ 
+ static int module_start(void)
+ {
+-	printk(KERN_INFO "ivtv:  ==================== START INIT IVTV ====================\n");
++	printk(KERN_INFO "ivtv:  ==================== START INIT IVTV [64k buffer patch] ====================\n");
+ 	printk(KERN_INFO "ivtv:  version %s loading\n", IVTV_VERSION);
+ 	printk(KERN_INFO "ivtv:  Linux version: " VERMAGIC_STRING "\n");
+ 	printk(KERN_INFO "ivtv:  In case of problems please include the debug info between\n");
+--- driver/ivtv-irq.c.orig	2007-07-28 14:02:46.000000000 -0400
++++ driver/ivtv-irq.c	2007-07-28 14:16:21.000000000 -0400
+@@ -130,6 +130,10 @@
+                         offset = data[1];
+                         size = data[2];
+                         s->dma_pts = 0;
++			if (size > 0x1F000) {
++			    IVTV_WARN("Warning: Large transfer requested 0x%08x (truncating)\n",size);
++			    size=0x1F000;
++			}
+                         break;
+ 
+                 case IVTV_ENC_STREAM_TYPE_YUV:
+@@ -896,7 +900,8 @@
+ 	
+ 	if (!test_bit(IVTV_F_I_DMA, &itv->i_flags))
+ 		return;
+-	IVTV_ERR("DMA TIMEOUT %08x %d\n", read_reg(IVTV_REG_DMASTATUS), itv->cur_dma_stream);
++	IVTV_ERR("DMA TIMEOUT [deltimer]  %08x %d\n", read_reg(IVTV_REG_DMASTATUS), itv->cur_dma_stream);
++	del_timer(&itv->dma_timer);
+ 
+ 	write_reg(read_reg(IVTV_REG_DMASTATUS) & 3, IVTV_REG_DMASTATUS);
+ 	clear_bit(IVTV_F_I_UDMA, &itv->i_flags);

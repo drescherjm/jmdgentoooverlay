@@ -9,7 +9,7 @@ ESVN_CO_DIR="${PORTAGE_ACTUAL_DISTDIR-${DISTDIR}}"/svn-src/${P/-svn}/"${ESVN_REP
 ESVN_REPO_URI="svn://svn.berlios.de/codeblocks/trunk"
 ESVN_PROJECT="${P}"
 
-WX_GTK_VER="2.6"
+WX_GTK_VER="2.8"
 
 DESCRIPTION="free cross-platform C/C++ IDE"
 HOMEPAGE="http://www.codeblocks.org/"
@@ -30,15 +30,33 @@ DEPEND="${RDEPEND}
    >=sys-devel/libtool-1.4
    app-arch/zip"
 
-pkg_setup() {
-   if use unicode; then
-      #check for gtk2-unicode
-      need-wxwidgets unicode
-   else
-      #check for gtk2-ansi
-      need-wxwidgets gtk2
-   fi
-}
+#pkg_setup() {
+#   if use unicode; then
+#      #check for gtk2-unicode
+#      need-wxwidgets unicode
+#   else
+#      #check for gtk2-ansi
+#      need-wxwidgets gtk2
+#   fi
+#}
+
+src_unpack() {
+        subversion_src_unpack
+
+        use vanilla || \
+        EPATCH_SOURCE="${FILESDIR}/patches" \
+        EPATCH_SUFFIX="patch" \
+        EPATCH_ARCH="all" \
+        epatch
+#        sed -i -e "s:\$(top_srcdir):${ESVN_CO_DIR}:" src/tools/autorevision/Makefile.am
+
+       sed -i -e "s:\$(top_srcdir):${ESVN_CO_DIR}:" ${S}/src/build_tools/autorevision/Makefile.am
+
+       REV_FILE_M4=./revision.m4
+       CB_REV=0
+       CB_REV=`LC_ALL=C svn info "${ESVN_CO_DIR}" | grep Revision: | cut -d" " -f2`;
+       echo "m4_define([SVN_REVISION], trunk-r${CB_REV})" > ${S}/$REV_FILE_M4 
+} 
 
 src_compile() {
    export WANT_AUTOCONF=2.5

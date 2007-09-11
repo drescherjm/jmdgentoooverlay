@@ -1,0 +1,30 @@
+diff -ruN samba-3.0.25c.orig/source/python/py_smb.c samba-3.0.25c/source/python/py_smb.c
+--- samba-3.0.25c.orig/source/python/py_smb.c	2007-03-01 05:53:57.000000000 +0100
++++ samba-3.0.25c/source/python/py_smb.c	2007-08-26 13:32:11.000000000 +0200
+@@ -39,6 +39,7 @@
+ 	struct cli_state *cli;
+ 	char *server;
+ 	struct in_addr ip;
++	NTSTATUS status;
+ 
+ 	if (!PyArg_ParseTupleAndKeywords(args, kw, "s", kwlist, &server))
+ 		return NULL;
+@@ -48,7 +49,8 @@
+ 
+ 	ZERO_STRUCT(ip);
+ 
+-	if (!cli_connect(cli, server, &ip))
++	status = cli_connect(cli, server, &ip);
++	if (!NT_STATUS_IS_OK(status))
+ 		return NULL;
+ 
+ 	return new_cli_state_object(cli);
+@@ -59,7 +61,7 @@
+ {
+ 	cli_state_object *cli = (cli_state_object *)self;
+ 	static char *kwlist[] = { "called", "calling", NULL };
+-	char *calling_name = NULL, *called_name;
++	const char *calling_name = NULL, *called_name;
+ 	struct nmb_name calling, called;
+ 	BOOL result;
+ 

@@ -19,15 +19,15 @@
 
 inherit eutils
 
-IUSE="bacula-clientonly bacula-console bacula-nodir bacula-nosd bacula-split-init doc gnome logrotate logwatch mysql postgres python readline sqlite sqlite3 ssl static tcpd wxwindows X bacula-bat"
+IUSE="bacula-clientonly bacula-console bacula-nodir bacula-nosd bacula-split-init doc gnome logrotate logwatch mysql postgres python readline sqlite sqlite3 ssl static tcpd wxwindows X bacula-bat bacula-batch-insert"
 KEYWORDS="~amd64 ~hppa ~ppc ~sparc ~x86"
 
 DESCRIPTION="Featureful client/server network backup suite"
 HOMEPAGE="http://www.bacula.org/"
 
-DOC_VER="2.0.3"
+DOC_VER="2.2.0"
 SRC_URI="mirror://sourceforge/bacula/${P}.tar.gz
-		doc? ( mirror://sourceforge/bacula/${PN}-docs-${DOC_VER}.tar.gz )"
+		doc? ( mirror://sourceforge/bacula/${PN}-docs-${DOC_VER}.tar.bz2 )"
 
 LICENSE="GPL-2"
 SLOT="0"
@@ -51,6 +51,7 @@ DEPEND="
 	)
 	bacula-bat? (
                 >=x11-libs/qt-4.2.0
+		>=x11-libs/qwt-5.0
         )
 	ssl? ( dev-libs/openssl )
 	logrotate? ( app-admin/logrotate )
@@ -136,7 +137,7 @@ src_unpack() {
 }
 
 src_compile() {
-	local myconf=''
+	local myconf="$(use_enable bacula-batch-insert batch-insert)"
 
 	if useq bacula-clientonly; then
 		myconf="${myconf} \
@@ -165,7 +166,8 @@ src_compile() {
 			$(use_enable gnome tray-monitor) \
 			$(use_enable wxwindows bwx-console) \
 			$(use_enable static static-cons) \
-			$(use_enable bacula-bat bat)"
+			$(use_enable bacula-bat bat) \
+			--with-qwt=/usr"
 	fi
 
 	myconf="${myconf} \
@@ -242,6 +244,10 @@ src_install() {
 		emake DESTDIR="${D}" install-menu-xsu \
 			|| die "Failed to install gnome menu files"
 	fi
+
+        if useq bacula-bat; then
+                cp ${S}/src/qt-console/bat ${D}/usr/sbin
+        fi
 
 	# extra files which 'make install' doesn't cover
 	if ! useq bacula-clientonly; then

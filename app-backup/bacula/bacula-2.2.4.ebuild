@@ -198,24 +198,6 @@ src_compile() {
 
 	emake || die "emake failed"
 
-	# build docs from bacula-docs tarball
-	if useq doc; then
-		pushd "${WORKDIR}/${PN}-docs-${DOC_VER}"
-
-		./configure \
-			--with-bacula=${S} \
-			|| die "configure for bacula-docs failed"
-
-		# the main Makefile tries to build stuff in
-		# ./developer/ and ./bacula-web/, which is
-		# unfortunately broken in 2.0.3, so we only
-		# build stuff in ./manual/, which works.
-		pushd manual
-		emake -j1 || die "emake for bacula-docs failed"
-		popd
-
-		popd
-	fi
 }
 
 src_install() {

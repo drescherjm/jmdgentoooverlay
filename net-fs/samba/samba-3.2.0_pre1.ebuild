@@ -1,6 +1,6 @@
 # Copyright 1999-2007 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
-# $Header: /var/cvsroot/gentoo-x86/net-fs/samba/samba-3.0.25c-r1.ebuild,v 1.3 2007/09/10 08:21:23 dev-zero Exp $
+# $Header: /var/cvsroot/gentoo-x86/net-fs/samba/samba-3.0.26a.ebuild,v 1.1 2007/09/15 05:27:23 dev-zero Exp $
 
 inherit eutils pam python multilib versionator confutils
 
@@ -8,7 +8,7 @@ MY_P=${PN}-${PV/_/}
 
 DESCRIPTION="A suite of SMB and CIFS client/server programs for UNIX"
 HOMEPAGE="http://www.samba.org/"
-SRC_URI="mirror://samba/${MY_P}.tar.gz
+SRC_URI="mirror://samba/pre/${MY_P}.tar.gz
 	mirror://samba/old-versions/${MY_P}.tar.gz"
 LICENSE="GPL-2"
 SLOT="0"
@@ -48,8 +48,7 @@ src_unpack() {
 
 	# This patch adds "-Wl,-z,now" to smb{mnt,umount}
 	# Please read ... for further informations
-	epatch "${FILESDIR}/${PV}-lazyldflags.patch"
-#	epatch "${FILESDIR}/${PV}-py_smp.patch"
+#	epatch "${FILESDIR}/${PV}-lazyldflags.patch"
 
 	# Ok, agreed, this is ugly. But it avoids a patch we
 	# need for every samba version and we don't need autotools
@@ -114,6 +113,7 @@ src_compile() {
 		$(use_with automount) \
 		$(use_enable cups) \
 		$(use_enable fam) \
+                $(use_enable swat) \
 		$(use_with ads krb5) \
 		$(use_with ldap) \
 		$(use_with pam) $(use_with pam pam_smbpass) \
@@ -127,9 +127,9 @@ src_compile() {
 	emake proto || die "emake proto failed"
 	emake everything || die "emake everything failed"
 
-	if use python ; then
-		emake python_ext || die "emake python_ext failed"
-	fi
+	#if use python ; then
+	#	emake python_ext || die "emake python_ext failed"
+	#fi
 }
 
 src_test() {

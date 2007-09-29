@@ -1,0 +1,44 @@
+# ChangeLog for media-tv/pvr-firmware
+# Copyright 1999-2007 Gentoo Foundation; Distributed under the GPL v2
+# $Header: /var/cvsroot/gentoo-x86/media-tv/pvr-firmware/ChangeLog,v 1.8 2007/01/30 15:09:38 cardoe Exp $
+
+  30 Jan 2007; Doug Goldstein <cardoe@gentoo.org>
+  pvr-firmware-20061007.ebuild:
+  Fix udev/hotplug depends
+
+  30 Jan 2007; Doug Goldstein <cardoe@gentoo.org>
+  pvr-firmware-20061007.ebuild:
+  mark ppc
+
+  06 Dec 2006; Doug Goldstein <cardoe@gentoo.org>
+  -pvr-firmware-20060701-r1.ebuild, pvr-firmware-20061007.ebuild:
+  Remove old version. Fix hotplug depends for new udev
+
+  07 Nov 2006; Doug Goldstein <cardoe@gentoo.org>
+  pvr-firmware-20061007.ebuild:
+  Stable on amd64 and x86. It's just firmware files. They haven't changed from
+  the previous release. Just added some more to be nice. I use them on stable.
+
+  06 Nov 2006; Danny van Dyk <kugelfang@gentoo.org>
+  pvr-firmware-20060701-r1.ebuild:
+  Marked stable on amd64.
+
+  19 Oct 2006; Joshua Jackson <tsunam@gentoo.org>
+  pvr-firmware-20060701-r1.ebuild:
+  Stable x86; at Cardoe's request
+
+*pvr-firmware-20061007 (08 Oct 2006)
+*pvr-firmware-20060701-r1 (08 Oct 2006)
+
+  08 Oct 2006; Doug Goldstein <cardoe@gentoo.org>
+  -pvr-firmware-20060701.ebuild, +pvr-firmware-20060701-r1.ebuild,
+  +pvr-firmware-20061007.ebuild:
+  Rev bump. Includes updates to pvrusb2 firmwares. Fixed issue where I wasn't
+  copying in the init firmware for PVR-350
+
+*pvr-firmware-20060701 (05 Oct 2006)
+
+  05 Oct 2006; Doug Goldstein <cardoe@gentoo.org> +metadata.xml,
+  +pvr-firmware-20060701.ebuild:
+  Initial revision
+

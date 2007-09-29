@@ -1,0 +1,24 @@
+Updated samba to 3.2.0_pre1
+--This line, and those below, will be ignored--
+
+A    samba/files/3.2.0_pre1-lazyldflags.patch
+D    samba/files/digest-samba-3.0.24
+D    samba/files/digest-samba-3.0.25a
+D    samba/files/digest-samba-3.0.25b
+A    samba/files/config
+A    samba/files/config/samba.pam
+A    samba/files/config/samba.schema
+A    samba/files/config/smb.conf.example-samba3
+A    samba/files/config/smbusers
+A    samba/files/config/nsswitch.conf-wins
+A    samba/files/config/swat.xinetd
+A    samba/files/config/lmhosts
+A    samba/files/config/system-auth-winbind
+A    samba/files/config/nsswitch.conf-winbind
+A    samba/files/digest-samba-3.2.0_pre1
+M    samba/Manifest
+D    samba/samba-3.0.24.ebuild
+D    samba/samba-3.0.25a.ebuild
+D    samba/samba-3.0.25b.ebuild
+A    samba/samba-3.2.0_pre1.ebuild
+D    samba/samba-3.0.25c.ebuild

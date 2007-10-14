@@ -13,7 +13,7 @@ KEYWORDS="~amd64 ~ppc ~x86"
 IUSE=""
 
 DEPEND=""
-RDEPEND="net-www/apache"
+RDEPEND="www-servers/apache"
 
 pkg_setup() {
         has_php

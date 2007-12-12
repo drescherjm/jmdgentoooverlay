@@ -1,6 +1,6 @@
-# Copyright 1999-2005 Gentoo Foundation
+# Copyright 1999-2007 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
-# $Header: /var/cvsroot/gentoo-x86/sys-block/partimage/partimage-0.6.4-r4.ebuild,v 1.8 2005/12/31 14:11:38 flameeyes Exp $
+# $Header: $
 
 inherit eutils flag-o-matic pam
 
@@ -9,14 +9,15 @@ HOMEPAGE="http://www.partimage.org/"
 SRC_URI="mirror://sourceforge/partimage/${P}.tar.bz2"
 LICENSE="GPL-2"
 SLOT="0"
-KEYWORDS="*- ~x86 ~ppc ~sparc"
-IUSE="ssl nologin nls pam static"
+KEYWORDS="~x86 ~ppc ~sparc ~amd64"
+IUSE="ssl nologin nls pam static unicode"
 
 DEPEND="virtual/libc
 	>=sys-libs/zlib-1.1.4
 	>=dev-libs/newt-0.51.6
 	app-arch/bzip2
-	>=sys-libs/slang-1.4.5-r2
+	sys-devel/automake
+	=sys-libs/slang-1*
 	nls? ( sys-devel/gettext )
 	ssl? ( >=dev-libs/openssl-0.9.6g )
 	sys-devel/autoconf"
@@ -51,19 +52,18 @@ src_unpack() {
 	cd ${S}
 
 	# we can do better security ourselves
-#	epatch ${FILESDIR}/${P}-nodumbpermchecks.diff || die
-#	epatch ${FILESDIR}/${P}-chown.patch || die
-#	epatch ${FILESDIR}/${P}-not_install_info.patch || die
-#	epatch ${FILESDIR}/${P}-fixserverargs.diff || die
-#	epatch ${FILESDIR}/${P}-lib64.patch || die
-#	epatch ${FILESDIR}/${P}-fflush-before-re-read-partition-table.patch || die
-#	epatch ${FILESDIR}/${P}-LP64-fixes.patch || die
-#	epatch ${FILESDIR}/${P}-save_all_and_rest_all_actions.patch || die
-#	epatch ${FILESDIR}/${P}-datadir-path.patch || die
+	epatch ${FILESDIR}/partimage-0.6.5-chown.patch || die
+	epatch ${FILESDIR}/partimage-0.6.4-not_install_info.patch || die
+	epatch ${FILESDIR}/partimage-0.6.4-datadir-path.patch || die
+
+	if use unicode; then
+		cp ${FILESDIR}/de.po ${S}/po/de.po
+	fi
 }
 
 src_compile() {
 	filter-flags -fno-exceptions
+	use ppc && append-flags -fsigned-char
 
 	local myconf
 	use nologin && myconf="${myconf} --disable-login"
@@ -90,7 +90,7 @@ src_compile() {
 
 src_install() {
 	emake DESTDIR=${D} \
-		MKINSTALLDIRS=/usr/share/automake-1.8/mkinstalldirs install || die
+		MKINSTALLDIRS=/usr/share/automake-1.10/mkinstalldirs install || die
 
 	keepdir /var/log/partimage
 
@@ -100,7 +100,7 @@ src_install() {
 	exeinto /etc/init.d ; newexe ${FILESDIR}/${PN}d.init ${PN}d || die
 	insinto /etc/conf.d ; newins ${FILESDIR}/${PN}d.conf ${PN}d || die
 
-	doman debian/partimage.1 debian/partimaged.8 ${FILESDIR}/partimagedusers.5 || die
+	doman doc/en/man/partimage.1 doc/en/man/partimaged.8 doc/en/man/partimagedusers.5 || die
 	dodoc AUTHORS BUGS COPYING ChangeLog INSTALL README* TODO partimage.lsm
 
 	# pam

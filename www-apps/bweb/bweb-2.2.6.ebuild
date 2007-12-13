@@ -1,5 +1,4 @@
-inherit webapp depend.php eutils perl-module
-
+inherit webapp perl-module
 
 MY_PV="${PV}-1"
 
@@ -23,19 +22,22 @@ S=${WORKDIR}/bacula-gui-${MY_PV}/bweb
 src_unpack() {
         unpack ${A}
 	cd ${S}
-	pwd
 }
 
-#src_compile(){
-#	pwd
-#}
+pkg_setup () {
+  webapp_pkg_setup
+}
 
 src_install() {
+
         webapp_src_preinst
 
         cp -R * ${D}/${MY_HTDOCSDIR}
-#	webapp_configfile ${MY_HTDOCSDIR}/configs/bacula.conf
+
 	webapp_serverowned -R ${MY_HTDOCSDIR}
         webapp_src_install
 }
 
+pkg_postinst() {
+  webapp_pkg_postinst
+}

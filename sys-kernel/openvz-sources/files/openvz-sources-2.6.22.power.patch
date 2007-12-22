@@ -1,0 +1,31 @@
+--- process.c	2007-12-15 00:26:46.000000000 -0500
++++ /usr/src/linux/kernel/power/process.c	2007-12-15 00:24:08.000000000 -0500
+@@ -211,26 +211,19 @@
+ {
+ 	unsigned int nr_unfrozen;
+ 
+-	atomic_inc(&global_suspend);
+ 	printk("Stopping tasks ... ");
+ 	nr_unfrozen = try_to_freeze_tasks(FREEZER_USER_SPACE);
+ 	if (nr_unfrozen)
+-		goto out;
++		return nr_unfrozen;
+ 
+ 	sys_sync();
+ 	nr_unfrozen = try_to_freeze_tasks(FREEZER_KERNEL_THREADS);
+ 	if (nr_unfrozen)
+-		goto out;
+-
+-	atomic_dec(&global_suspend);
++		return nr_unfrozen;
+ 
+ 	printk("done.\n");
+ 	BUG_ON(in_atomic());
+ 	return 0;
+-
+-out:
+-	atomic_dec(&global_suspend);
+-	return nr_unfrozen;
+ }
+ 
+ static void thaw_tasks(int thaw_user_space)

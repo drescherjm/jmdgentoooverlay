@@ -1,0 +1,22 @@
+#!/sbin/runscript
+# Copyright 1999-2007 Gentoo Foundation
+# Distributed under the terms of the GNU General Public License v2
+# $Header: /var/cvsroot/gentoo-x86/app-backup/bacula/files/2.2.7/bacula-fd-init,v 1.1 2007/12/29 16:21:09 wschlich Exp $
+
+depend() {
+	need net
+	use dns
+}
+
+start() {
+	ebegin "Starting bacula file daemon"
+	start-stop-daemon --start --quiet --exec /usr/sbin/bacula-fd \
+		-- ${FD_OPTIONS}
+	eend $?
+}
+
+stop() {
+	ebegin "Stopping bacula file daemon"
+	start-stop-daemon --stop --quiet --pidfile /var/run/bacula-fd.*.pid
+	eend $?
+}

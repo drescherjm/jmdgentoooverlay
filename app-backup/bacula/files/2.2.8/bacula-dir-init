@@ -1,0 +1,25 @@
+#!/sbin/runscript
+# Copyright 1999-2007 Gentoo Foundation
+# Distributed under the terms of the GNU General Public License v2
+# $Header: /var/cvsroot/gentoo-x86/app-backup/bacula/files/2.2.7/bacula-dir-init,v 1.1 2007/12/29 16:21:09 wschlich Exp $
+
+depend() {
+	need net
+	if [ ${LOCAL_DB} -eq 1 ]; then
+		need "%database%"
+	fi
+	use dns
+}
+
+start() {
+	ebegin "Starting bacula director"
+	start-stop-daemon --start --quiet --exec /usr/sbin/bacula-dir \
+		-- ${DIR_OPTIONS}
+	eend $?
+}
+
+stop() {
+	ebegin "Stopping bacula director"
+	start-stop-daemon --stop --quiet --pidfile /var/run/bacula-dir.*.pid
+	eend $?
+}

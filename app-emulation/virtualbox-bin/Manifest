@@ -1,8 +1,2 @@
 DIST VirtualBox_1.4.0_Linux_amd64.run 11766998 RMD160 973378f363f251065044d5e6244fff84eef0ae69 SHA1 8e72562248bd1638e1c3883d81c2e0206e8eed2d SHA256 5fa13a82fe1cb333668e6dfa84005e78e9ac08a0bb4b68d8e053bde630345ff7
 EBUILD virtualbox-bin-1.4.0.ebuild 3889 RMD160 69bcf667bbb8ea01cddc1686eb50d5400db5cb2d SHA1 40e2282d6dcb39e6dc368b01e7836e7e2fd02d14 SHA256 522d589a6eedcf5246d3306a1ba4954a8b32c6d65dc9aab0eff63c3745ec6882
-MD5 d0f8366fae28c24ae4a77102ff04aed8 virtualbox-bin-1.4.0.ebuild 3889
-RMD160 69bcf667bbb8ea01cddc1686eb50d5400db5cb2d virtualbox-bin-1.4.0.ebuild 3889
-SHA256 522d589a6eedcf5246d3306a1ba4954a8b32c6d65dc9aab0eff63c3745ec6882 virtualbox-bin-1.4.0.ebuild 3889
-MD5 518c89313c1aec12c81aa262194bea1f files/digest-virtualbox-bin-1.4.0 283
-RMD160 2eab657d7f0cebcc6b7ece0969bc6cb303d45e61 files/digest-virtualbox-bin-1.4.0 283
-SHA256 8cd93e0c126906a3fc4d3f7a4c53ddf0506f109d080af177a596bff665fd62e9 files/digest-virtualbox-bin-1.4.0 283

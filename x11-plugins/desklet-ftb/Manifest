@@ -1,12 +1,3 @@
 AUX desklet-ftb-0.3.2-baddiskgauge.patch 1023 RMD160 68f45cc428d7b3e0f5b718cdf1a51affdc8eddaa SHA1 3b8746c1464b86e07bc39544bea42e0adfd0a20f SHA256 b67c17f641a209040461fdc12c713add5e1afefc5f4c5b3ad416fb322706b547
-MD5 f4df767f87d5590e596a30c2be570269 files/desklet-ftb-0.3.2-baddiskgauge.patch 1023
-RMD160 68f45cc428d7b3e0f5b718cdf1a51affdc8eddaa files/desklet-ftb-0.3.2-baddiskgauge.patch 1023
-SHA256 b67c17f641a209040461fdc12c713add5e1afefc5f4c5b3ad416fb322706b547 files/desklet-ftb-0.3.2-baddiskgauge.patch 1023
 DIST FTB-0.3.2.tar.gz 183231 RMD160 a4f3be98f45e78c7e967cb3107ad867fd35d2540 SHA1 e7f12af3703f534bc16922a00bc9e2b9316c17a0 SHA256 62b821d677cb4111449e49d35ae30b206ba6621661d44479ce34ecd3f9a6150c
 EBUILD desklet-ftb-0.3.2.ebuild 745 RMD160 38acfcb69820299070cd63f9ef4caeb7a993f529 SHA1 00d08b5ca3961621218bf39614e670d74543dd52 SHA256 a4cb24ba8295fc7e6931e94abcac4d32c18fa4ac6193e3c1eb4bd5e41b50991f
-MD5 3efb175be32fb805998690a03ee480d5 desklet-ftb-0.3.2.ebuild 745
-RMD160 38acfcb69820299070cd63f9ef4caeb7a993f529 desklet-ftb-0.3.2.ebuild 745
-SHA256 a4cb24ba8295fc7e6931e94abcac4d32c18fa4ac6193e3c1eb4bd5e41b50991f desklet-ftb-0.3.2.ebuild 745
-MD5 9039df0cefb09188d269033d282f32b5 files/digest-desklet-ftb-0.3.2 229
-RMD160 e9b1949d673d5c6b8f3982c672b81697f91d2171 files/digest-desklet-ftb-0.3.2 229
-SHA256 d159e42b33e1c0ad36c7e50cb60191934506cbfd661496d32352a12353177ca4 files/digest-desklet-ftb-0.3.2 229

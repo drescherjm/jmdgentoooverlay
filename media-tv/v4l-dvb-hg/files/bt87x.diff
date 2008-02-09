@@ -1,0 +1,12 @@
+diff -r 93ef35d93d83 linux/sound/pci/bt87x.c
+--- linux/sound/pci/bt87x.c	Fri Feb 08 14:07:04 2008 -0200
++++ linux/sound/pci/bt87x.c	Sat Feb 09 16:09:13 2008 +0100
+@@ -28,7 +28,7 @@
+ #include <linux/moduleparam.h>
+ #include <linux/bitops.h>
+ #include <asm/io.h>
+-#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,24)
++#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,25)
+ #include <sound/driver.h>
+ #endif
+ #include <sound/core.h>

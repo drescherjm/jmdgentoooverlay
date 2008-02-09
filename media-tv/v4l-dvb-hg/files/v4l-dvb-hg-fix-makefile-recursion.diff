@@ -1,0 +1,13 @@
+diff -ru v4l-dvb-orig/v4l/Makefile v4l-dvb/v4l/Makefile
+--- v4l-dvb-orig/v4l/Makefile	2006-05-21 11:05:19.141505104 +0200
++++ v4l-dvb/v4l/Makefile	2006-05-21 11:05:36.972662589 +0200
+@@ -146,9 +146,7 @@
+ 
+ .version::
+ ifneq ($(KERNELRELEASE),)
+-	@echo -e VERSION=$(VERSION)\\nPATCHLEVEL:=$(PATCHLEVEL)\\nSUBLEVEL:=$(SUBLEVEL)\\nKERNELRELEASE:=$(KERNELRELEASE) > $(obj)/.version
+ ifneq ($(SRCDIR),)
+-	@echo -e SRCDIR=$(SRCDIR)\\n >> $(obj)/.version
+ endif
+ else
+ 	@echo "No version yet."

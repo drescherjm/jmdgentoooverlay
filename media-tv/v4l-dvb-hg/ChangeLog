@@ -1,0 +1,78 @@
+# ChangeLog for media-tv/v4l-dvb-hg
+# Copyright 1999-2007 Gentoo Foundation; Distributed under the GPL v2
+# $Header: /var/cvsroot/gentoo-x86/media-tv/v4l-dvb-hg/ChangeLog,v 1.17 2007/10/19 07:49:52 zzam Exp $
+
+  19 Oct 2007; Matthias Schwarzott <zzam@gentoo.org>
+  v4l-dvb-hg-0.1-r2.ebuild:
+  Removed useless depends that already are done by eclasses, Bug 192805.
+
+  16 Oct 2007; Matthias Schwarzott <zzam@gentoo.org>
+  v4l-dvb-hg-0.1-r2.ebuild:
+  Disable makefile-patch as upstream seems to have changed its makefile.
+
+  15 Oct 2007; Matthias Schwarzott <zzam@gentoo.org> metadata.xml:
+  Assign package to media-tv herd only.
+
+  17 Sep 2007; Joerg Bornkessel <hd_brummy@gentoo.org>
+  v4l-dvb-hg-0.1-r2.ebuild:
+  rdepend to dev-util/mercurial fixed; thanks to R.Gruber on bug #192805
+
+  10 Apr 2007; Matthias Schwarzott <zzam@gentoo.org> metadata.xml:
+  Assigned package to vdr-team.
+
+  09 Apr 2007; Matthias Schwarzott <zzam@gentoo.org>
+  v4l-dvb-hg-0.1-r2.ebuild:
+  Moved local patches before make allmodconfig, suggested by Helmut Auer
+  <helmut@helmutauer.de>.
+
+  21 Mar 2007; Matthias Schwarzott <zzam@gentoo.org>
+  v4l-dvb-hg-0.1-r2.ebuild:
+  Make ebuild work with newer Makefile.
+
+  05 Jan 2007; Joerg Bornkessel <hd_brummy@gentoo.org>
+  v4l-dvb-hg-0.1-r2.ebuild:
+  einfo converted to elog
+
+  20 Nov 2006; Matthias Schwarzott <zzam@gentoo.org>
+  v4l-dvb-hg-0.1-r2.ebuild:
+  Made a check for forgotten depmod-calls.
+
+  13 Nov 2006; Matthias Schwarzott <zzam@gentoo.org>
+  v4l-dvb-hg-0.1-r2.ebuild:
+  Enable ebuild to use other repository-pathes than default.
+
+  09 Sep 2006; Matthias Schwarzott <zzam@gentoo.org>
+  v4l-dvb-hg-0.1-r2.ebuild:
+  Also remove depmod from script generating some Makefiles.
+
+  21 Aug 2006; Matthias Schwarzott <zzam@gentoo.org>
+  v4l-dvb-hg-0.1-r2.ebuild:
+  Keyworded ~amd64.
+
+  23 Jun 2006; Matthias Schwarzott <zzam@gentoo.org> -v4l-dvb-hg-0.1.ebuild,
+  -v4l-dvb-hg-0.1-r1.ebuild:
+  Removed older versions.
+
+  23 Jun 2006; Matthias Schwarzott <zzam@gentoo.org>
+  v4l-dvb-hg-0.1-r2.ebuild:
+  Give out message about autoload-modification of stradis-driver.
+
+*v4l-dvb-hg-0.1-r2 (18 Jun 2006)
+
+  18 Jun 2006; Matthias Schwarzott <zzam@gentoo.org>
+  +v4l-dvb-hg-0.1-r2.ebuild:
+  Stop stradis-module from autoloading based on pci-vendor/device-no.
+
+*v4l-dvb-hg-0.1-r1 (24 May 2006)
+
+  24 May 2006; Matthias Schwarzott <zzam@gentoo.org>
+  +v4l-dvb-hg-0.1-r1.ebuild:
+  Added a check for old modules to pkg_setup.
+
+*v4l-dvb-hg-0.1 (21 May 2006)
+
+  21 May 2006; Matthias Schwarzott <zzam@gentoo.org>
+  +files/v4l-dvb-hg-fix-makefile-recursion.diff, +metadata.xml,
+  +v4l-dvb-hg-0.1.ebuild:
+  Initial import of ebuild.
+

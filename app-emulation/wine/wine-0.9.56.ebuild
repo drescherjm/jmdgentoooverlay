@@ -1,45 +1,47 @@
-# Copyright 1999-2006 Gentoo Foundation
+# Copyright 1999-2008 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
-# $Header: /var/cvsroot/gentoo-x86/app-emulation/wine/wine-0.9.10.ebuild,v 1.1 2006/03/16 00:08:36 vapier Exp $
+# $Header: /var/cvsroot/gentoo-x86/app-emulation/wine/wine-0.9.55.ebuild,v 1.1 2008/02/08 19:42:58 vapier Exp $
+
+EAPI="1"
 
 inherit eutils flag-o-matic multilib
 
 DESCRIPTION="free implementation of Windows(tm) on Unix"
 HOMEPAGE="http://www.winehq.com/"
-SRC_URI="mirror://sourceforge/${PN}/wine-${PV}.tar.bz2"
+SRC_URI="mirror://sourceforge/${PN}/wine-${PV}.tar.bz2
+	gecko? ( mirror://sourceforge/wine/wine_gecko-0.1.0.cab )"
 
 LICENSE="LGPL-2.1"
 SLOT="0"
-KEYWORDS="-* ~amd64 ~x86"
-IUSE="alsa arts cups debug esd gif glut jack jpeg lcms ldap nas ncurses opengl oss scanner truetype xml2 X"
+KEYWORDS="-* ~amd64 ~x86 ~x86-fbsd"
+IUSE="alsa cups dbus esd +gecko hal jack jpeg lcms ldap nas ncurses +opengl oss samba scanner xml +X"
 RESTRICT="test" #72375
 
 RDEPEND=">=media-libs/freetype-2.0.0
 	media-fonts/corefonts
 	ncurses? ( >=sys-libs/ncurses-5.2 )
 	jack? ( media-sound/jack-audio-connection-kit )
-	X? ( || ( ( x11-libs/libXrandr
-				x11-libs/libXi
-				x11-libs/libXmu
-				x11-libs/libXxf86dga
-				x11-libs/libXxf86vm
-			)
-			virtual/x11
-		)
+	dbus? ( sys-apps/dbus )
+	hal? ( sys-apps/hal )
+	X? (
+		x11-libs/libXcursor
+		x11-libs/libXrandr
+		x11-libs/libXi
+		x11-libs/libXmu
+		x11-libs/libXxf86vm
+		x11-apps/xmessage
 	)
-	arts? ( kde-base/arts )
 	alsa? ( media-libs/alsa-lib )
 	esd? ( media-sound/esound )
 	nas? ( media-libs/nas )
 	cups? ( net-print/cups )
 	opengl? ( virtual/opengl )
-	gif? ( media-libs/giflib )
 	jpeg? ( media-libs/jpeg )
 	ldap? ( net-nds/openldap )
-	glut? ( virtual/glut )
 	lcms? ( media-libs/lcms )
-	xml2? ( dev-libs/libxml2 dev-libs/libxslt )
-	truetype? ( media-libs/freetype media-gfx/fontforge )
+	samba? ( >=net-fs/samba-3.0.25 )
+	xml? ( dev-libs/libxml2 dev-libs/libxslt )
+	>=media-gfx/fontforge-20060703
 	scanner? ( media-gfx/sane-backends )
 	amd64? (
 		>=app-emulation/emul-linux-x86-xlibs-2.1
@@ -47,29 +49,28 @@ RDEPEND=">=media-libs/freetype-2.0.0
 		>=sys-kernel/linux-headers-2.6
 	)"
 DEPEND="${RDEPEND}
-	X? ( || ( ( x11-proto/inputproto
-				x11-proto/xextproto
-				x11-proto/xf86dgaproto
-				x11-proto/xf86vidmodeproto
-			)
-			virtual/x11
-		)
+	X? (
+		x11-proto/inputproto
+		x11-proto/xextproto
+		x11-proto/xf86vidmodeproto
 	)
 	sys-devel/bison
 	sys-devel/flex"
 
 pkg_setup() {
-	use amd64 && has_multilib_profile && export ABI=x86
+	use alsa || return 0
+	if ! built_with_use --missing true media-libs/alsa-lib midi ; then
+		eerror "You must build media-libs/alsa-lib with USE=midi"
+		die "please re-emerge media-libs/alsa-lib with USE=midi"
+	fi
 }
 
 src_unpack() {
 	unpack wine-${PV}.tar.bz2
 	cd "${S}"
 
-	epatch "${FILESDIR}"/wine-0.9.6-force-ddraw-gamma.patch #119931
 	sed -i '/^UPDATE_DESKTOP_DATABASE/s:=.*:=true:' tools/Makefile.in
 	epatch "${FILESDIR}"/wine-gentoo-no-ssp.patch #66002
-       epatch "${FILESDIR}"/wine-opengl-glx.patch
 	sed -i '/^MimeType/d' tools/wine.desktop || die #117785
 }
 
@@ -87,33 +88,30 @@ config_cache() {
 
 src_compile() {
 	export LDCONFIG=/bin/true
-	use arts    || export ARTSCCONFIG=""
-	use esd     || export ESDCONFIG=""
-	use scanner || export sane_devel="no"
+	use esd     || export ac_cv_path_ESDCONFIG=""
+	use scanner || export ac_cv_path_sane_devel="no"
 	config_cache jack jack/jack.h
 	config_cache cups cups/cups.h
 	config_cache alsa alsa/asoundlib.h sys/asoundlib.h asound:snd_pcm_open
 	config_cache nas audio/audiolib.h audio/soundlib.h
-	config_cache xml2 libxml/parser.h libxslt/pattern.h libxslt/transform.h
+	config_cache xml libxml/parser.h libxslt/pattern.h libxslt/transform.h
 	config_cache ldap ldap.h lber.h
-	config_cache gif gif_lib.h
-	config_cache glut glut:glutMainLoop
+	config_cache dbus dbus/dbus.h
+	config_cache hal hal/libhal.h
 	config_cache jpeg jpeglib.h
 	config_cache oss sys/soundcard.h machine/soundcard.h soundcard.h
 	config_cache lcms lcms.h
-	use x86 && config_cache truetype freetype:FT_Init_FreeType
 
 	strip-flags
 
+	use amd64 && multilib_toolchain_setup x86
+
 	#	$(use_enable amd64 win64)
 	econf \
-		CC=$(tc-getCC) \
 		--sysconfdir=/etc/wine \
 		$(use_with ncurses curses) \
 		$(use_with opengl) \
 		$(use_with X x) \
-		$(use_enable debug trace) \
-		$(use_enable debug) \
 		|| die "configure failed"
 
 	emake -j1 depend || die "depend"
@@ -121,11 +119,15 @@ src_compile() {
 }
 
 src_install() {
-	make DESTDIR="${D}" install || die
-	dodoc ANNOUNCE AUTHORS ChangeLog DEVELOPERS-HINTS README
+	emake DESTDIR="${D}" install || die
+	dodoc ANNOUNCE AUTHORS ChangeLog README
+	if use gecko ; then
+		insinto /usr/share/wine/gecko
+		doins "${DISTDIR}"/wine_gecko-*.cab || die
+	fi
 }
 
 pkg_postinst() {
-	einfo "~/.wine/config is now deprecated.  For configuration either use"
-	einfo "winecfg or regedit HKCU\\Software\\Wine"
+	elog "~/.wine/config is now deprecated.  For configuration either use"
+	elog "winecfg or regedit HKCU\\Software\\Wine"
 }

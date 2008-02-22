@@ -1,0 +1,56 @@
+http://bugs.gentoo.org/202542
+
+fix from Rafal Muzylo building with newer versions of valgrind
+
+--- dlls/ntdll/heap.c
++++ dlls/ntdll/heap.c
+@@ -142,6 +142,8 @@
+     if (TRACE_ON(heap) || WARN_ON(heap)) memset( ptr, ARENA_FREE_FILLER, size );
+ #ifdef VALGRIND_MAKE_NOACCESS
+     VALGRIND_DISCARD( VALGRIND_MAKE_NOACCESS( ptr, size ));
++#elif defined(VALGRIND_MAKE_MEM_NOACCESS)
++    VALGRIND_DISCARD( VALGRIND_MAKE_MEM_NOACCESS( ptr, size ));
+ #endif
+ }
+ 
+@@ -150,6 +152,8 @@
+ {
+ #ifdef VALGRIND_MAKE_READABLE
+     VALGRIND_DISCARD( VALGRIND_MAKE_READABLE( ptr, size ));
++#elif defined(VALGRIND_MAKE_MEM_DEFINED)
++    VALGRIND_DISCARD( VALGRIND_MAKE_MEM_DEFINED( ptr, size ));
+ #endif
+ }
+ 
+@@ -158,6 +162,8 @@
+ {
+ #ifdef VALGRIND_MAKE_WRITABLE
+     VALGRIND_DISCARD( VALGRIND_MAKE_WRITABLE( ptr, size ));
++#elif defined(VALGRIND_MAKE_MEM_UNDEFINED)
++    VALGRIND_DISCARD( VALGRIND_MAKE_MEM_UNDEFINED( ptr, size ));
+ #endif
+     if (TRACE_ON(heap) || WARN_ON(heap))
+     {
+@@ -165,6 +171,8 @@
+ #ifdef VALGRIND_MAKE_WRITABLE
+         /* make it uninitialized to valgrind again */
+         VALGRIND_DISCARD( VALGRIND_MAKE_WRITABLE( ptr, size ));
++#elif defined(VALGRIND_MAKE_MEM_UNDEFINED)
++	VALGRIND_DISCARD( VALGRIND_MAKE_MEM_UNDEFINED( ptr, size ));
+ #endif
+     }
+ }
+--- dlls/ntdll/signal_i386.c
++++ dlls/ntdll/signal_i386.c
+@@ -936,8 +936,10 @@
+     }
+ 
+     stack--;  /* push the stack_layout structure */
+-#ifdef HAVE_VALGRIND_MEMCHECK_H
++#ifdef VALGRIND_MAKE_WRITABLE
+     VALGRIND_MAKE_WRITABLE(stack, sizeof(*stack));
++#elif defined(VALGRIND_MAKE_MEM_UNDEFINED)
++     VALGRIND_MAKE_MEM_UNDEFINED(stack, sizeof(*stack));
+ #endif
+     stack->ret_addr     = (void *)0xdeadbabe;  /* raise_func must not return */
+     stack->rec_ptr      = &stack->rec;

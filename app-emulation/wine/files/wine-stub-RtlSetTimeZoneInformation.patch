@@ -1,0 +1,13 @@
+http://bugs.gentoo.org/162438
+
+--- wine/dlls/ntdll/time.c
++++ wine/dlls/ntdll/time.c
+@@ -1059,7 +1059,7 @@
+  */
+ NTSTATUS WINAPI RtlSetTimeZoneInformation( const RTL_TIME_ZONE_INFORMATION *tzinfo )
+ {
+-#ifdef HAVE_SETTIMEOFDAY
++#if 0 /* settimeofday(NULL) always returns -1: Bug 162438 */
+     struct timezone tz;
+ 
+     tz.tz_minuteswest = tzinfo->Bias;

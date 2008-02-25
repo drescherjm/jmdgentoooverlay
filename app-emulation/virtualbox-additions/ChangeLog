@@ -1,0 +1,72 @@
+# ChangeLog for app-emulation/virtualbox-additions
+# Copyright 1999-2008 Gentoo Foundation; Distributed under the GPL v2
+# $Header: /var/cvsroot/gentoo-x86/app-emulation/virtualbox-additions/ChangeLog,v 1.13 2008/01/05 17:48:38 jokey Exp $
+
+*virtualbox-additions-1.5.4 (05 Jan 2008)
+
+  05 Jan 2008; Markus Ullmann <jokey@gentoo.org>
+  -virtualbox-additions-1.4.0.ebuild, +virtualbox-additions-1.5.4.ebuild:
+  Version bump wrt bug #203893 thanks to x-drum
+
+  29 Oct 2007; Dawid Węgliński <cla@gentoo.org>
+  virtualbox-additions-1.5.2.ebuild:
+  Stable on x86
+
+  22 Oct 2007; Markus Ullmann <jokey@gentoo.org>
+  -virtualbox-additions-1.5.0.ebuild:
+  Drop old
+
+*virtualbox-additions-1.5.2 (22 Oct 2007)
+
+  22 Oct 2007; Markus Ullmann <jokey@gentoo.org>
+  +virtualbox-additions-1.5.2.ebuild:
+  Version bump wrt bug #196424 thanks to Alessio for the ebuilds
+
+*virtualbox-additions-1.5.0 (04 Sep 2007)
+
+  04 Sep 2007; Markus Ullmann <jokey@gentoo.org>
+  -virtualbox-additions-1.3.8.ebuild, +virtualbox-additions-1.5.0.ebuild:
+  Version bump wrt bug #191142
+
+  23 Jun 2007; Charlie Shepherd <masterdriverz@gentoo.org>
+  virtualbox-additions-1.3.8.ebuild, virtualbox-additions-1.4.0.ebuild:
+  Port fixes from jokey's overlay; thanks to x-drum: add blocker for
+  virtualbox-9999; force src_unpack to skip; fix header
+
+  22 Jun 2007; Charlie Shepherd <masterdriverz@gentoo.org>
+  virtualbox-additions-1.4.0.ebuild:
+  Port changes from jokey's overlay; thanks to x-drum: force src_unpack to skip
+
+*virtualbox-additions-1.4.0 (06 Jun 2007)
+
+  06 Jun 2007; Markus Ullmann <jokey@gentoo.org>
+  -virtualbox-additions-1.3.6-r1.ebuild, +virtualbox-additions-1.4.0.ebuild:
+  Version bump, thanks to Alessio ;)
+
+  21 Apr 2007; Raúl Porcel <armin76@gentoo.org>
+  virtualbox-additions-1.3.8.ebuild:
+  x86 stable
+
+*virtualbox-additions-1.3.8 (16 Mar 2007)
+*virtualbox-additions-1.3.6-r1 (16 Mar 2007)
+
+  16 Mar 2007; Markus Ullmann <jokey@gentoo.org>
+  -virtualbox-additions-1.3.4.ebuild, -virtualbox-additions-1.3.6.ebuild,
+  +virtualbox-additions-1.3.6-r1.ebuild, +virtualbox-additions-1.3.8.ebuild:
+  Version bump and minor bugfixes
+
+  28 Feb 2007; Markus Ullmann <jokey@gentoo.org> ChangeLog:
+  gpg b0rkage
+
+*virtualbox-additions-1.3.6 (28 Feb 2007)
+
+  28 Feb 2007; Markus Ullmann <jokey@gentoo.org>
+  +virtualbox-additions-1.3.6.ebuild:
+  Version bump, thanks to x-drum for the hard work
+
+*virtualbox-additions-1.3.4 (15 Feb 2007)
+
+  15 Feb 2007; Markus Ullmann <jokey@gentoo.org> +metadata.xml,
+  +virtualbox-additions-1.3.4.ebuild:
+  Initial version, thanks to Alessio Cassibba
+

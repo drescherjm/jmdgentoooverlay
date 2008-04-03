@@ -1,0 +1,94 @@
+commit 95fcbf4bed2550fd173963493c217aefcc6a866a
+Author: Alexey Dobriyan <adobriyan@openvz.org>
+Date:   Tue Apr 1 15:55:25 2008 +0400
+
+    UBC: don't do preventive dentries uncharge
+    
+    NFS in 2.6.23+ kernels started to dget parent dentry temporarily
+    during final dentry put. This doesn't work with current scheme, namely, "drop
+    all ->d_inuse counters, uncharge, do normal put later", because
+    ub_dget_testone() will oops on such dentries in filesystem.
+    
+    So, move actual uncharge code to later stage right after dentry free, so
+    that "->d_inuse" won't be -1 during filesystem dentry put method.
+    
+    Once we find parent dentry which won't be freed this time, drop ->d_inuse et
+    al counters as usually do.
+    
+    Steps to reproduce:
+        creat08 test from LTP on NFS mounted /vz with dentry accounting active.
+    
+    Mainline commit: e4eff1a622edd6ab7b73acd5d8763aa2fa3fee49
+        aka "SUNRPC: Clean up the sillyrename code"
+
+diff --git a/fs/dcache.c b/fs/dcache.c
+index 499f1ba..b69a57e 100644
+--- a/fs/dcache.c
++++ b/fs/dcache.c
+@@ -181,9 +181,14 @@ static struct dentry *d_kill(struct dentry *dentry)
+ 
+ static void dput_recursive(struct dentry *dentry)
+ {
++	struct user_beancounter *ub;
++	unsigned long d_ubsize;
++
+ repeat:
+-	if (!atomic_dec_and_lock(&dentry->d_count, &dcache_lock))
++	if (!atomic_dec_and_lock(&dentry->d_count, &dcache_lock)) {
++		ub_dentry_uncharge(dentry);
+ 		goto out_preempt;
++	}
+ 
+ 	spin_lock(&dentry->d_lock);
+ 	if (atomic_read(&dentry->d_count))
+@@ -206,6 +211,7 @@ repeat:
+   	}
+ out_unlock:
+  	spin_unlock(&dentry->d_lock);
++	ub_dentry_uncharge_locked(dentry);
+ 	spin_unlock(&dcache_lock);
+ out_preempt:
+ 	preempt_enable();
+@@ -221,7 +227,14 @@ kill_it:
+ 		list_del(&dentry->d_lru);
+ 		dentry_stat.nr_unused--;
+ 	}
++
++	ub = dentry->dentry_bc.d_ub;
++	d_ubsize = dentry->dentry_bc.d_ubsize;
+ 	dentry = d_kill(dentry);
++	if (ub_dentry_on) {
++		uncharge_dcache(ub, d_ubsize);
++		put_beancounter(ub);
++	}
+ 	if (dentry) {
+ 		preempt_disable();
+ 		goto repeat;
+@@ -237,7 +250,6 @@ void dput(struct dentry *dentry)
+ 		might_sleep();
+ 
+ 	preempt_disable();
+-	ub_dentry_uncharge(dentry);
+ 	dput_recursive(dentry);
+ }
+ 
+diff --git a/include/bc/dcache_op.h b/include/bc/dcache_op.h
+index 6227195..23306e9 100644
+--- a/include/bc/dcache_op.h
++++ b/include/bc/dcache_op.h
+@@ -85,6 +85,7 @@ static inline void ub_dentry_uncharge(struct dentry *d)
+ 	spin_unlock(&dcache_lock);
+ }
+ 
++void uncharge_dcache(struct user_beancounter *ub, unsigned long size);
+ #else /* CONFIG_BEANCOUNTERS */
+ 
+ static inline int ub_dentry_alloc(struct dentry *d) { return 0; }
+@@ -94,6 +95,7 @@ static inline int ub_dentry_charge(struct dentry *d) { return 0; }
+ static inline void ub_dentry_charge_nofail(struct dentry *d) { }
+ static inline void ub_dentry_uncharge_locked(struct dentry *d) { }
+ static inline void ub_dentry_uncharge(struct dentry *d) { }
++static inline void uncharge_dcache(struct user_beancounter *ub, unsigned long size) { }
+ 
+ #endif /* CONFIG_BEANCOUNTERS */
+ 

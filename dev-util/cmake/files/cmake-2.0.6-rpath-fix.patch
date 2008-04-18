@@ -1,0 +1,11 @@
+--- ./cmake-2.0.6/Modules/CMakeSystemSpecificInformation.cmake.orig	2005-09-26 08:05:28.000000000 +1000
++++ ./cmake-2.0.6/Modules/CMakeSystemSpecificInformation.cmake	2005-09-26 08:05:37.000000000 +1000
+@@ -34,7 +34,7 @@
+ ENDIF(CMAKE_COMPILER_IS_GNUCXX)
+ 
+ 
+-SET (CMAKE_SKIP_RPATH "NO" CACHE BOOL
++SET (CMAKE_SKIP_RPATH "YES" CACHE BOOL
+      "If set, runtime paths are not added when using shared libraries.")
+ MARK_AS_ADVANCED(CMAKE_SKIP_RPATH)
+ # 2. now include SystemName.cmake file to set the system specific information

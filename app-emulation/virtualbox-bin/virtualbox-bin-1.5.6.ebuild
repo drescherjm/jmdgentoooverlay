@@ -18,7 +18,7 @@ IUSE="additions chm sdk"
 
 RDEPEND="!app-emulation/virtualbox
 	!app-emulation/virtualbox-additions
-	~app-emulation/virtualbox-modules-${PV}
+	>=app-emulation/virtualbox-modules-${PV}
 	virtual/xft
 	x11-libs/libXi
 	x11-libs/libX11

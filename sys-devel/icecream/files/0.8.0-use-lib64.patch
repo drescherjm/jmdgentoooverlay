@@ -1,0 +1,37 @@
+diff -ur icecream-7.0.14.org/ChangeLog icecream-7.0.14/ChangeLog
+--- icecream-7.0.14.org/ChangeLog	2006-03-17 15:13:08.000000000 +0100
++++ icecream-7.0.14/ChangeLog	2007-11-05 11:04:23.000000000 +0100
+@@ -1,3 +1,10 @@
++2007-11-05 10:58  Guido Jaekel <g.jaekel@d-nb.de>
++
++	* client/icecc-create-env: On x86_64, a shared lib placed in /lib 
++	  will not be found by the loader on remote host chroot enviroment
++	  for some reason (, which is unknown to me).
++	  Therefore, /lib/... will be mapped to /lib64/... (, if such exists).
++				  
+ 2004-09-05 12:13  Stephan Kulow <coolo@kde.org>
+ 
+ 	* client/local.cpp, client/remote.cpp, daemon/main.cpp,
+diff -ur icecream-7.0.14.org/client/icecc-create-env icecream-7.0.14/client/icecc-create-env
+--- icecream-0.7.14.org/client/icecc-create-env	2006-09-11 01:40:49.000000000 +0200
++++ icecream-0.7.14/client/icecc-create-env	2007-11-05 11:03:58.000000000 +0100
+@@ -50,9 +50,16 @@
+ 	    # and prefer that on the assumption that it is a more generic one.
+ 	    local baselib=`echo "$lib" | sed 's,\(/[^/]*\)/.*\(/[^/]*\)$,\1\2,'`
+ 	    test -f "$baselib" && lib=$baselib
+-	  add_file "$lib"
+-        done
+-      fi
++	    #<<< 20070511/gj
++	    # On x86_64, a shared lib placed in /lib will not be found by the loader
++	    # on remote host chroot enviroment for some reason (, which is unknown to me).
++	    # Therefore, /lib/... will be mapped to /lib64/... (, if such exists).
++	    local liblxxxvi=`echo "$lib" | sed 's./lib/./lib64/.g'`
++	    test -f "$liblxxxvi" && lib=$liblxxxvi
++	    #>>>
++	    add_file "$lib"
++          done
++        fi
+     fi
+   fi
+ }

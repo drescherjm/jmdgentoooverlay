@@ -1,0 +1,14 @@
+--- icecream/client/icecc-create-env	2006-09-10 18:40:49.000000000 -0500
++++ icecream.new/client/icecc-create-env	2007-06-28 20:40:46.242345984 -0500
+@@ -85,6 +85,11 @@
+ add_file $added_gxx /usr/bin/g++
+ add_file /usr/bin/as
+ 
++# Gentoo x86_64 hack
++if test "`gcc -dumpmachine`" = "x86_64-pc-linux-gnu"; then
++	add_file /lib64/libc.so.6
++fi
++
+ add_file `$added_gcc -print-prog-name=cc1` /usr/bin/cc1
+ add_file `$added_gxx -print-prog-name=cc1plus` /usr/bin/cc1plus
+ specfile=`$added_gcc -print-file-name=specs`

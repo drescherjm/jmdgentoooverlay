@@ -23,6 +23,9 @@ src_unpack() {
 	epatch "${FILESDIR}"/0.7.14-conf.d-verbosity.patch
 	epatch "${FILESDIR}"/icecc-make-it-cool.diff
 
+#	use amd64 && epatch "${FILESDIR}"/${PV}-use-lib64.patch
+	use amd64 && epatch "${FILESDIR}"/${PV}-x86_64-libc.patch
+
 	use amd64 && append-flags -fPIC -DPIC
 
 	eautoreconf

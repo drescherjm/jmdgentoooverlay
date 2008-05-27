@@ -1,0 +1,14 @@
+diff -urN icecream/client/Makefile.am icecream.new/client/Makefile.am
+--- icecream/client/Makefile.am	2004-08-30 09:00:56.000000000 +0100
++++ icecream.new/client/Makefile.am	2006-05-31 19:29:02.000000000 +0100
+@@ -15,10 +15,6 @@
+ 
+ install-exec-local:
+ 	$(mkinstalldirs) $(DESTDIR)$(bindir)
+-	for link in g++ gcc c++ cc; do \
+-	  rm -f $(DESTDIR)$(bindir)/$$link ;\
+-	  $(LN_S) icecc $(DESTDIR)$(bindir)/$$link ;\
+-	done
+ 
+ uninstall-local:
+ 	for link in g++ gcc c++ cc; do \

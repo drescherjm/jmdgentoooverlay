@@ -1,0 +1,3963 @@
+Index: BENCH
+===================================================================
+--- BENCH	(.../trunk/icecream)	(revision 657903)
++++ BENCH	(.../branches/work/icecream-make-it-cool)	(revision 695567)
+@@ -197,3 +197,15 @@ make -j5  :    274s
+ make -j5  :    271s
+ 
+ Hmm.. 2% win.
++
++============================================================================
++
++New baseline: 0.8.0:
++
++remote with -m 1:
++make -j5  :  257s
++
++without compression: 
++
++make -j5:   442s
++
+Index: suse/Makefile.am
+===================================================================
+--- suse/Makefile.am	(.../trunk/icecream)	(revision 0)
++++ suse/Makefile.am	(.../branches/work/icecream-make-it-cool)	(revision 695567)
+@@ -0,0 +1,2 @@
++
++EXTRA_DIST = icecream.spec.in init.icecream logrotate SuSEfirewall.iceccd SuSEfirewall.scheduler sysconfig.icecream
+Index: suse/init.icecream
+===================================================================
+--- suse/init.icecream	(.../trunk/icecream)	(revision 657903)
++++ suse/init.icecream	(.../branches/work/icecream-make-it-cool)	(revision 695567)
+@@ -9,8 +9,8 @@
+ #
+ ### BEGIN INIT INFO
+ # Provides:          icecream
+-# Required-Start:    $network $syslog $nfs
+-# Required-Stop:     $network $syslog
++# Required-Start:    $network $syslog $remote_fs
++# Required-Stop:
+ # Default-Start:     3 5
+ # Default-Stop:
+ # Description:       distributed compiler daemon
+@@ -91,6 +91,23 @@ case "$1" in
+ 	$0 stop; sleep 1  &&  $0 start
+ 	rc_status
+ 	;;
++    try-restart|condrestart)
++        ## Do a restart only if the service was active before.
++        ## Note: try-restart is now part of LSB (as of 1.9).
++        ## RH has a similar command named condrestart.
++        if test "$1" = "condrestart"; then
++                echo "${attn} Use try-restart ${done}(LSB)${attn} rather than condrestart ${warn}(R
++H)${norm}"
++        fi
++        $0 status
++        if test $? = 0; then
++                $0 restart
++        else
++                rc_reset        # Not running is not a failure.
++        fi
++        # Remember status and be quiet
++        rc_status
++        ;;
+     reload|force-reload)
+ 	if test "$ICECREAM_RUN_SCHEDULER" == "yes"; then
+           killproc  -HUP /usr/sbin/scheduler
+@@ -104,7 +121,7 @@ case "$1" in
+ 	rc_status -v
+ 	;;
+     *)
+-	echo "Usage: $0 {start|stop|status|restart|reload}"
++	echo "Usage: $0 {start|stop|status|restart|try-restart|reload}"
+ 	exit 1
+ 	;;
+ esac
+
+Property changes on: suse
+___________________________________________________________________
+Name: svn:ignore
+   - icecream.spec
+
+   + icecream.spec
+Makefile.in
+Makefile
+
+
+Index: daemon/load.cpp
+===================================================================
+--- daemon/load.cpp	(.../trunk/icecream)	(revision 657903)
++++ daemon/load.cpp	(.../branches/work/icecream-make-it-cool)	(revision 695567)
+@@ -16,6 +16,7 @@
+     Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ */
+ 
++#include "config.h"
+ #include "load.h"
+ #include <unistd.h>
+ #include <stdio.h>
+@@ -24,15 +25,27 @@
+ #include <sys/types.h>
+ #include <sys/stat.h>
+ #include <fcntl.h>
++#ifdef HAVE_SYS_PARAM_H
++#include <sys/param.h>
++#endif
+ 
+-#if defined( __FreeBSD__ ) || defined( MACOS ) || defined(__DragonFly__)
++#ifdef HAVE_MACH_HOST_INFO_H
++#define USE_MACH 1
++#elif !defined( __linux__ ) && !defined(__CYGWIN__)
+ #define USE_SYSCTL
+ #endif
+-#if defined(__DragonFly__)
+-#include <sys/param.h>
++
++#ifdef USE_MACH
++#include <mach/host_info.h>
++#include <mach/mach_host.h>
++#include <mach/mach_init.h>
++#endif
++
++#ifdef HAVE_KINFO_H
+ #include <kinfo.h>
+ #endif
+-#ifdef USE_SYSCTL
++
++#ifdef HAVE_DEVSTAT_H
+ #include <sys/resource.h>
+ #include <sys/sysctl.h>
+ #include <devstat.h>
+@@ -85,7 +98,7 @@ static void updateCPULoad( CPULoadInfo* 
+   /* It doesn't exist in DragonFlyBSD. */
+   currWaitTicks = 0;
+ 
+-#elif defined USE_SYSCTL
++#elif defined (USE_SYSCTL)
+   static int mibs[4] = { 0,0,0,0 };
+   static size_t mibsize = 4;
+   unsigned long ticks[CPUSTATES];
+@@ -110,6 +123,26 @@ static void updateCPULoad( CPULoadInfo* 
+       currIdleTicks = ticks[CP_IDLE];
+   }
+ 
++#elif defined( USE_MACH )
++    host_cpu_load_info r_load;
++
++    kern_return_t		error;
++    mach_msg_type_number_t	count;
++
++    count = HOST_CPU_LOAD_INFO_COUNT;
++    mach_port_t port = mach_host_self();
++    error = host_statistics(port, HOST_CPU_LOAD_INFO,
++                            (host_info_t)&r_load, &count);
++
++    if (error != KERN_SUCCESS)
++        return;
++
++    currUserTicks = r_load.cpu_ticks[CPU_STATE_USER];
++    currNiceTicks = r_load.cpu_ticks[CPU_STATE_NICE];
++    currSysTicks  = r_load.cpu_ticks[CPU_STATE_SYSTEM];
++    currIdleTicks = r_load.cpu_ticks[CPU_STATE_IDLE];
++    currWaitTicks = 0;
++
+ #else
+     char buf[ 256 ];
+     static int fd = -1;
+@@ -156,7 +189,7 @@ static void updateCPULoad( CPULoadInfo* 
+     if ( load->idleLoad < 0 )
+         load->idleLoad = 0;
+   } else {
+-    load->userLoad = load->sysLoad = load->niceLoad = 0; 
++    load->userLoad = load->sysLoad = load->niceLoad = 0;
+     load->idleLoad = 1000;
+   }
+ 
+@@ -182,19 +215,36 @@ static unsigned long int scan_one( const
+ 
+ static unsigned int calculateMemLoad( unsigned long int &NetMemFree )
+ {
+-    unsigned long int MemFree;
++    unsigned long long MemFree = 0, Buffers = 0, Cached = 0;
++
++#ifdef USE_MACH
++    /* Get VM statistics. */
++    vm_statistics_data_t vm_stat;
++    mach_msg_type_number_t count = sizeof(vm_stat) / sizeof(natural_t);
++    kern_return_t error = host_statistics(mach_host_self(), HOST_VM_INFO,
++                                          (host_info_t)&vm_stat, &count);
++    if (error != KERN_SUCCESS)
++        return 0;
++
++    vm_size_t pagesize;
++    host_page_size(mach_host_self(), &pagesize);
++
++    unsigned long long MemInactive = (unsigned long long) vm_stat.inactive_count * pagesize;
++    MemFree = (unsigned long long) vm_stat.free_count * pagesize;
+ 
+-#ifdef USE_SYSCTL
++    // blunt lie - but when's sche macht
++    Buffers = MemInactive;
++  
++#elif defined( USE_SYSCTL )
+     size_t len = sizeof (MemFree);
+     if ((sysctlbyname("vm.stats.vm.v_free_count", &MemFree, &len, NULL, 0) == -1) || !len)
+         MemFree = 0; /* Doesn't work under FreeBSD v2.2.x */
+ 
+-    unsigned long int Buffers;
++  
+     len = sizeof (Buffers);
+     if ((sysctlbyname("vfs.bufspace", &Buffers, &len, NULL, 0) == -1) || !len)
+         Buffers = 0; /* Doesn't work under FreeBSD v2.2.x */
+ 
+-    unsigned long int Cached;
+     len = sizeof (Cached);
+     if ((sysctlbyname("vm.stats.vm.v_cache_count", &Cached, &len, NULL, 0) == -1) || !len)
+             Cached = 0; /* Doesn't work under FreeBSD v2.2.x */
+@@ -221,8 +271,8 @@ static unsigned int calculateMemLoad( un
+ 
+     buf[n] = '\0';
+     MemFree = scan_one( buf, "MemFree" );
+-    unsigned long int Buffers = scan_one( buf, "Buffers" );
+-    unsigned long int Cached = scan_one( buf, "Cached" );
++    Buffers = scan_one( buf, "Buffers" );
++    Cached = scan_one( buf, "Cached" );
+ #endif
+ 
+     if ( Buffers > 50 * 1024 )
+@@ -303,6 +353,7 @@ bool fill_stats( unsigned long &myidlelo
+         double avg[3];
+ #if HAVE_GETLOADAVG
+         getloadavg( avg, 3 );
++        (void) hint;
+ #else
+         fakeloadavg( avg, 3, hint );
+ #endif
+Index: daemon/workit.cpp
+===================================================================
+--- daemon/workit.cpp	(.../trunk/icecream)	(revision 657903)
++++ daemon/workit.cpp	(.../branches/work/icecream-make-it-cool)	(revision 695567)
+@@ -38,7 +38,7 @@
+ #include <unistd.h>
+ #include <sys/fcntl.h>
+ #include <sys/wait.h>
+-#if HAVE_SYS_USER_H
++#if HAVE_SYS_USER_H && !defined(__DragonFly__)
+ #  include <sys/user.h>
+ #endif
+ #include <sys/socket.h>
+@@ -109,7 +109,8 @@ error_client( MsgChannel *client, string
+ }
+ 
+ int work_it( CompileJob &j, unsigned int job_stat[], MsgChannel* client,
+-             CompileResultMsg& rmsg, string &outfilename, unsigned long int mem_limit, int client_fd )
++             CompileResultMsg& rmsg, const string &outfilename, 
++             unsigned long int mem_limit, int client_fd, int job_in_fd )
+ {
+     rmsg.out.erase(rmsg.out.begin(), rmsg.out.end());
+     rmsg.out.erase(rmsg.out.begin(), rmsg.out.end());
+@@ -118,14 +119,6 @@ int work_it( CompileJob &j, unsigned int
+     appendList( list, j.restFlags() );
+     int ret;
+ 
+-    char tmp_output[PATH_MAX];
+-    char prefix_output[PATH_MAX]; // I'm too lazy to calculate how many digits 2^64 is :)
+-    sprintf( prefix_output, "icecc-%d", j.jobID() );
+-    if ( ( ret = dcc_make_tmpnam(prefix_output, ".o", tmp_output, 1 ) ) != 0 )
+-        return ret;
+-
+-    outfilename = tmp_output;
+-
+     int sock_err[2];
+     int sock_out[2];
+     int sock_in[2];
+@@ -156,6 +149,9 @@ int work_it( CompileJob &j, unsigned int
+         return EXIT_DISTCC_FAILED;
+ 
+     int maxsize = 2*1024*2024;
++    // if any of these fail, well, things get a little bit slower
++    // but it doesn't matter at all for correctness. Don't worry, missing
++    // error handling is on purpose :)
+ #ifdef SO_SNDBUFFORCE
+     if (setsockopt(sock_in[1], SOL_SOCKET, SO_SNDBUFFORCE, &maxsize, sizeof(maxsize)) < 0)
+ #endif
+@@ -196,7 +192,6 @@ int work_it( CompileJob &j, unsigned int
+         close( sock_in[0] );
+         close( sock_in[1] );
+         close( sock_err[0] );
+-        unlink( tmp_output );
+         return EXIT_OUT_OF_MEMORY;
+     } else if ( pid == 0 ) {
+ 
+@@ -257,7 +252,7 @@ int work_it( CompileJob &j, unsigned int
+         argv[i++] = strdup((j.language() == CompileJob::Lang_CXX) ? "c++" : "c");
+         argv[i++] = strdup( "-" );
+         argv[i++] = strdup( "-o" );
+-        argv[i++] = tmp_output;
++        argv[i++] = strdup(outfilename.c_str());
+         argv[i++] = strdup( "--param" );
+         sprintf( buffer, "ggc-min-expand=%d", ggc_min_expand_heuristic( mem_limit ) );
+         argv[i++] = strdup( buffer );
+@@ -327,6 +322,8 @@ int work_it( CompileJob &j, unsigned int
+                 if ( bytes < 0 && errno == EINTR )
+                     continue;
+ 
++                write(job_in_fd, fcmsg->buffer + off, bytes);
++
+                 if ( bytes == -1 ) {
+                     log_perror("write to caching socket failed. ");
+ 
+Index: daemon/environment.cpp
+===================================================================
+--- daemon/environment.cpp	(.../trunk/icecream)	(revision 657903)
++++ daemon/environment.cpp	(.../branches/work/icecream-make-it-cool)	(revision 695567)
+@@ -29,7 +29,7 @@
+ #include <sys/stat.h>
+ #include <sys/types.h>
+ #include <sys/wait.h>
+-#if defined(__FreeBSD__) || defined(__DragonFly__)
++#ifdef HAVE_SIGNAL_H
+ #include <signal.h>
+ #endif
+ 
+@@ -205,11 +205,11 @@ size_t setup_env_cache(const string &bas
+     native_environment = "";
+     string nativedir = basedir + "/native/";
+ 
+-    if ( ::access( "/usr/bin/gcc", X_OK ) || ::access( "/usr/bin/g++", X_OK ) )
++    if ( ::access( "/usr/bin/gcc", X_OK ) || ::access( "/usr/bin/g++", X_OK ) ) 
+ 	return 0;
+ 
+     if ( mkdir( nativedir.c_str(), 0755 ) )
+-   	return 0;
++   	return 0; 
+ 
+     if ( chown( nativedir.c_str(), nobody_uid, nobody_gid) ) {
+ 	rmdir( nativedir.c_str() );
+@@ -350,7 +350,7 @@ pid_t start_install_environment( const s
+ 
+     char **argv;
+     argv = new char*[6];
+-    argv[0] = strdup( "/bin/tar" );
++    argv[0] = strdup( TAR );
+     argv[1] = strdup ("-C");
+     argv[2] = strdup ( dirname.c_str() );
+     if ( compression == BZip2 )
+Index: daemon/main.cpp
+===================================================================
+--- daemon/main.cpp	(.../trunk/icecream)	(revision 657903)
++++ daemon/main.cpp	(.../branches/work/icecream-make-it-cool)	(revision 695567)
+@@ -35,6 +35,9 @@
+ #include <netdb.h>
+ #include <getopt.h>
+ 
++#ifdef HAVE_SIGNAL_H
++#include <signal.h>
++#endif
+ #include <sys/stat.h>
+ #include <sys/types.h>
+ #include <sys/wait.h>
+@@ -64,16 +67,15 @@
+ #endif
+ #include <netdb.h>
+ 
+-#if defined(__FreeBSD__) || defined(__DragonFly__)
+-#  include <signal.h> // for kill(2)
+-#  include <sys/time.h>
++#ifdef HAVE_SYS_RESOURCE_H
+ #  include <sys/resource.h>
+-#  ifndef RUSAGE_SELF
+-#    define RUSAGE_SELF (0)
+-#  endif
+-#  ifndef RUSAGE_CHILDREN
+-#    define RUSAGE_CHILDREN (-1)
+-#  endif
++#endif
++
++#ifndef RUSAGE_SELF
++#  define RUSAGE_SELF (0)
++#endif
++#ifndef RUSAGE_CHILDREN
++#  define RUSAGE_CHILDREN (-1)
+ #endif
+ 
+ #include <deque>
+@@ -92,6 +94,7 @@
+ #include <comm.h>
+ #include "load.h"
+ #include "environment.h"
++#include "platform.h"
+ 
+ const int PORT = 10245;
+ static std::string pidFilePath;
+@@ -431,7 +434,7 @@ struct Daemon
+     map<int, MsgChannel *> fd2chan;
+     int new_client_id;
+     string remote_name;
+-    time_t next_check;
++    time_t next_scheduler_connect;
+     unsigned long icecream_load;
+     struct timeval icecream_usage;
+     int current_load;
+@@ -452,7 +455,7 @@ struct Daemon
+         nobody_gid = 65533;
+         listen_fd = -1;
+         new_client_id = 0;
+-        next_check = 0;
++        next_scheduler_connect = 0;
+         cache_size = 0;
+         noremote = false;
+         custom_nodename = false;
+@@ -471,7 +474,7 @@ struct Daemon
+     bool reannounce_environments() __attribute_warn_unused_result__;
+     int answer_client_requests();
+     bool handle_transfer_env( MsgChannel *c, Msg *msg ) __attribute_warn_unused_result__;
+-    bool handle_transfer_env_done( Client *client ) __attribute_warn_unused_result__;
++    bool handle_transfer_env_done( Client *client );
+     bool handle_get_native_env( MsgChannel *c ) __attribute_warn_unused_result__;
+     void handle_old_request();
+     bool handle_compile_file( MsgChannel *c, Msg *msg ) __attribute_warn_unused_result__;
+@@ -488,6 +491,7 @@ struct Daemon
+     int handle_cs_conf( ConfCSMsg *msg);
+     string dump_internals() const;
+     string determine_nodename();
++    void determine_system();
+     bool maybe_stats(bool force = false);
+     bool send_scheduler(const Msg& msg) __attribute_warn_unused_result__;
+     void close_scheduler();
+@@ -495,6 +499,23 @@ struct Daemon
+     int working_loop();
+ };
+ 
++void Daemon::determine_system()
++{
++    struct utsname uname_buf;
++    if ( uname( &uname_buf ) ) {
++        log_perror( "uname call failed" );
++        return;
++    }
++
++    if ( nodename.length() && nodename != uname_buf.nodename )
++        custom_nodename  = true;
++
++    if (!custom_nodename)
++        nodename = uname_buf.nodename;
++
++    machine_name = determine_platform();
++}
++
+ string Daemon::determine_nodename()
+ {
+     if (custom_nodename && !nodename.empty())
+@@ -541,6 +562,7 @@ void Daemon::close_scheduler()
+     scheduler = 0;
+     delete discover;
+     discover = 0;
++    next_scheduler_connect = time(0) + 20 + (rand() & 31);
+ }
+ 
+ bool Daemon::maybe_stats(bool send_ping)
+@@ -677,14 +699,17 @@ int Daemon::scheduler_use_cs( UseCSMsg *
+     trace() << "handle_use_cs " << msg->job_id << " " << msg->client_id
+             << " " << c << " " << msg->hostname << " " << remote_name <<  endl;
+     if ( !c ) {
+-        send_scheduler( JobDoneMsg( msg->job_id, 107, JobDoneMsg::FROM_SUBMITTER ) );
++        if (send_scheduler( JobDoneMsg( msg->job_id, 107, JobDoneMsg::FROM_SUBMITTER ) ))
++            return 1;
+         return 1;
+     }
+     if ( msg->hostname == remote_name ) {
+-        c->usecsmsg = new UseCSMsg( msg->host_platform, "127.0.0.1", PORT, msg->job_id, true, 1 );
++        c->usecsmsg = new UseCSMsg( msg->host_platform, "127.0.0.1", PORT, msg->job_id, true, 1,
++                msg->matched_job_id );
+         c->status = Client::PENDING_USE_CS;
+     } else {
+-        c->usecsmsg = new UseCSMsg( msg->host_platform, msg->hostname, msg->port, msg->job_id, true, 1 );
++        c->usecsmsg = new UseCSMsg( msg->host_platform, msg->hostname, msg->port, 
++                msg->job_id, true, 1, msg->matched_job_id );
+         if (!c->channel->send_msg( *msg )) {
+             handle_end(c, 143);
+             return 0;
+@@ -719,13 +744,14 @@ bool Daemon::handle_transfer_env( MsgCha
+         emsg->name, c, sock_to_stdin, fmsg, nobody_uid, nobody_gid );
+ 
+     if ( pid > 0) {
++        log_error() << "got pid " << pid << endl;
+         current_kids++;
+         client->status = Client::TOINSTALL;
+-        client->outfile = msg->target + "/" + msg->name;
++        client->outfile = emsg->target + "/" + emsg->name;
+         client->pipe_to_child = sock_to_stdin;
+         client->child_pid = pid;
+-        handle_file_chunk_env(c, fmsg);
+-        log_error() << "got pid " << pid << endl;
++        if (!handle_file_chunk_env(c, fmsg))
++            pid = 0;
+     }
+     delete fmsg;
+     return pid > 0;
+@@ -870,7 +896,8 @@ void Daemon::handle_old_request()
+                 client->status = Client::CLIENTWORK;
+                 clients.active_processes++;
+                 trace() << "pushed local job " << client->client_id << endl;
+-                send_scheduler( JobLocalBeginMsg( client->client_id, client->outfile ) );
++                if (!send_scheduler( JobLocalBeginMsg( client->client_id, client->outfile ) ))
++                    return;
+             }
+             continue;
+         }
+@@ -1049,12 +1076,13 @@ void Daemon::handle_end( Client *client,
+                 break;
+             }
+             trace() << "scheduler->send_msg( JobDoneMsg( " << client->dump() << ", " << exitcode << "))\n";
+-            send_scheduler( JobDoneMsg( job_id, exitcode, flag) );
++            if (!send_scheduler( JobDoneMsg( job_id, exitcode, flag) ))
++                trace() << "failed to reach scheduler for remote job done msg!" << endl;
+         } else if ( client->status == Client::CLIENTWORK ) {
+             // Clientwork && !job_id == LINK
+             trace() << "scheduler->send_msg( JobLocalDoneMsg( " << client->client_id << ") );\n";
+             if (!send_scheduler( JobLocalDoneMsg( client->client_id ) ))
+-                trace() << "failed to reach scheduler for job done msg!" << endl;
++                trace() << "failed to reach scheduler for local job done msg!" << endl;
+         }
+     }
+ 
+@@ -1097,7 +1125,8 @@ bool Daemon::handle_get_cs( MsgChannel *
+         /* now the thing is this: if there is no scheduler
+            there is no point in trying to ask him. So we just
+            redefine this as local job */
+-        client->usecsmsg = new UseCSMsg( umsg->target, "127.0.0.1", PORT, umsg->client_id, true, 1 );
++        client->usecsmsg = new UseCSMsg( umsg->target, "127.0.0.1", PORT, 
++                umsg->client_id, true, 1, 0 );
+         client->status = Client::PENDING_USE_CS;
+         client->job_id = umsg->client_id;
+         return true;
+@@ -1271,13 +1300,13 @@ int Daemon::answer_client_requests()
+         FD_SET( scheduler->fd, &listen_set );
+         if ( max_fd < scheduler->fd )
+             max_fd = scheduler->fd;
+-    } else if ( discover && discover->get_fd() >= 0) {
++    } else if ( discover && discover->listen_fd() >= 0) {
+         /* We don't explicitely check for discover->get_fd() being in
+ 	   the selected set below.  If it's set, we simply will return
+ 	   and our call will make sure we try to get the scheduler.  */
+-        FD_SET( discover->get_fd(), &listen_set);
+-	if ( max_fd < discover->get_fd() )
+-	    max_fd = discover->get_fd();
++        FD_SET( discover->listen_fd(), &listen_set);
++	if ( max_fd < discover->listen_fd() )
++	    max_fd = discover->listen_fd();
+     }
+ 
+     tv.tv_sec = max_scheduler_pong;
+@@ -1292,36 +1321,39 @@ int Daemon::answer_client_requests()
+     if ( ret > 0 ) {
+         bool had_scheduler = scheduler;
+         if ( scheduler && FD_ISSET( scheduler->fd, &listen_set ) ) {
+-            Msg *msg = scheduler->get_msg();
+-            if ( !msg ) {
+-                log_error() << "scheduler closed connection\n";
+-                close_scheduler();
+-                clear_children();
+-                return 1;
+-            } else {
+-                ret = 0;
+-                switch ( msg->type )
+-                {
+-                case M_PING:
+-                    if (!IS_PROTOCOL_27(scheduler))
+-                        ret = !send_scheduler(PingMsg());
+-                    break;
+-                case M_USE_CS:
+-                    ret = scheduler_use_cs( dynamic_cast<UseCSMsg*>( msg ) );
+-		    break;
+-                case M_GET_INTERNALS:
+-                    ret = scheduler_get_internals( );
+-                    break;
+-                case M_CS_CONF:
+-                    ret = handle_cs_conf(dynamic_cast<ConfCSMsg*>( msg ));
+-                    break;
+-                default:
+-                    log_error() << "unknown scheduler type " << ( char )msg->type << endl;
+-                    ret = 1;
++            while (!scheduler->read_a_bit() || scheduler->has_msg()) {
++                Msg *msg = scheduler->get_msg();
++                if ( !msg ) {
++                    log_error() << "scheduler closed connection\n";
++                    close_scheduler();
++                    clear_children();
++                    return 1;
++                } else {
++                    ret = 0;
++                    switch ( msg->type )
++                    {
++                    case M_PING:
++                        if (!IS_PROTOCOL_27(scheduler))
++                            ret = !send_scheduler(PingMsg());
++                        break;
++                    case M_USE_CS:
++                        ret = scheduler_use_cs( static_cast<UseCSMsg*>( msg ) );
++                        break;
++                    case M_GET_INTERNALS:
++                        ret = scheduler_get_internals( );
++                        break;
++                    case M_CS_CONF:
++                        ret = handle_cs_conf(static_cast<ConfCSMsg*>( msg ));
++                        break;
++                    default:
++                        log_error() << "unknown scheduler type " << ( char )msg->type << endl;
++                        ret = 1;
++                    }
+                 }
++                delete msg;
++                if (ret)
++                    return ret;
+             }
+-            delete msg;
+-            return ret;
+         }
+ 
+         if ( FD_ISSET( listen_fd, &listen_set ) ) {
+@@ -1334,10 +1366,10 @@ int Daemon::answer_client_requests()
+                 log_perror("accept failed:");
+                 return EXIT_CONNECT_FAILED;
+             } else {
+-                MsgChannel *c = Service::createChannel( acc_fd, (struct sockaddr*) &cli_addr, cli_len );
++                MsgChannel *c = Service::createChannel( acc_fd, &cli_addr, cli_len );
+                 if ( !c )
+                     return 0;
+-                trace() << "accept " << c->fd << " " << c->name << endl;
++                trace() << "accepted " << c->fd << " " << c->name << endl;
+ 
+                 Client *client = new Client;
+                 client->client_id = ++new_client_id;
+@@ -1345,8 +1377,9 @@ int Daemon::answer_client_requests()
+                 clients[c] = client;
+ 
+                 fd2chan[c->fd] = c;
+-                c->read_a_bit();
+-                while (c->has_msg() && handle_activity(c)) {
++                while (!c->read_a_bit() || c->has_msg()) {
++                    if (!handle_activity(c))
++                        break;
+                     if (client->status == Client::TOCOMPILE ||
+                             client->status == Client::WAITFORCHILD)
+                         break;
+@@ -1369,15 +1402,16 @@ int Daemon::answer_client_requests()
+                         return 1;
+                 }
+                 if (FD_ISSET (i, &listen_set)) {
+-                    c->read_a_bit();
+-                    while (c->has_msg() && handle_activity(c)) {
++                    while (!c->read_a_bit() || c->has_msg()) {
++                        if (!handle_activity(c))
++                            break;
+                         if (client->status == Client::TOCOMPILE ||
+                                 client->status == Client::WAITFORCHILD)
+                             break;
+                     }
+                     max_fd--;
+                 }
+-           }
++            }
+         }
+         if ( had_scheduler && !scheduler ) {
+             clear_children();
+@@ -1393,13 +1427,18 @@ bool Daemon::reconnect()
+     if ( scheduler )
+         return true;
+ 
+-    trace() << "reconn " << dump_internals() << endl;
++    if (!discover &&
++        next_scheduler_connect > time(0)) {
++        trace() << "timeout.." << endl;
++        return false;
++    }
+ 
++    trace() << "reconn " << dump_internals() << endl;
+     if (!discover
+ 	|| discover->timed_out())
+     {
+         delete discover;
+-	discover = new DiscoverSched (netname, 3000, schedname);
++	discover = new DiscoverSched (netname, max_scheduler_pong, schedname);
+     }
+ 
+     scheduler = discover->try_get_scheduler ();
+@@ -1425,7 +1464,7 @@ bool Daemon::reconnect()
+     lmsg.envs = available_environmnents(envbasedir);
+     lmsg.max_kids = max_kids;
+     lmsg.noremote = noremote;
+-    return scheduler->send_msg( lmsg );
++    return send_scheduler ( lmsg );
+ }
+ 
+ int Daemon::working_loop()
+@@ -1444,6 +1483,7 @@ int Daemon::working_loop()
+ int main( int argc, char ** argv )
+ {
+     int max_processes = -1;
++    srand( time( 0 ) + getpid() );
+ 
+     Daemon d;
+ 
+@@ -1451,7 +1491,6 @@ int main( int argc, char ** argv )
+     string logfile;
+     bool detach = false;
+     nice_level = 5; // defined in serve.h
+-    bool runasuser = false;
+ 
+     while ( true ) {
+         int option_index = 0;
+@@ -1464,7 +1503,6 @@ int main( int argc, char ** argv )
+             { "nice", 1, NULL, 0},
+             { "name", 1, NULL, 'n'},
+             { "scheduler-host", 1, NULL, 's' },
+-            { "run-as-user", 1, NULL, 'r' },
+             { "env-basedir", 1, NULL, 'b' },
+             { "nobody-uid", 1, NULL, 'u'},
+             { "cache-limit", 1, NULL, 0},
+@@ -1553,9 +1591,6 @@ int main( int argc, char ** argv )
+             if ( optarg && *optarg )
+                 d.envbasedir = optarg;
+             break;
+-        case 'r':
+-            runasuser = true;
+-            break;
+         case 'u':
+             if ( optarg && *optarg )
+             {
+@@ -1583,28 +1618,13 @@ int main( int argc, char ** argv )
+ 
+     setup_debug( debug_level, logfile );
+ 
+-    if ((geteuid()!=0) && !runasuser)
+-    {
+-        log_error() << "Please run iceccd with root privileges" << endl;
+-        return 1;
+-    }
++    if ((getuid()!=0))
++        d.noremote = true;
+ 
+     log_info() << "ICECREAM daemon " VERSION " starting up (nice level "
+                << nice_level << ") " << endl;
+ 
+-    struct utsname uname_buf;
+-    if ( uname( &uname_buf ) ) {
+-        log_perror( "uname call failed" );
+-        return 1;
+-    }
+-
+-    if ( d.nodename.length() && d.nodename != uname_buf.nodename )
+-        d.custom_nodename  = true;
+-
+-    if (!d.custom_nodename)
+-        d.nodename = uname_buf.nodename;
+-
+-    d.machine_name = uname_buf.machine;
++    d.determine_system();
+ 
+     chdir( "/" );
+ 
+Index: daemon/serve.cpp
+===================================================================
+--- daemon/serve.cpp	(.../trunk/icecream)	(revision 657903)
++++ daemon/serve.cpp	(.../branches/work/icecream-make-it-cool)	(revision 695567)
+@@ -159,23 +159,23 @@ int handle_connection( const string &bas
+             throw myexception( -1 );
+         }
+ 
+-        const char *dot;
+-        if (job->language() == CompileJob::Lang_C)
+-            dot = ".i";
+-        else if (job->language() == CompileJob::Lang_CXX)
+-            dot = ".ii";
+-        else
+-            assert(0);
+-
+         int ret;
+         unsigned int job_stat[8];
+         CompileResultMsg rmsg;
++        job_id = job->jobID();
+ 
+         memset(job_stat, 0, sizeof(job_stat));
+ 
+-        ret = work_it( *job, job_stat, client, rmsg, obj_file, mem_limit, client->fd );
++        char tmp_output[PATH_MAX];
++        char prefix_output[PATH_MAX]; // I'm too lazy to calculate how many digits 2^64 is :)
++        sprintf( prefix_output, "icecc-%d", job_id );
++
++        if ( ( ret = dcc_make_tmpnam(prefix_output, ".o", tmp_output, 1 ) ) == 0 ) {
++            obj_file = tmp_output;
++            ret = work_it( *job, job_stat, client, rmsg, obj_file, mem_limit, client->fd,
++                   -1 );
++        }
+ 
+-        job_id = job->jobID();
+         delete job;
+         job = 0;
+ 
+@@ -197,6 +197,7 @@ int handle_connection( const string &bas
+             job_stat[JobStatistics::out_uncompressed] = st.st_size;
+ 
+         /* wake up parent and tell him that compile finished */
++        /* if the write failed, well, doesn't matter */
+         write( out_fd, job_stat, sizeof( job_stat ) );
+         close( out_fd );
+ 
+Index: daemon/workit.h
+===================================================================
+--- daemon/workit.h	(.../trunk/icecream)	(revision 657903)
++++ daemon/workit.h	(.../branches/work/icecream-make-it-cool)	(revision 695567)
+@@ -45,7 +45,7 @@ namespace JobStatistics {
+ }
+ 
+ extern int work_it( CompileJob &j, unsigned int job_stats[], MsgChannel* client,
+-             CompileResultMsg& msg, std::string &outfilename,
+-             unsigned long int mem_limit, int client_fd );
++             CompileResultMsg& msg, const std::string &outfilename,
++             unsigned long int mem_limit, int client_fd, int job_in_fd );
+ 
+ #endif
+Index: services/comm.h
+===================================================================
+--- services/comm.h	(.../trunk/icecream)	(revision 657903)
++++ services/comm.h	(.../branches/work/icecream-make-it-cool)	(revision 695567)
+@@ -29,11 +29,13 @@
+ #endif
+ #include <sys/types.h>
+ #include <sys/socket.h>
++#include <netinet/in.h>
++#include <netinet/tcp.h>
+ 
+ #include "job.h"
+ 
+ // if you increase the PROTOCOL_VERSION, add a macro below and use that
+-#define PROTOCOL_VERSION 27
++#define PROTOCOL_VERSION 29
+ // if you increase the MIN_PROTOCOL_VERSION, comment out macros below and clean up the code
+ #define MIN_PROTOCOL_VERSION 21
+ 
+@@ -47,6 +49,8 @@
+ #define IS_PROTOCOL_25( c ) ( (c)->protocol >= 25 )
+ #define IS_PROTOCOL_26( c ) ( (c)->protocol >= 26 )
+ #define IS_PROTOCOL_27( c ) ( (c)->protocol >= 27 )
++#define IS_PROTOCOL_28( c ) ( (c)->protocol >= 28 )
++#define IS_PROTOCOL_29( c ) ( (c)->protocol >= 29 )
+ 
+ enum MsgType {
+   // so far unknown
+@@ -133,35 +137,38 @@ public:
+   // our filedesc
+   int fd;
+ 
++  enum SendFlags {
++      SendBlocking    = 1<<0,
++      SendNonBlocking = 1<<1,
++      SendBulkOnly    = 1<<2
++  };
++
+   // the minimum protocol version between me and him
+   int protocol;
+ 
+   std::string name;
+-  uint32_t port;
+   time_t last_talk;
+ 
++  void setBulkTransfer();
++
+   std::string dump() const;
+   // NULL  <--> channel closed
+   Msg *get_msg(int timeout = 10);
+   // false <--> error (msg not send)
+-  bool send_msg (const Msg &, bool blocking = true);
+-  // return last error (0 == no error)
+-  int error(void) {return 0;}
++  bool send_msg (const Msg &, int SendFlags = SendBlocking);
+   bool has_msg (void) const { return eof || instate == HAS_MSG; }
+-  bool need_write (void) const { return msgtogo != 0; }
+   bool read_a_bit (void);
+-  bool write_a_bit (void) {
+-    return need_write () ? flush_writebuf (false) : true;
+-  }
+   bool at_eof (void) const { return instate != HAS_MSG && eof; }
+   bool is_text_based(void) const { return text_based; }
+ 
+-  void readuint32 (uint32_t &buf);
+-  void writeuint32 (uint32_t u);
+-  void read_string (std::string &s);
+-  void write_string (const std::string &s);
+-  void read_strlist (std::list<std::string> &l);
+-  void write_strlist (const std::list<std::string> &l);
++  MsgChannel &operator>>(uint32_t&);
++  MsgChannel &operator>>(std::string&);
++  MsgChannel &operator>>(std::list<std::string>&);
++
++  MsgChannel &operator<<(uint32_t);
++  MsgChannel &operator<<(const std::string&);
++  MsgChannel &operator<<(const std::list<std::string>&);
++
+   void readcompressed (unsigned char **buf, size_t &_uclen, size_t &_clen);
+   void writecompressed (const unsigned char *in_buf,
+ 			size_t _in_len, size_t &_out_len);
+@@ -170,7 +177,7 @@ public:
+   void read_line (std::string &line);
+   void write_line (const std::string &line);
+ 
+-  bool eq_ip (const MsgChannel &s);
++  bool eq_ip (const MsgChannel &s) const;
+ 
+   virtual ~MsgChannel ();
+ 
+@@ -206,12 +213,17 @@ public:
+   static MsgChannel *createChannel( int remote_fd, struct sockaddr *, socklen_t );
+ };
+ 
+-class DiscoverSched {
++// --------------------------------------------------------------------------
++// this class is also used by icecream-monitor
++class DiscoverSched 
++{
++  struct sockaddr_in remote_addr;
+   std::string netname, schedname;
+   int timeout;
+   int ask_fd;
+   time_t time0;
+   unsigned int sport;
++  void attempt_scheduler_connect();
+ public:
+   /* Connect to a scheduler waiting max. TIMEOUT milliseconds.
+      schedname can be the hostname of a box running a scheduler, to avoid
+@@ -221,9 +233,15 @@ public:
+ 		 const std::string &_schedname = std::string());
+   ~DiscoverSched();
+   bool timed_out();
+-  int get_fd() const { return ask_fd; }
++  int listen_fd() const { return schedname.empty() ? ask_fd : -1; }
++  int connect_fd() const { return schedname.empty() ? -1 : ask_fd; }
++
++  // compat for icecream monitor
++  int get_fd() const { return listen_fd(); }
++
+   MsgChannel *try_get_scheduler();
+ };
++// --------------------------------------------------------------------------
+ 
+ /* Return a list of all reachable netnames.  We wait max. WAITTIME
+    milliseconds for answers.  */
+@@ -270,9 +288,19 @@ public:
+   std::string host_platform;
+   uint32_t got_env;
+   uint32_t client_id;
++  uint32_t matched_job_id;
+   UseCSMsg () : Msg(M_USE_CS) {}
+-  UseCSMsg (std::string platform, std::string host, unsigned int p, unsigned int id, bool gotit, unsigned int _client_id)
+-    : Msg(M_USE_CS), job_id(id), hostname (host), port (p), host_platform( platform ), got_env( gotit ), client_id( _client_id ) {}
++  UseCSMsg (std::string platform, std::string host, unsigned int p, unsigned int id, bool gotit,
++          unsigned int _client_id, unsigned int matched_host_jobs)
++    : Msg(M_USE_CS),
++    job_id(id),
++    hostname (host),
++    port (p),
++    host_platform( platform ),
++    got_env( gotit ),
++    client_id( _client_id ),
++    matched_job_id (matched_host_jobs)
++    { }
+   virtual void fill_from_channel (MsgChannel * c);
+   virtual void send_to_channel (MsgChannel * c) const;
+ };
+@@ -319,6 +347,9 @@ public:
+   ~FileChunkMsg();
+   virtual void fill_from_channel (MsgChannel * c);
+   virtual void send_to_channel (MsgChannel * c) const;
++private:
++  FileChunkMsg(const FileChunkMsg&);
++  FileChunkMsg& operator=(const FileChunkMsg&);
+ };
+ 
+ class CompileResultMsg : public Msg {
+@@ -467,6 +498,7 @@ public:
+ class GetInternalStatus : public Msg {
+ public:
+   GetInternalStatus() : Msg(M_GET_INTERNALS) {}
++  GetInternalStatus(const GetInternalStatus&) : Msg(M_GET_INTERNALS) {}
+ };
+ 
+ class MonLoginMsg : public Msg {
+@@ -509,11 +541,8 @@ public:
+   MonJobDoneMsg() : JobDoneMsg() {
+     type = M_MON_JOB_DONE;
+   }
+-  MonJobDoneMsg( const JobDoneMsg &m )
+-    : JobDoneMsg(m)
+-  {
+-    type = M_MON_JOB_DONE;
+-  }
++  MonJobDoneMsg(const JobDoneMsg& o)
++    : JobDoneMsg(o) { type = M_MON_JOB_DONE; }
+ };
+ 
+ class MonLocalJobBeginMsg : public Msg {
+@@ -536,8 +565,7 @@ public:
+   MonStatsMsg() : Msg( M_MON_STATS ) {}
+   MonStatsMsg( int id, const std::string &_statmsg )
+     : Msg( M_MON_STATS ), hostid( id ), statmsg( _statmsg )
+-  {
+-  }
++  { }
+   virtual void fill_from_channel (MsgChannel * c);
+   virtual void send_to_channel (MsgChannel * c) const;
+ };
+@@ -548,6 +576,8 @@ public:
+   TextMsg() : Msg( M_TEXT ) {}
+   TextMsg( const std::string &_text)
+     : Msg ( M_TEXT ), text(_text) {}
++  TextMsg (const TextMsg& m)
++    : Msg ( M_TEXT ), text(m.text) {}
+   virtual void fill_from_channel (MsgChannel *c);
+   virtual void send_to_channel (MsgChannel *c) const;
+ };
+Index: services/job.cpp
+===================================================================
+--- services/job.cpp	(.../trunk/icecream)	(revision 657903)
++++ services/job.cpp	(.../branches/work/icecream-make-it-cool)	(revision 695567)
+@@ -21,7 +21,7 @@
+ #include "job.h"
+ #include "logging.h"
+ #include "exitcode.h"
+-#include <sys/utsname.h>
++#include "platform.h"
+ #include <stdio.h>
+ 
+ using namespace std;
+@@ -62,12 +62,7 @@ list<string> CompileJob::allFlags() cons
+ 
+ void CompileJob::__setTargetPlatform()
+ {
+-    struct utsname buf;
+-    if ( uname(&buf) ) {
+-        log_perror( "uname failed" );
+-        return;
+-    } else
+-        m_target_platform = buf.machine;
++    m_target_platform = determine_platform();
+ }
+ 
+ unsigned int CompileJob::argumentFlags() const
+Index: services/scheduler.cpp
+===================================================================
+--- services/scheduler.cpp	(.../trunk/icecream)	(revision 657903)
++++ services/scheduler.cpp	(.../branches/work/icecream-make-it-cool)	(revision 695567)
+@@ -1,4 +1,5 @@
+ /*  -*- mode: C++; c-file-style: "gnu"; fill-column: 78 -*- */
++/* vim:cinoptions={.5s,g0,p5,t0,(0,^-0.5s,n-0.5s:tw=78:cindent:sw=4: */
+ /*
+     This file is part of Icecream.
+ 
+@@ -92,14 +93,16 @@ struct JobStat {
+   unsigned long compile_time_real;  // in milliseconds
+   unsigned long compile_time_user;
+   unsigned long compile_time_sys;
++  unsigned int job_id;
+   JobStat() : osize(0), compile_time_real(0), compile_time_user(0),
+-	      compile_time_sys(0) {}
++	      compile_time_sys(0), job_id(0) {}
+   JobStat& operator +=(const JobStat &st)
+   {
+     osize += st.osize;
+     compile_time_real += st.compile_time_real;
+     compile_time_user += st.compile_time_user;
+     compile_time_sys += st.compile_time_sys;
++    job_id = 0;
+     return *this;
+   }
+   JobStat& operator -=(const JobStat &st)
+@@ -108,22 +111,27 @@ struct JobStat {
+     compile_time_real -= st.compile_time_real;
+     compile_time_user -= st.compile_time_user;
+     compile_time_sys -= st.compile_time_sys;
++    job_id = 0;
+     return *this;
+   }
++private:
+   JobStat& operator /=(int d)
+   {
+     osize /= d;
+     compile_time_real /= d;
+     compile_time_user /= d;
+     compile_time_sys /= d;
++    job_id = 0;
+     return *this;
+   }
++public:
+   JobStat operator /(int d) const
+   {
+     JobStat r = *this;
+     r /= d;
+     return r;
+   }
++
+ };
+ 
+ class Job;
+@@ -177,8 +185,8 @@ public:
+ 
+ unsigned int CS::hostid_counter = 0;
+ 
+-static map<int, MsgChannel *> fd2chan;
+-static bool allow_run_as_user = false;
++static map<int, CS *> fd2cs;
++static bool exit_main_loop = false;
+ 
+ time_t starttime;
+ 
+@@ -220,10 +228,10 @@ public:
+ };
+ 
+ // A subset of connected_hosts representing the compiler servers
+-static list<CS*> css;
++static list<CS*> css, monitors, controls;
++static list<string> block_css;
+ static unsigned int new_job_id;
+ static map<unsigned int, Job*> jobs;
+-static map<unsigned int, Job*> done_jobs;
+ 
+ /* XXX Uah.  Don't use a queue for the job requests.  It's a hell
+    to delete anything out of them (for clean up).  */
+@@ -238,8 +246,6 @@ static list<UnansweredList*> toanswer;
+ static list<JobStat> all_job_stats;
+ static JobStat cum_job_stats;
+ 
+-static list<MsgChannel*> monitors;
+-
+ static float server_speed (CS *cs, Job *job = 0);
+ 
+ /* Searches the queue for JOB and removes it.
+@@ -270,6 +276,7 @@ add_job_stats (Job *job, JobDoneMsg *msg
+   st.compile_time_real = msg->real_msec;
+   st.compile_time_user = msg->user_msec;
+   st.compile_time_sys = msg->sys_msec;
++  st.job_id = job->id;
+ 
+   if ( job->arg_flags & CompileJob::Flag_g )
+     st.osize = st.osize * 10 / 36; // average over 1900 jobs: faktor 3.6 in osize
+@@ -339,19 +346,22 @@ add_job_stats (Job *job, JobDoneMsg *msg
+ 
+ }
+ 
+-static bool handle_end (MsgChannel *c, Msg *);
++static bool handle_end (CS *c, Msg *);
+ 
+ static void
+-notify_monitors (const Msg &m)
++notify_monitors (Msg* m)
+ {
+-  list<MsgChannel*>::iterator it, it_old;
++  list<CS*>::iterator it, it_old;
+   for (it = monitors.begin(); it != monitors.end();)
+     {
+-      it_old = it++; // handle_end removes it from monitors, so don't be clever
++      it_old = it++;
+       /* If we can't send it, don't be clever, simply close this monitor.  */
+-      if (!(*it_old)->send_msg (m))
++      if (!(*it_old)->send_msg (*m, MsgChannel::SendNonBlocking /*| MsgChannel::SendBulkOnly*/)) {
++        trace() << "monitor is blocking... removing" << endl;
+         handle_end (*it_old, 0);
++      }
+     }
++  delete m;
+ }
+ 
+ static float
+@@ -423,7 +433,7 @@ handle_monitor_stats( CS *cs, StatsMsg *
+       sprintf( buffer, "Load:%d\n", cs->load );
+       msg += buffer;
+     }
+-  notify_monitors( MonStatsMsg( cs->hostid, msg ) );
++  notify_monitors( new MonStatsMsg( cs->hostid, msg ) );
+ }
+ 
+ static Job *
+@@ -511,10 +521,14 @@ handle_cs_request (MsgChannel *c, Msg *_
+       dbg << "NEW " << job->id << " client="
+                     << submitter->nodename << " versions=[";
+       for ( Environments::const_iterator it = job->environments.begin();
+-            it != job->environments.end(); ++it )
+-        dbg << it->second << "(" << it->first << "), ";
++            it != job->environments.end();)
++        {
++          dbg << it->second << "(" << it->first << ")";
++          if (++it != job->environments.end())
++            dbg << ", ";
++        }
+       dbg << "] " << m->filename << " " << job->language << endl;
+-      notify_monitors (MonGetCSMsg (job->id, submitter->hostid, m));
++      notify_monitors (new MonGetCSMsg (job->id, submitter->hostid, m));
+       if ( !master_job )
+         {
+           master_job = job;
+@@ -529,7 +543,7 @@ handle_cs_request (MsgChannel *c, Msg *_
+ }
+ 
+ static bool
+-handle_local_job (MsgChannel *c, Msg *_m)
++handle_local_job (CS *c, Msg *_m)
+ {
+   JobLocalBeginMsg *m = dynamic_cast<JobLocalBeginMsg *>(_m);
+   if (!m)
+@@ -537,23 +551,21 @@ handle_local_job (MsgChannel *c, Msg *_m
+ 
+   ++new_job_id;
+   trace() << "handle_local_job " << m->outfile << " " << m->id << endl;
+-  CS *cs = dynamic_cast<CS*>( c );
+-  cs->client_map[m->id] = new_job_id;
+-  notify_monitors (MonLocalJobBeginMsg( new_job_id, m->outfile, m->stime, cs->hostid ) );
++  c->client_map[m->id] = new_job_id;
++  notify_monitors (new MonLocalJobBeginMsg( new_job_id, m->outfile, m->stime, c->hostid ) );
+   return true;
+ }
+ 
+ static bool
+-handle_local_job_done (MsgChannel *c, Msg *_m)
++handle_local_job_done (CS *c, Msg *_m)
+ {
+   JobLocalDoneMsg *m = dynamic_cast<JobLocalDoneMsg *>(_m);
+   if (!m)
+     return false;
+ 
+   trace() << "handle_local_job_done " << m->job_id << endl;
+-  CS *cs = dynamic_cast<CS*>( c );
+-  notify_monitors (JobLocalDoneMsg( cs->client_map[m->job_id] ) );
+-  cs->client_map.erase( m->job_id );
++  notify_monitors (new JobLocalDoneMsg( c->client_map[m->job_id] ) );
++  c->client_map.erase( m->job_id );
+   return true;
+ }
+ 
+@@ -788,7 +800,7 @@ pick_server(Job *job)
+         }
+ 
+       /* Don't use non-chroot-able daemons for remote jobs.  XXX */
+-      if (!allow_run_as_user && !cs->chroot_possible)
++      if (!cs->chroot_possible)
+         {
+ 	  trace() << cs->nodename << " can't use chroot\n";
+ 	  continue;
+@@ -837,7 +849,7 @@ pick_server(Job *job)
+                 && server_speed (best, job) < server_speed (cs, job))
+               {
+                 if (int( cs->joblist.size() ) < cs->max_jobs)
+-              best = cs;
++                  best = cs;
+                 else
+                   bestpre = cs;
+               }
+@@ -854,7 +866,7 @@ pick_server(Job *job)
+                 && server_speed (bestui, job) < server_speed (cs, job))
+               {
+                 if (int( cs->joblist.size() ) < cs->max_jobs)
+-              bestui = cs;
++                  bestui = cs;
+                 else
+                   bestpre = cs;
+               }
+@@ -877,9 +889,9 @@ pick_server(Job *job)
+   if ( bestui )
+     {
+ #if DEBUG_SCHEDULER > 1
+-    trace() << "taking best uninstalled " << bestui->nodename << " " <<  server_speed (bestui) << endl;
++      trace() << "taking best uninstalled " << bestui->nodename << " " <<  server_speed (bestui) << endl;
+ #endif
+-  return bestui;
++      return bestui;
+     }
+ 
+   if ( bestpre )
+@@ -903,6 +915,19 @@ prune_servers ()
+   time_t now = time( 0 );
+   time_t min_time = MAX_SCHEDULER_PING;
+ 
++  for (it = controls.begin(); it != controls.end();)
++    {
++      if (now - ( *it )->last_talk >= MAX_SCHEDULER_PING) 
++        {
++	  CS *old = *it;
++          ++it;
++	  handle_end (old, 0);
++	  continue;
++        }
++      min_time = min (min_time, MAX_SCHEDULER_PING - now + ( *it )->last_talk);
++      ++it;
++    }
++
+   for (it = css.begin(); it != css.end(); )
+     {
+       /* protocol version 27 and newer use TCP keepalive */
+@@ -934,7 +959,7 @@ prune_servers ()
+ 	  handle_end (old, 0);
+ 	  continue;
+         }
+-      else 
++      else
+         min_time = min (min_time, MAX_SCHEDULER_PING - now + ( *it )->last_talk);
+ #if DEBUG_SCHEDULER > 1
+       if ((random() % 400) < 0)
+@@ -950,26 +975,6 @@ prune_servers ()
+       ++it;
+     }
+ 
+-  /**
+-   * check the jobs that were not cared about even though they are done
+-   * (one in a million ;( */
+-  for (map<unsigned int, Job*>::const_iterator it = done_jobs.begin();
+-       it != done_jobs.end(); ++it)
+-    {
+-      Job *j = it->second;
+-      if (now - j->done_time > 30 )
+-        {
+-          trace() << "undone " << dump_job( j ) << endl;
+-          trace() << "FORCED removing " << j->server->nodename << endl;
+-          handle_end( j->server, 0 );
+-          /* the above will kill all jobs associated with this server, so
+-             we better get out of this, as done_jobs is changed too and
+-             we'll come back (</schwarzeneggeraccent>)
+-          */
+-          break;
+-        }
+-    }
+-
+     return min_time;
+ }
+ 
+@@ -993,21 +998,7 @@ empty_queue()
+   if (!job)
+     return false;
+ 
+-  if (css.empty())
+-    {
+-      /* XXX Can't happen anymore, right?  We have a request, hence one
+-	 daemon must be connected to us (the submitter), so css can't
+-	 be empty.  */
+-      log_error() << "no servers to handle\n";
+-      abort ();
+-      remove_job_request ();
+-      jobs.erase( job->id );
+-      notify_monitors (MonJobDoneMsg (JobDoneMsg( job->id,  255 )));
+-      // Don't delete channel here.  We expect the client on the other side
+-      // to exit, and that will remove the channel in handle_end
+-      delete job;
+-      return false;
+-    }
++  assert(!css.empty());
+ 
+   Job *first_job = job;
+   CS *cs = 0;
+@@ -1049,9 +1040,29 @@ empty_queue()
+       gotit = false;
+       host_platform = can_install (cs, job);
+     }
+-  
++
++  // mix and match between job ids
++  unsigned matched_job_id = 0;
++  unsigned count = 0;
++  for (list<JobStat>::const_iterator l = job->submitter->last_requested_jobs.begin();
++       l != job->submitter->last_requested_jobs.end(); ++l)
++    {
++      unsigned rcount = 0;
++      for (list<JobStat>::const_iterator r = cs->last_compiled_jobs.begin();
++           r != cs->last_compiled_jobs.end(); ++r)
++        {
++          if (l->job_id == r->job_id)
++            matched_job_id = l->job_id;
++          if (++rcount > 16)
++            break;
++        }
++
++       if (matched_job_id || ++count > 16)
++         break;
++    }
++
+   UseCSMsg m2(host_platform, cs->name, cs->remote_port, job->id,
+-	      gotit, job->local_client_id );
++	      gotit, job->local_client_id, matched_job_id );
+ 
+   if (!job->submitter->send_msg (m2))
+     {
+@@ -1104,18 +1115,12 @@ handle_login (MsgChannel *c, Msg *_m)
+   if (!m)
+     return false;
+ 
+-  /* If we don't allow non-chroot-able daemons in the farm,
+-     discard them here.  */
+-  if (!allow_run_as_user && !m->chroot_possible)
+-    return false;
+-
+   std::ostream& dbg = trace();
+-  dbg << "login " << m->nodename << " protocol version: " << c->protocol;
+ 
+   CS *cs = static_cast<CS *>(c);
+   cs->remote_port = m->port;
+   cs->compiler_versions = m->envs;
+-  cs->max_jobs = m->max_kids;
++  cs->max_jobs = m->chroot_possible ? m->max_kids : 0;
+   cs->noremote = m->noremote;
+   if ( m->nodename.length() )
+     cs->nodename = m->nodename;
+@@ -1124,6 +1129,12 @@ handle_login (MsgChannel *c, Msg *_m)
+   cs->host_platform = m->host_platform;
+   cs->chroot_possible = m->chroot_possible;
+   cs->pick_new_id();
++
++  for (list<string>::const_iterator it = block_css.begin(); it != block_css.end(); ++it)
++      if (cs->name == *it)
++          return false;
++
++  dbg << "login " << m->nodename << " protocol version: " << c->protocol;
+   handle_monitor_stats( cs );
+ 
+   /* remove any other clients with the same IP, they must be stale */
+@@ -1182,22 +1193,24 @@ handle_relogin (MsgChannel *c, Msg *_m)
+ }
+ 
+ static bool
+-handle_mon_login (MsgChannel *c, Msg *_m)
++handle_mon_login (CS *c, Msg *_m)
+ {
+   MonLoginMsg *m = dynamic_cast<MonLoginMsg *>(_m);
+   if (!m)
+     return false;
+-  // This is really a CS*, but we don't need the full one here
+   monitors.push_back (c);
+-  for (list<CS*>::iterator it = css.begin(); it != css.end(); ++it)
++  // monitors really want to be fed lazily
++  c->setBulkTransfer();
++
++  for (list<CS*>::const_iterator it = css.begin(); it != css.end(); ++it)
+     handle_monitor_stats( *it );
+ 
+-  fd2chan.erase( c->fd ); // no expected data from them
++  fd2cs.erase( c->fd ); // no expected data from them
+   return true;
+ }
+ 
+ static bool
+-handle_job_begin (MsgChannel *c, Msg *_m)
++handle_job_begin (CS *c, Msg *_m)
+ {
+   JobBeginMsg *m = dynamic_cast<JobBeginMsg *>(_m);
+   if ( !m )
+@@ -1216,8 +1229,7 @@ handle_job_begin (MsgChannel *c, Msg *_m
+   job->state = Job::COMPILING;
+   job->starttime = m->stime;
+   job->start_on_scheduler = time(0);
+-  CS *cs = dynamic_cast<CS*>( c );
+-  notify_monitors (MonJobBeginMsg (m->job_id, m->stime, cs->hostid));
++  notify_monitors (new MonJobBeginMsg (m->job_id, m->stime, c->hostid));
+ #if DEBUG_SCHEDULER >= 0
+   trace() << "BEGIN: " << m->job_id << " client=" << job->submitter->nodename
+           << "(" << job->target_platform << ")" << " server="
+@@ -1230,7 +1242,7 @@ handle_job_begin (MsgChannel *c, Msg *_m
+ 
+ 
+ static bool
+-handle_job_done (MsgChannel *c, Msg *_m)
++handle_job_done (CS *c, Msg *_m)
+ {
+   JobDoneMsg *m = dynamic_cast<JobDoneMsg *>(_m);
+   if ( !m )
+@@ -1242,10 +1254,10 @@ handle_job_done (MsgChannel *c, Msg *_m)
+     {
+       // the daemon saw a cancel of what he believes is waiting in the scheduler
+       map<unsigned int, Job*>::iterator mit;
+-      for (mit = jobs.begin(); mit != jobs.end(); mit++)
++      for (mit = jobs.begin(); mit != jobs.end(); ++mit)
+         {
+           Job *job = mit->second;
+-          trace() << "looking for waitcs " << job->server << " " << job->submitter  << " " << c << " " 
++          trace() << "looking for waitcs " << job->server << " " << job->submitter  << " " << c << " "
+ 		  << job->state << " " << job->local_client_id << " " << m->job_id << endl;
+           if (job->server == 0 && job->submitter == c && job->state == Job::PENDING
+               && job->local_client_id == m->job_id )
+@@ -1264,7 +1276,7 @@ handle_job_done (MsgChannel *c, Msg *_m)
+ 		    list<Job*>::iterator jit;
+ 		    for (jit = l->l.begin(); jit != l->l.end(); ++jit)
+ 		      {
+-			if (*jit == j) 
++			if (*jit == j)
+ 			  {
+ 			    l->l.erase(jit);
+ 			    break;
+@@ -1299,7 +1311,7 @@ handle_job_done (MsgChannel *c, Msg *_m)
+     {
+       log_info() << "the server isn't the same for job " << m->job_id << endl;
+       log_info() << "server: " << j->server->nodename << endl;
+-      log_info() << "msg came from: " << ((CS*)c)->nodename << endl;
++      log_info() << "msg came from: " << c->nodename << endl;
+       // the daemon is not following matz's rules: kick him
+       handle_end(c, 0);
+       return false;
+@@ -1308,7 +1320,7 @@ handle_job_done (MsgChannel *c, Msg *_m)
+     {
+       log_info() << "the submitter isn't the same for job " << m->job_id << endl;
+       log_info() << "submitter: " << j->submitter->nodename << endl;
+-      log_info() << "msg came from: " << ((CS*)c)->nodename << endl;
++      log_info() << "msg came from: " << c->nodename << endl;
+       // the daemon is not following matz's rules: kick him
+       handle_end(c, 0);
+       return false;
+@@ -1345,32 +1357,30 @@ handle_job_done (MsgChannel *c, Msg *_m)
+     trace() << "END " << m->job_id
+ 	    << " status=" << m->exitcode << endl;
+ 
+-  if (j->server) 
++  if (j->server)
+     {
+       j->server->joblist.remove (j);
+       j->server->busy_installing = 0;
+     }
+   add_job_stats (j, m);
+-  notify_monitors (MonJobDoneMsg (*m));
++  notify_monitors (new MonJobDoneMsg (*m));
+   jobs.erase (m->job_id);
+-  done_jobs.erase (m->job_id);
+   delete j;
+ 
+   return true;
+ }
+ 
+ static bool
+-handle_ping (MsgChannel * c, Msg * /*_m*/)
++handle_ping (CS* c, Msg * /*_m*/)
+ {
+   c->last_talk = time( 0 );
+-  CS *cs = dynamic_cast<CS*>( c );
+-  if ( cs && cs->max_jobs < 0 )
+-    cs->max_jobs *= -1;
++  if ( c->max_jobs < 0 )
++    c->max_jobs *= -1;
+   return true;
+ }
+ 
+ static bool
+-handle_stats (MsgChannel * c, Msg * _m)
++handle_stats (CS * c, Msg * _m)
+ {
+   StatsMsg *m = dynamic_cast<StatsMsg *>(_m);
+   if (!m)
+@@ -1381,9 +1391,8 @@ handle_stats (MsgChannel * c, Msg * _m)
+   if (!IS_PROTOCOL_25(c))
+     {
+       c->last_talk = time( 0 );
+-      CS *cs = dynamic_cast<CS*>( c );
+-      if ( cs && cs->max_jobs < 0 )
+-        cs->max_jobs *= -1;
++      if ( c && c->max_jobs < 0 )
++        c->max_jobs *= -1;
+     }
+ 
+   for (list<CS*>::iterator it = css.begin(); it != css.end(); ++it)
+@@ -1439,22 +1448,47 @@ split_string (const string &s, const cha
+ }
+ 
+ static bool
+-handle_line (MsgChannel *c, Msg *_m)
++handle_control_login(CS* c)
++{
++    c->type = CS::LINE;
++    c->last_talk = time (0);
++    c->setBulkTransfer();
++    c->state = CS::LOGGEDIN;
++    assert(find(controls.begin(), controls.end(), c) == controls.end());
++    controls.push_back(c);
++
++    std::ostringstream o;
++    o << "200-ICECC " VERSION ": "
++      << time(0) - starttime << "s uptime, "
++      << css.size() << " hosts, "
++      << jobs.size() << " jobs in queue "
++      << "(" << new_job_id << " total)." << endl;
++    o << "200 Use 'help' for help and 'quit' to quit." << endl;
++    return c->send_msg(TextMsg(o.str()));
++}
++
++static bool
++handle_line (CS *c, Msg *_m)
+ {
+   TextMsg *m = dynamic_cast<TextMsg *>(_m);
+   if (!m)
+     return false;
++
+   char buffer[1000];
+   string line;
+   list<string> l;
+   split_string (m->text, " \t\n", l);
+   string cmd;
++
++  c->last_talk = time(0);
++
+   if (l.empty())
+     cmd = "";
+   else
+     {
+       cmd = l.front();
+       l.pop_front();
++      transform(cmd.begin(), cmd.end(), cmd.begin(), ::tolower);
+     }
+   if (cmd == "listcs")
+     {
+@@ -1476,9 +1510,15 @@ handle_line (MsgChannel *c, Msg *_m)
+             return false;
+           for ( list<Job*>::const_iterator it2 = cs->joblist.begin(); it2 != cs->joblist.end(); ++it2 )
+             if(!c->send_msg (TextMsg ("   " + dump_job (*it2) ) ))
+-              break;
++              return false;
+ 	}
+     }
++  else if (cmd == "listblocks")
++    {
++      for (list<string>::const_iterator it = block_css.begin(); it != block_css.end(); ++it)
++        if(!c->send_msg (TextMsg ("   " + (*it) ) ))
++          return false;
++    }
+   else if (cmd == "listjobs")
+     {
+       for (map<unsigned int, Job*>::const_iterator it = jobs.begin();
+@@ -1486,15 +1526,15 @@ handle_line (MsgChannel *c, Msg *_m)
+ 	if(!c->send_msg( TextMsg( " " + dump_job (it->second) ) ))
+           return false;
+     }
+-  else if (cmd == "quit")
++  else if (cmd == "quit" || cmd == "exit" )
+     {
+-      handle_end (c, m);
++      handle_end(c, 0);
+       return false;
+     }
+-  else if (cmd == "removecs")
++  else if (cmd == "removecs" || cmd == "blockcs")
+     {
+       if (l.empty()) {
+-        if(!c->send_msg (TextMsg (string ("Sure.  But which hosts?"))))
++        if(!c->send_msg (TextMsg (string ("401 Sure. But which hosts?"))))
+           return false;
+       }
+       else
+@@ -1502,6 +1542,8 @@ handle_line (MsgChannel *c, Msg *_m)
+ 	  for (list<CS*>::iterator it = css.begin(); it != css.end(); ++it)
+ 	    if ((*it)->nodename == *si || (*it)->name == *si)
+ 	      {
++                if (cmd == "blockcs")
++                    block_css.push_back((*it)->name);
+                 if (c->send_msg (TextMsg (string ("removing host ") + *si)))
+                     handle_end ( *it, 0);
+ 		break;
+@@ -1517,7 +1559,7 @@ handle_line (MsgChannel *c, Msg *_m)
+         {
+           Msg *msg = NULL;
+ 
+-	  if (!l.empty()) 
++	  if (!l.empty())
+ 	    {
+ 	      list<string>::const_iterator si;
+ 	      for (si = l.begin(); si != l.end(); ++si) {
+@@ -1544,7 +1586,7 @@ handle_line (MsgChannel *c, Msg *_m)
+   else if (cmd == "help")
+     {
+       if (!c->send_msg (TextMsg (
+-        "listcs\nlistjobs\nremovecs\ninternals\nhelp\nquit")))
++        "listcs\nlistblocks\nlistjobs\nremovecs\nblockcs\ninternals\nhelp\nquit")))
+         return false;
+     }
+   else
+@@ -1555,68 +1597,62 @@ handle_line (MsgChannel *c, Msg *_m)
+       if(!c->send_msg (TextMsg (txt)))
+         return false;
+     }
+-  return c->send_msg (TextMsg (string ("done")));
++  return c->send_msg (TextMsg (string ("200 done")));
+ }
+ 
+ // return false if some error occured, leaves C open.  */
+ static bool
+-try_login (MsgChannel *c, Msg *m)
++try_login (CS *c, Msg *m)
+ {
+   bool ret = true;
+-  CS *cs = static_cast<CS *>(c);
+   switch (m->type)
+     {
+     case M_LOGIN:
+-      cs->type = CS::DAEMON;
++      c->type = CS::DAEMON;
+       ret = handle_login (c, m);
+       break;
+     case M_MON_LOGIN:
+-      cs->type = CS::MONITOR;
++      c->type = CS::MONITOR;
+       ret = handle_mon_login (c, m);
+       break;
+-    case M_TEXT:
+-      cs->type = CS::LINE;
+-      ret = handle_line (c, m);
+-      break;
+     default:
+       log_info() << "Invalid first message " << (char)m->type << endl;
+       ret = false;
+       break;
+     }
+-  delete m;
+   if (ret)
+-    cs->state = CS::LOGGEDIN;
++    c->state = CS::LOGGEDIN;
+   else
+-    {
+-      fd2chan.erase (c->fd);
+-      delete c;
+-    }
++    handle_end (c, m);
++
++  delete m;
+   return ret;
+ }
+ 
+ static bool
+-handle_end (MsgChannel *c, Msg *m)
++handle_end (CS *toremove, Msg *m)
+ {
+ #if DEBUG_SCHEDULER > 1
+-  trace() << "Handle_end " << c << " " << m << endl;
++  trace() << "Handle_end " << toremove << " " << m << endl;
+ #else
+   ( void )m;
+ #endif
+ 
+-  CS *toremove = static_cast<CS *>(c);
+-  if (toremove->type == CS::MONITOR)
++  switch (toremove->type) {
++  case CS::MONITOR:
+     {
+-      assert (find (monitors.begin(), monitors.end(), c) != monitors.end());
+-      monitors.remove (c);
++      assert (find (monitors.begin(), monitors.end(), toremove) != monitors.end());
++      monitors.remove (toremove);
+ #if DEBUG_SCHEDULER > 1
+       trace() << "handle_end(moni) " << monitors.size() << endl;
+ #endif
+     }
+-  else if (toremove->type == CS::DAEMON)
++    break;
++  case CS::DAEMON:
+     {
+       log_info() << "remove daemon " << toremove->nodename << endl;
+ 
+-      notify_monitors( MonStatsMsg( toremove->hostid, "State:Offline\n" ) );
++      notify_monitors(new  MonStatsMsg( toremove->hostid, "State:Offline\n" ) );
+ 
+       /* A daemon disconnected.  We must remove it from the css list,
+          and we have to delete all jobs scheduled on that daemon.
+@@ -1636,11 +1672,10 @@ handle_end (MsgChannel *c, Msg *m)
+ 	    for (jit = l->l.begin(); jit != l->l.end(); ++jit)
+ 	      {
+ 		trace() << "STOP (DAEMON) FOR " << (*jit)->id << endl;
+-                notify_monitors (MonJobDoneMsg (JobDoneMsg( ( *jit )->id,  255 )));
++                notify_monitors (new MonJobDoneMsg ( JobDoneMsg (( *jit )->id,  255 )));
+ 		if ((*jit)->server)
+ 		  (*jit)->server->busy_installing = 0;
+ 		jobs.erase( (*jit)->id );
+-                done_jobs.erase( (*jit)->id );
+ 		delete (*jit);
+ 	      }
+ 	    delete l;
+@@ -1656,14 +1691,13 @@ handle_end (MsgChannel *c, Msg *m)
+           if (job->server == toremove || job->submitter == toremove)
+             {
+               trace() << "STOP (DAEMON2) FOR " << mit->first << endl;
+-              notify_monitors (MonJobDoneMsg (JobDoneMsg( job->id,  255 )));
++              notify_monitors (new MonJobDoneMsg ( JobDoneMsg( job->id,  255 )));
+ 	      /* If this job is removed because the submitter is removed
+ 		 also remove the job from the servers joblist.  */
+ 	      if (job->server && job->server != toremove)
+ 		job->server->joblist.remove (job);
+ 	      if (job->server)
+ 	        job->server->busy_installing = 0;
+-              done_jobs.erase( job->id );
+               jobs.erase( mit++ );
+               delete job;
+             }
+@@ -1673,22 +1707,28 @@ handle_end (MsgChannel *c, Msg *m)
+             }
+         }
+     }
+-  else if (toremove->type == CS::LINE)
++    break;
++  case CS::LINE:
+     {
+-      if (!c->send_msg (TextMsg ("Good Bye!"))) {
++      if (!toremove->send_msg (TextMsg ("200 Good Bye!"))) {
+       }
++      controls.remove (toremove);
+     }
+-  else
+-    trace() << "remote end had UNKNOWN type?" << endl;
++    break;
++  default:
++    {
++      trace() << "remote end had UNKNOWN type?" << endl;
++    }
++  }
+ 
+-  fd2chan.erase (c->fd);
+-  delete c;
++  fd2cs.erase (toremove->fd);
++  delete toremove;
+   return true;
+ }
+ 
+ /* Returns TRUE if C was not closed.  */
+ static bool
+-handle_activity (MsgChannel *c)
++handle_activity (CS *c)
+ {
+   Msg *m;
+   bool ret = true;
+@@ -1699,7 +1739,7 @@ handle_activity (MsgChannel *c)
+       return false;
+     }
+   /* First we need to login.  */
+-  if (static_cast<CS *>(c)->state == CS::CONNECTED)
++  if (c->state == CS::CONNECTED)
+     return try_login (c, m);
+ 
+   switch (m->type)
+@@ -1805,16 +1845,25 @@ usage(const char* reason = 0)
+        << "  -h, --help\n"
+        << "  -l, --log-file <file>\n"
+        << "  -d, --daemonize\n"
+-       << "  -r, --allow-run-as-user\n"
+        << "  -v[v[v]]]\n"
+        << endl;
+ 
+   exit(1);
+ }
+ 
+-void removePidFile( int )
++static void
++trigger_exit( int signum )
+ {
+-  unlink(pidFilePath.c_str());
++  if (!exit_main_loop)
++    exit_main_loop = true;
++  else
++    {
++      // hmm, we got killed already. try better
++      cerr << "forced exit." << endl;
++      _exit(1);
++    }
++  // make BSD happy
++  signal(signum, trigger_exit);
+ }
+ 
+ int
+@@ -1837,7 +1886,6 @@ main (int argc, char * argv[])
+       { "port", 0, NULL, 'p' },
+       { "daemonize", 0, NULL, 'd'},
+       { "log-file", 1, NULL, 'l'},
+-      { "allow-run-as-user", 1, NULL, 'u' },
+       { 0, 0, 0, 0 }
+     };
+ 
+@@ -1885,10 +1933,6 @@ main (int argc, char * argv[])
+         usage("Error: -p requires argument");
+       break;
+ 
+-    case 'r':
+-      allow_run_as_user = true;
+-      break;
+-
+     default:
+       usage();
+     }
+@@ -1927,11 +1971,11 @@ main (int argc, char * argv[])
+   pidFile << getpid() << endl;
+   pidFile.close();
+ 
+-  signal(SIGTERM, removePidFile);
+-  signal(SIGINT, removePidFile);
+-  signal(SIGALRM, removePidFile);
++  signal(SIGTERM, trigger_exit);
++  signal(SIGINT, trigger_exit);
++  signal(SIGALRM, trigger_exit);
+ 
+-  while (1)
++  while (!exit_main_loop)
+     {
+       struct timeval tv;
+       tv.tv_usec = 0;
+@@ -1954,11 +1998,10 @@ main (int argc, char * argv[])
+       if (broad_fd > max_fd)
+         max_fd = broad_fd;
+       FD_SET (broad_fd, &read_set);
+-      for (map<int, MsgChannel *>::const_iterator it = fd2chan.begin();
+-           it != fd2chan.end();)
++      for (map<int, CS*>::const_iterator it = fd2cs.begin(); it != fd2cs.end();)
+         {
+           int i = it->first;
+-          MsgChannel *c = it->second;
++          CS *c = it->second;
+           bool ok = true;
+           ++it;
+           /* handle_activity() can delete c and make the iterator
+@@ -1996,7 +2039,7 @@ main (int argc, char * argv[])
+ 	  if (remote_fd >= 0)
+ 	    {
+ 	      CS *cs = new CS (remote_fd, (struct sockaddr*) &remote_addr, remote_len, false);
+-              trace() << "accepted " << cs->name << " " << cs->port << endl;
++              trace() << "accepted " << cs->name << endl;
+               cs->last_talk = time( 0 );
+ 
+               if ( !cs->protocol ) // protocol mismatch
+@@ -2004,7 +2047,7 @@ main (int argc, char * argv[])
+                   delete cs;
+                   continue;
+                 }
+-	      fd2chan[cs->fd] = cs;
++	      fd2cs[cs->fd] = cs;
+ 	      while (!cs->read_a_bit () || cs->has_msg ())
+                 if(! handle_activity (cs))
+                   break;
+@@ -2026,13 +2069,12 @@ main (int argc, char * argv[])
+ 	  if (remote_fd >= 0)
+ 	    {
+ 	      CS *cs = new CS (remote_fd, (struct sockaddr*) &remote_addr, remote_len, true);
+-              cs->last_talk = time (0);
+-              if (!cs->protocol) // protocol mismatch
++	      fd2cs[cs->fd] = cs;
++              if (!handle_control_login(cs))
+                 {
+-                  delete cs;
++                  handle_end(cs, 0);
+                   continue;
+                 }
+-	      fd2chan[cs->fd] = cs;
+ 	      while (!cs->read_a_bit () || cs->has_msg ())
+ 	        if (!handle_activity (cs))
+                   break;
+@@ -2073,12 +2115,12 @@ main (int argc, char * argv[])
+ 		}
+ 	    }
+ 	}
+-      for (map<int, MsgChannel *>::const_iterator it = fd2chan.begin();
+-           max_fd && it != fd2chan.end();)
++      for (map<int, CS*>::const_iterator it = fd2cs.begin();
++           max_fd && it != fd2cs.end();)
+         {
+           int i = it->first;
+-          MsgChannel *c = it->second;
+-          /* handle_activity can delete the channel from the fd2chan list,
++          CS *c = it->second;
++          /* handle_activity can delete the channel from the fd2cs list,
+              hence advance the iterator right now, so it doesn't become
+              invalid.  */
+           ++it;
+@@ -2091,9 +2133,9 @@ main (int argc, char * argv[])
+             }
+         }
+     }
++  shutdown (broad_fd, SHUT_RDWR);
+   close (broad_fd);
++  unlink(pidFilePath.c_str());
+   return 0;
+ }
+-/*
+-vim:cinoptions={.5s,g0,p5,t0,(0,^-0.5s,n-0.5s:tw=78:cindent:sw=4:
+-*/
++
+Index: services/job.h
+===================================================================
+--- services/job.h	(.../trunk/icecream)	(revision 657903)
++++ services/job.h	(.../branches/work/icecream-make-it-cool)	(revision 695567)
+@@ -36,17 +36,16 @@ public:
+ class CompileJob {
+ 
+ public:
+-    typedef enum {Lang_C, Lang_CXX, Lang_OBJC} Language;
++    typedef enum {Lang_C, Lang_CXX, Lang_OBJC, Lang_Custom} Language;
+     typedef enum { Flag_None = 0, Flag_g = 0x1, Flag_g3 = 0x2, Flag_O = 0x4, Flag_O2 = 0x8, Flag_Ol2 = 0x10 } Flag;
+ 
+     CompileJob() : m_id( 0 ) { __setTargetPlatform(); }
+ 
+-    void setLanguage( Language lg ) {
+-        m_language = lg;
+-    }
+-    Language language() const {
+-        return m_language;
+-    }
++    void setCompilerName(const std::string& name) { m_compiler_name = name; }
++    std::string compilerName() const { return m_compiler_name; }
++
++    void setLanguage( Language lg ) { m_language = lg; }
++    Language language() const { return m_language; }
+ 
+     void setEnvironmentVersion( const std::string& ver ) {
+         m_environment_version = ver;
+@@ -89,22 +88,6 @@ public:
+         return m_id;
+     }
+ 
+-    CompileJob( const CompileJob &rhs ) {
+-        *this = rhs;
+-    }
+-
+-    CompileJob &operator=( const CompileJob &rhs ) {
+-        m_id = rhs.m_id;
+-        m_language = rhs.m_language;
+-        m_environment_version = rhs.m_environment_version;
+-        m_flags = rhs.m_flags;
+-        m_input_file = rhs.m_input_file;
+-        m_output_file = rhs.m_output_file;
+-        m_target_platform = rhs.m_target_platform;
+-
+-        return *this;
+-    }
+-
+     void appendFlag( std::string arg, Argument_Type argumentType ) {
+         m_flags.append( arg, argumentType );
+     }
+@@ -120,6 +103,7 @@ private:
+ 
+     unsigned int m_id;
+     Language m_language;
++    std::string m_compiler_name;
+     std::string m_environment_version;
+     ArgumentsList m_flags;
+     std::string m_input_file, m_output_file;
+Index: services/platform.cpp
+===================================================================
+--- services/platform.cpp	(.../trunk/icecream)	(revision 0)
++++ services/platform.cpp	(.../branches/work/icecream-make-it-cool)	(revision 695567)
+@@ -0,0 +1,61 @@
++/*
++    This file is part of Icecream.
++
++    Copyright (c) 2006 Mirko Boehm <mirko@kde.org>
++
++    This program is free software; you can redistribute it and/or modify
++    it under the terms of the GNU General Public License as published by
++    the Free Software Foundation; either version 2 of the License, or
++    (at your option) any later version.
++
++    This program is distributed in the hope that it will be useful,
++    but WITHOUT ANY WARRANTY; without even the implied warranty of
++    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
++    GNU General Public License for more details.
++
++    You should have received a copy of the GNU General Public License
++    along with this program; if not, write to the Free Software
++    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
++*/
++
++extern "C" {
++#include <sys/utsname.h>
++}
++
++#include "logging.h"
++#include "platform.h"
++
++std::string determine_platform_once()
++{
++    using namespace std;
++    string platform;
++
++    struct utsname uname_buf;
++    if ( uname( &uname_buf ) ) {
++        log_perror( "uname call failed" );
++        throw( "determine_platform: cannot determine OS version and machine architecture" );
++        // return platform;
++    }
++
++    string os = uname_buf.sysname;
++    if ( os != "Linux" )
++        platform = os + '_' + uname_buf.machine;
++    else // Linux
++        platform = uname_buf.machine;
++
++    while (true)
++    {
++        string::size_type pos = platform.find(" ");
++        if (pos == string::npos)
++            break;
++        platform.erase(pos, 1);
++    }
++
++    return platform;
++}
++
++const std::string& determine_platform()
++{
++    const static std::string platform( determine_platform_once() );
++    return platform;
++}
+Index: services/Makefile.am
+===================================================================
+--- services/Makefile.am	(.../trunk/icecream)	(revision 657903)
++++ services/Makefile.am	(.../branches/work/icecream-make-it-cool)	(revision 695567)
+@@ -2,13 +2,13 @@ INCLUDES = -I$(srcdir)/../minilzo
+ 
+ lib_LTLIBRARIES = libicecc.la
+ 
+-libicecc_la_SOURCES = job.cpp comm.cpp getifaddrs.cpp logging.cpp tempfile.c
++libicecc_la_SOURCES = job.cpp comm.cpp getifaddrs.cpp logging.cpp tempfile.c platform.cpp
+ libicecc_la_LIBADD = ../minilzo/libminilzo.la
+ libicecc_la_CFLAGS = -fPIC -DPIC
+ libicecc_la_CXXFLAGS = -fPIC -DPIC
+ 
+ ice_HEADERS = job.h comm.h
+-noinst_HEADERS = bench.h exitcode.h getifaddrs.h logging.h tempfile.h
++noinst_HEADERS = bench.h exitcode.h getifaddrs.h logging.h tempfile.h platform.h
+ icedir = $(includedir)/icecc
+ 
+ sbin_PROGRAMS = scheduler
+Index: services/platform.h
+===================================================================
+--- services/platform.h	(.../trunk/icecream)	(revision 0)
++++ services/platform.h	(.../branches/work/icecream-make-it-cool)	(revision 695567)
+@@ -0,0 +1,28 @@
++/*
++    This file is part of Icecream.
++
++    Copyright (c) 2006 Mirko Boehm <mirko@kde.org>
++
++    This program is free software; you can redistribute it and/or modify
++    it under the terms of the GNU General Public License as published by
++    the Free Software Foundation; either version 2 of the License, or
++    (at your option) any later version.
++
++    This program is distributed in the hope that it will be useful,
++    but WITHOUT ANY WARRANTY; without even the implied warranty of
++    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
++    GNU General Public License for more details.
++
++    You should have received a copy of the GNU General Public License
++    along with this program; if not, write to the Free Software
++    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
++*/
++
++#ifndef PLATFORM_H
++#define PLATFORM_H
++
++#include <string>
++
++extern const std::string& determine_platform();
++
++#endif
+Index: services/logging.h
+===================================================================
+--- services/logging.h	(.../trunk/icecream)	(revision 657903)
++++ services/logging.h	(.../branches/work/icecream-make-it-cool)	(revision 695567)
+@@ -28,6 +28,7 @@
+ #include <string>
+ #include <iostream>
+ #include <cassert>
++#include <cstring>
+ 
+ enum DebugLevels { Info = 1, Warning = 2, Error = 4, Debug = 8};
+ extern std::ostream *logfile_info;
+@@ -46,11 +47,11 @@ static inline std::ostream & output_date
+     time_t t = time( 0 );
+     struct tm* tmp = localtime(&t);
+     char buf[64];
+-    strftime(buf, sizeof(buf), "%T", tmp);
++    strftime(buf, sizeof(buf), "%T: ", tmp);
+     if (logfile_prefix.size())
+         os << logfile_prefix << "[" << getpid() << "] ";
+ 
+-    os << buf << ": ";
++    os << buf;
+     return os;
+ }
+ 
+Index: services/comm.cpp
+===================================================================
+--- services/comm.cpp	(.../trunk/icecream)	(revision 657903)
++++ services/comm.cpp	(.../branches/work/icecream-make-it-cool)	(revision 695567)
+@@ -4,6 +4,7 @@
+ 
+     Copyright (c) 2004 Michael Matz <matz@suse.de>
+                   2004 Stephan Kulow <coolo@suse.de>
++                  2007 Dirk Mueller <dmueller@suse.de>
+ 
+     This program is free software; you can redistribute it and/or modify
+     it under the terms of the GNU General Public License as published by
+@@ -20,6 +21,7 @@
+     Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ */
+ 
++#include <config.h>
+ 
+ #include <sys/types.h>
+ #include <netinet/in.h>
+@@ -28,6 +30,10 @@
+ #include <sys/select.h>
+ #include <netinet/in.h>
+ #include <netinet/tcp.h>
++#if HAVE_NETINET_TCP_VAR_H
++#include <sys/socketvar.h>
++#include <netinet/tcp_var.h>
++#endif
+ #include <errno.h>
+ #include <fcntl.h>
+ #include <netdb.h>
+@@ -38,7 +44,6 @@
+ #include <assert.h>
+ #include <minilzo.h>
+ #include <stdio.h>
+-#include <sys/utsname.h>
+ 
+ #include "logging.h"
+ #include "job.h"
+@@ -46,6 +51,15 @@
+ 
+ using namespace std;
+ 
++/*
++ * A generic DoS protection. The biggest messages are of type FileChunk
++ * which shouldn't be larger than 100kb. so anything bigger than 10 times
++ * of that is definitly fishy, and we must reject it (we're running as root,
++ * so be cautious).
++ */
++
++#define MAX_MSG_SIZE 1 * 1024 * 1024
++
+ /* TODO
+  * buffered in/output per MsgChannel
+     + move read* into MsgChannel, create buffer-fill function
+@@ -121,20 +135,20 @@ MsgChannel::update_state (void)
+ 	      /* The first time we read the remote protocol.  */
+ 	      protocol = 0;
+ 	      if (remote_prot < MIN_PROTOCOL_VERSION)
+-		remote_prot = 0;
+-	      else if (remote_prot > PROTOCOL_VERSION)
++                {
++		  remote_prot = 0;
++		  return false;
++                }
++
++	      if (remote_prot > PROTOCOL_VERSION)
+ 		remote_prot = PROTOCOL_VERSION; // ours is smaller
+-	      if (remote_prot == 0)
+-		return false;
+-	      else
+-		{
+-		  vers[0] = remote_prot;
+-		  //writeuint32 (remote_prot);
+-		  writefull (vers, 4);
+-		  if (!flush_writebuf (true))
+-		    return false;
+-		  protocol = -1 - remote_prot;
+-		}
++
++	      vers[0] = remote_prot;
++	      //writeuint32 (remote_prot);
++	      writefull (vers, 4);
++	      if (!flush_writebuf (true))
++		  return false;
++	      protocol = -1 - remote_prot;
+ 	    }
+ 	  else if (protocol < -1)
+ 	    {
+@@ -174,7 +188,9 @@ MsgChannel::update_state (void)
+ 	}
+       else if (inofs - intogo >= 4)
+         {
+-	  readuint32 (inmsglen);
++          (*this) >> inmsglen;
++          if (inmsglen > MAX_MSG_SIZE)
++              return false;
+ 	  if (inbuflen - intogo < inmsglen)
+ 	    {
+ 	      inbuflen = (inmsglen + intogo + 127) & ~(size_t)127;
+@@ -216,8 +232,7 @@ MsgChannel::chop_input ()
+ void
+ MsgChannel::chop_output ()
+ {
+-  if (msgofs > 8192
+-      || msgtogo <= 16)
++  if (msgofs > 8192 || msgtogo <= 16)
+     {
+       if (msgtogo)
+         memmove (msgbuf, msgbuf + msgofs, msgtogo);
+@@ -298,8 +313,8 @@ MsgChannel::flush_writebuf (bool blockin
+   return !error;
+ }
+ 
+-void
+-MsgChannel::readuint32 (uint32_t &buf)
++MsgChannel&
++MsgChannel::operator>> (uint32_t &buf)
+ {
+   if (inofs >= intogo + 4)
+     {
+@@ -314,23 +329,25 @@ MsgChannel::readuint32 (uint32_t &buf)
+     }
+   else
+     buf = 0;
++  return *this;
+ }
+ 
+-void
+-MsgChannel::writeuint32 (uint32_t i)
++MsgChannel&
++MsgChannel::operator<< (uint32_t i)
+ {
+   i = htonl (i);
+   writefull (&i, 4);
++  return *this;
+ }
+ 
+-void
+-MsgChannel::read_string (string &s)
++MsgChannel&
++MsgChannel::operator>> (string &s)
+ {
+   char *buf;
+   // len is including the (also saved) 0 Byte
+   uint32_t len;
+-  readuint32 (len);
+-  if (!len || inofs < intogo + len)
++  *this >> len;
++  if (!len || len > inofs - intogo)
+     s = "";
+   else
+     {
+@@ -338,47 +355,53 @@ MsgChannel::read_string (string &s)
+       intogo += len;
+       s = buf;
+     }
++  return *this;
+ }
+ 
+-void
+-MsgChannel::write_string (const string &s)
++MsgChannel&
++MsgChannel::operator<< (const std::string &s)
+ {
+   uint32_t len = 1 + s.length();
+-  writeuint32 (len);
++  *this << len;
+   writefull (s.c_str(), len);
++  return *this;
+ }
+ 
+-void
+-MsgChannel::read_strlist (list<string> &l)
++MsgChannel&
++MsgChannel::operator>> (list<string> &l)
+ {
+   uint32_t len;
+   l.clear();
+-  readuint32 (len);
++  *this >> len;
+   while (len--)
+     {
+       string s;
+-      read_string (s);
++      *this >> s;
+       l.push_back (s);
++      if (inofs == intogo)
++        break;
+     }
++  return *this;
+ }
+ 
+-void
+-MsgChannel::write_strlist (const list<string> &l)
++MsgChannel&
++MsgChannel::operator<< (const std::list<std::string> &l)
+ {
+-  writeuint32 ((uint32_t) l.size());
++  *this << (uint32_t) l.size();
+   for (list<string>::const_iterator it = l.begin();
+        it != l.end(); ++it )
+-    write_string (*it);
++    *this << *it;
++  return *this;
+ }
+ 
+ void
+ MsgChannel::write_environments( const Environments &envs )
+ {
+-  writeuint32( envs.size() );
++  *this << envs.size();
+   for ( Environments::const_iterator it = envs.begin(); it != envs.end(); ++it )
+     {
+-      write_string( it->first );
+-      write_string( it->second );
++      *this << it->first;
++      *this << it->second;
+     }
+ }
+ 
+@@ -387,13 +410,13 @@ MsgChannel::read_environments( Environme
+ {
+   envs.clear();
+   uint32_t count;
+-  readuint32( count );
++  *this >> count;
+   for ( unsigned int i = 0; i < count; i++ )
+     {
+       string plat;
+       string vers;
+-      read_string( plat );
+-      read_string( vers );
++      *this >> plat;
++      *this >> vers;
+       envs.push_back( make_pair( plat, vers ) );
+     }
+ }
+@@ -405,15 +428,19 @@ MsgChannel::readcompressed (unsigned cha
+   lzo_uint uncompressed_len;
+   lzo_uint compressed_len;
+   uint32_t tmp;
+-  readuint32 (tmp);
++  *this >> tmp;
+   uncompressed_len = tmp;
+-  readuint32 (tmp);
++  *this >> tmp;
+   compressed_len = tmp;
+-  /* If there was some input, but nothing compressed, or we don't have
+-     everything to uncompress, there was an error.  */
+-  if ((uncompressed_len && !compressed_len)
+-      || inofs < intogo + compressed_len)
++  /* If there was some input, but nothing compressed,
++     or lengths are bigger than the whole chunk message
++     or we don't have everything to uncompress, there was an error.  */
++  if ( uncompressed_len > MAX_MSG_SIZE
++       || compressed_len > (inofs - intogo)
++       || (uncompressed_len && !compressed_len)
++       || inofs < intogo + compressed_len )
+     {
++      log_error() << "failure in readcompressed() length checking" << endl;
+       *uncompressed_buf = 0;
+       uncompressed_len = 0;
+       _uclen = uncompressed_len;
+@@ -435,13 +462,14 @@ MsgChannel::readcompressed (unsigned cha
+ 	     Remove the buffer, and indicate there is nothing in it,
+ 	     but don't reset the compressed_len, so our caller know,
+ 	     that there actually was something read in.  */
+-          log_error() << "internal error - decompression of data from " << dump().c_str() 
++          log_error() << "internal error - decompression of data from " << dump().c_str()
+               << " failed: " << ret << endl;
+ 	  delete [] *uncompressed_buf;
+ 	  *uncompressed_buf = 0;
+ 	  uncompressed_len = 0;
+         }
+     }
++
+   /* Read over everything used, _also_ if there was some error.
+      If we couldn't decode it now, it won't get better in the future,
+      so just ignore this hunk.  */
+@@ -457,9 +485,9 @@ MsgChannel::writecompressed (const unsig
+   lzo_uint in_len = _in_len;
+   lzo_uint out_len = _out_len;
+   out_len = in_len + in_len / 64 + 16 + 3;
+-  writeuint32 (in_len);
++  *this << in_len;
+   size_t msgtogo_old = msgtogo;
+-  writeuint32 (0); // will be out_len
++  *this << (uint32_t) 0;
+   if (msgtogo + out_len >= msgbuflen)
+     {
+       /* Realloc to a multiple of 128.  */
+@@ -511,7 +539,43 @@ MsgChannel::write_line (const string &li
+     }
+ }
+ 
+-static bool connect_async( int remote_fd, struct sockaddr *remote_addr, size_t remote_size, int timeout  )
++static int
++prepare_connect(const string &hostname, unsigned short p,
++                          struct sockaddr_in& remote_addr)
++{
++  int remote_fd;
++  int i = 1;
++
++  if ((remote_fd = socket (PF_INET, SOCK_STREAM, 0)) < 0)
++    {
++      log_perror("socket()");
++      return -1;
++    }
++  struct hostent *host = gethostbyname (hostname.c_str());
++  if (!host)
++    {
++      log_perror("Unknown host");
++      close (remote_fd);
++      return -1;
++    }
++  if (host->h_length != 4)
++    {
++      log_error() << "Invalid address length" << endl;
++      close (remote_fd);
++      return -1;
++    }
++
++  setsockopt (remote_fd, IPPROTO_TCP, TCP_NODELAY, (char*) &i, sizeof(i));
++
++  remote_addr.sin_family = AF_INET;
++  remote_addr.sin_port = htons (p);
++  memcpy (&remote_addr.sin_addr.s_addr, host->h_addr_list[0], host->h_length);
++
++  return remote_fd;
++}
++
++static bool
++connect_async( int remote_fd, struct sockaddr *remote_addr, size_t remote_size, int timeout  )
+ {
+   fcntl(remote_fd, F_SETFL, O_NONBLOCK);
+ 
+@@ -521,22 +585,22 @@ static bool connect_async( int remote_fd
+     {
+       struct timeval select_timeout;
+       fd_set writefds;
++      int ret;
+ 
+-      /* we select for a specific time and if that succeeds, we connect one
+-         final time. Everything else we ignore */
+-
+-      select_timeout.tv_sec = timeout;
+-      select_timeout.tv_usec = 0;
+-      FD_ZERO(&writefds);
+-      FD_SET(remote_fd, &writefds);
+-      int ret = select(remote_fd + 1, NULL, &writefds, NULL, &select_timeout);
++      do
++        {
++          /* we select for a specific time and if that succeeds, we connect one
++             final time. Everything else we ignore */
+ 
+-      /*
+-      **  If we suspend, then it is possible that select will be
+-      **  interrupted.  Allow for this possibility. - JED
+-      */
+-      if ((ret == -1) && (errno == EINTR))
+-        return connect_async( remote_fd, remote_addr, remote_size, timeout );
++          select_timeout.tv_sec = timeout;
++          select_timeout.tv_usec = 0;
++          FD_ZERO(&writefds);
++          FD_SET(remote_fd, &writefds);
++          ret = select(remote_fd + 1, NULL, &writefds, NULL, &select_timeout);
++          if (ret < 0 && errno == EINTR)
++            continue;
++          break;
++        } while (1);
+ 
+       if (ret > 0)
+         {
+@@ -574,32 +638,10 @@ static bool connect_async( int remote_fd
+ MsgChannel *Service::createChannel (const string &hostname, unsigned short p, int timeout)
+ {
+   int remote_fd;
+-  int i = 1;
+   struct sockaddr_in remote_addr;
+ 
+-  if ((remote_fd = socket (PF_INET, SOCK_STREAM, 0)) < 0)
+-    {
+-      log_perror("socket()");
+-      return 0;
+-    }
+-  struct hostent *host = gethostbyname (hostname.c_str());
+-  if (!host)
+-    {
+-      log_perror("Unknown host");
+-      close (remote_fd);
+-      return 0;
+-    }
+-  if (host->h_length != 4)
+-    {
+-      log_error() << "Invalid address length" << endl;
+-      close (remote_fd);
+-      return 0;
+-    }
+-
+-  remote_addr.sin_family = AF_INET;
+-  remote_addr.sin_port = htons (p);
+-  memcpy (&remote_addr.sin_addr.s_addr, host->h_addr_list[0], host->h_length);
+-  setsockopt (remote_fd, IPPROTO_TCP, TCP_NODELAY, (char*) &i, sizeof(i));
++  if ((remote_fd = prepare_connect(hostname, p, remote_addr)) < 0)
++    return 0;
+ 
+   if ( timeout )
+     {
+@@ -608,7 +650,7 @@ MsgChannel *Service::createChannel (cons
+     }
+   else
+     {
+-      i = 2048;
++      int i = 2048;
+       setsockopt(remote_fd, SOL_SOCKET, SO_SNDBUF, &i, sizeof(i));
+       if (connect (remote_fd, (struct sockaddr *) &remote_addr, sizeof (remote_addr)) < 0)
+         {
+@@ -617,19 +659,21 @@ MsgChannel *Service::createChannel (cons
+           return 0;
+         }
+     }
+-  MsgChannel * c = new MsgChannel( remote_fd, (struct sockaddr *)&remote_addr, sizeof( remote_addr ) );
+-  c->port = p;
+-  if (!c->wait_for_protocol ())
+-    {
+-      delete c;
+-      c = 0;
+-      trace() << "not the same protocol\n";
+-    }
+-  return c;
++  return createChannel(remote_fd, (struct sockaddr *)&remote_addr, sizeof( remote_addr ));
++}
++
++static std::string
++shorten_filename(const std::string& str)
++{
++  std::string::size_type ofs = str.rfind('/');
++  for (int i = 2; i--;)
++    if (ofs != string::npos)
++      ofs = str.rfind('/', ofs-1);
++  return str.substr(ofs+1);
+ }
+ 
+ bool
+-MsgChannel::eq_ip (const MsgChannel &s)
++MsgChannel::eq_ip (const MsgChannel &s) const
+ {
+   struct sockaddr_in *s1, *s2;
+   s1 = (struct sockaddr_in *) addr;
+@@ -658,13 +702,11 @@ MsgChannel::MsgChannel (int _fd, struct 
+       addr = (struct sockaddr *)malloc (len);
+       memcpy (addr, _a, len);
+       name = inet_ntoa (((struct sockaddr_in *) addr)->sin_addr);
+-      port = ntohs (((struct sockaddr_in *)addr)->sin_port);
+     }
+   else
+     {
+       addr = 0;
+       name = "";
+-      port = 0;
+     }
+ 
+   // not using new/delete because of the need of realloc()
+@@ -682,13 +724,29 @@ MsgChannel::MsgChannel (int _fd, struct 
+   int on = 1;
+   if (!setsockopt (_fd, SOL_SOCKET, SO_KEEPALIVE, (char*) &on, sizeof(on)))
+   {
++#if defined( TCP_KEEPIDLE )
++      int keepidle = TCP_KEEPIDLE;
++#else
++      int keepidle = TCPCTL_KEEPIDLE;
++#endif
++
+       int sec;
+       sec = MAX_SCHEDULER_PING - 3 * MAX_SCHEDULER_PONG;
+-      setsockopt (_fd, IPPROTO_TCP, TCP_KEEPIDLE, (char*) &sec, sizeof(sec));
++      setsockopt (_fd, IPPROTO_TCP, keepidle, (char*) &sec, sizeof(sec));
++
++#if defined( TCP_KEEPINTVL )
++      int keepintvl = TCP_KEEPINTVL;
++#else
++      int keepintvl = TCPCTL_KEEPINTVL;
++#endif
++
+       sec = MAX_SCHEDULER_PONG;
+-      setsockopt (_fd, IPPROTO_TCP, TCP_KEEPINTVL, (char*) &sec, sizeof(sec));
++      setsockopt (_fd, IPPROTO_TCP, keepintvl, (char*) &sec, sizeof(sec));
++
++#ifdef TCP_KEEPCNT
+       sec = 3;
+       setsockopt (_fd, IPPROTO_TCP, TCP_KEEPCNT, (char*) &sec, sizeof(sec));
++#endif
+   }
+ 
+   if (fcntl (fd, F_SETFL, O_NONBLOCK) < 0)
+@@ -731,8 +789,7 @@ MsgChannel::~MsgChannel()
+ 
+ string MsgChannel::dump() const
+ {
+-  return name + ":" + toString( port ) + " (" +
+-    char((int)instate+'A') + " eof: " + char(eof +'0') + ")";
++  return name + ": (" + char((int)instate+'A') + " eof: " + char(eof +'0') + ")";
+ }
+ 
+ /* Wait blocking until the protocol setup for this channel is complete.
+@@ -754,8 +811,10 @@ MsgChannel::wait_for_protocol ()
+       int ret = select (fd + 1, &set, NULL, NULL, &tv);
+       if (ret < 0 && errno == EINTR)
+         continue;
+-      if (ret == 0)
++      if (ret == 0) {
++        log_error() << "no response from local daemon within timeout." << endl;
+         return false; /* timeout. Consider it a fatal error. */
++      }
+       if (ret < 0)
+         {
+           log_perror("select in wait_for_protocol()");
+@@ -767,6 +826,22 @@ MsgChannel::wait_for_protocol ()
+   return true;
+ }
+ 
++void MsgChannel::setBulkTransfer()
++{
++  if (fd < 0) return;
++
++  int i = 0;
++  setsockopt (fd, IPPROTO_TCP, TCP_NODELAY, (char*) &i, sizeof(i));
++
++  // would be nice but not portable accross non-linux
++#ifdef __linux__
++  i = 1;
++  setsockopt (fd, IPPROTO_TCP, TCP_CORK, (char*) &i, sizeof(i));
++#endif
++  i = 65536;
++  setsockopt (fd, SOL_SOCKET, SO_SNDBUF, &i, sizeof(i));
++}
++
+ /* This waits indefinitely (well, TIMEOUT seconds) for a complete
+    message to arrive.  Returns false if there was some error.  */
+ bool
+@@ -827,7 +902,7 @@ MsgChannel::get_msg(int timeout)
+     type = M_TEXT;
+   else
+     {
+-      readuint32 (t);
++      *this >> t;
+       type = (enum MsgType) t;
+     }
+   switch (type)
+@@ -872,10 +947,9 @@ MsgChannel::get_msg(int timeout)
+ }
+ 
+ bool
+-MsgChannel::send_msg (const Msg &m, bool blocking)
++MsgChannel::send_msg (const Msg &m, int flags)
+ {
+-  if (instate == NEED_PROTO
+-      && !wait_for_protocol ())
++  if (instate == NEED_PROTO && !wait_for_protocol ())
+     return false;
+   chop_output ();
+   size_t msgtogo_old = msgtogo;
+@@ -885,12 +959,15 @@ MsgChannel::send_msg (const Msg &m, bool
+     }
+   else
+     {
+-      writeuint32 (0);  // filled out later with the overall len
++      *this << (uint32_t) 0;
+       m.send_to_channel (this);
+       uint32_t len = htonl (msgtogo - msgtogo_old - 4);
+       memcpy (msgbuf + msgtogo_old, &len, 4);
+     }
+-  return flush_writebuf (blocking);
++  if ((flags & SendBulkOnly) && msgtogo < 4096)
++    return true;
++
++  return flush_writebuf ((flags & SendBlocking));
+ }
+ 
+ #include "getifaddrs.h"
+@@ -955,7 +1032,7 @@ open_send_broadcast (void)
+ 
+ 	  remote_addr.sin_family = AF_INET;
+ 	  remote_addr.sin_port = htons (8765);
+-	  remote_addr.sin_addr = ( ( sockaddr_in* )addr->ifa_broadaddr )->sin_addr ;
++	  remote_addr.sin_addr = ( ( sockaddr_in* )addr->ifa_broadaddr )->sin_addr;
+ 
+ 	  if (sendto (ask_fd, &buf, 1, 0, (struct sockaddr*)&remote_addr,
+                       sizeof (remote_addr)) != 1)
+@@ -1024,7 +1101,10 @@ DiscoverSched::DiscoverSched (const std:
+     netname = "ICECREAM";
+ 
+   if (!schedname.empty())
+-    netname = ""; // take whatever the machine is giving us
++    {
++      netname = ""; // take whatever the machine is giving us
++      attempt_scheduler_connect();
++    }
+   else
+     ask_fd = open_send_broadcast ();
+ }
+@@ -1038,15 +1118,25 @@ DiscoverSched::~DiscoverSched ()
+ bool
+ DiscoverSched::timed_out ()
+ {
+-  return (time (0) - time0 >= (timeout / 1000));
++  return (time (0) - time0 >= timeout);
++}
++
++void
++DiscoverSched::attempt_scheduler_connect()
++{
++
++    time0 = time(0) + MAX_SCHEDULER_PONG;
++    log_info() << "scheduler is on " << schedname << ":" << sport << " (net " << netname << ")\n";
++    if ((ask_fd = prepare_connect(schedname, sport, remote_addr)) >= 0)
++        fcntl(ask_fd, F_SETFL, O_NONBLOCK);
+ }
+ 
++
+ MsgChannel *
+ DiscoverSched::try_get_scheduler ()
+ {
+   if (schedname.empty())
+     {
+-      struct sockaddr_in remote_addr;
+       socklen_t remote_len;
+       bool found = false;
+       char buf2[BROAD_BUFLEN];
+@@ -1054,7 +1144,7 @@ DiscoverSched::try_get_scheduler ()
+       /* Read/test all packages arrived until now.  */
+       while (!found
+ 	     && get_broad_answer (ask_fd, 0/*timeout*/, buf2,
+-                                  &remote_addr, &remote_len))
++                                  (struct sockaddr_in*) &remote_addr, &remote_len))
+         if (strcasecmp (netname.c_str(), buf2 + 1) == 0)
+           found = true;
+       if (!found)
+@@ -1062,9 +1152,23 @@ DiscoverSched::try_get_scheduler ()
+       schedname = inet_ntoa (remote_addr.sin_addr);
+       sport = ntohs (remote_addr.sin_port);
+       netname = buf2 + 1;
++      close (ask_fd);
++      ask_fd = -1;
++      attempt_scheduler_connect();
++    }
++
++  if (ask_fd >= 0)
++    {
++      int status = connect (ask_fd, (struct sockaddr*) &remote_addr, sizeof(remote_addr) );
++      if (status == 0 || (status < 0 && errno == EISCONN))
++        {
++          int fd = ask_fd;
++          ask_fd = -1;
++          return Service::createChannel(fd,
++                  (struct sockaddr*) &remote_addr, sizeof(remote_addr));
++        }
+     }
+-  log_info() << "scheduler is on " << schedname << ":" << sport << " (net " << netname << ")\n";
+-  return Service::createChannel( schedname, sport, 0/*timeout*/);
++  return 0;
+ }
+ 
+ list<string>
+@@ -1105,7 +1209,7 @@ Msg::send_to_channel (MsgChannel *c) con
+ {
+   if (c->is_text_based())
+     return;
+-  c->writeuint32 ((uint32_t) type);
++  *c << (uint32_t) type;
+ }
+ 
+ void
+@@ -1113,17 +1217,17 @@ GetCSMsg::fill_from_channel (MsgChannel 
+ {
+   Msg::fill_from_channel (c);
+   c->read_environments( versions );
+-  c->read_string (filename);
++  *c >> filename;
+   uint32_t _lang;
+-  c->readuint32 (_lang);
+-  c->readuint32( count );
+-  c->read_string( target );
++  *c >> _lang;
++  *c >> count;
++  *c >> target;
+   lang = static_cast<CompileJob::Language>( _lang );
+-  c->readuint32( arg_flags );
+-  c->readuint32( client_id );
++  *c >> arg_flags;
++  *c >> client_id;
+   preferred_host = string();
+   if (IS_PROTOCOL_22(c))
+-    c->read_string( preferred_host );
++    *c >> preferred_host;
+ }
+ 
+ void
+@@ -1131,38 +1235,44 @@ GetCSMsg::send_to_channel (MsgChannel *c
+ {
+   Msg::send_to_channel (c);
+   c->write_environments( versions );
+-  c->write_string (filename);
+-  c->writeuint32 ((uint32_t) lang);
+-  c->writeuint32( count );
+-  c->write_string( target );
+-  c->writeuint32( arg_flags );
+-  c->writeuint32( client_id );
++  *c << shorten_filename(filename);
++  *c << (uint32_t) lang;
++  *c << count;
++  *c << target;
++  *c << arg_flags;
++  *c << client_id;
+   if (IS_PROTOCOL_22(c))
+-    c->write_string( preferred_host);
++    *c << preferred_host;
+ }
+ 
+ void
+ UseCSMsg::fill_from_channel (MsgChannel *c)
+ {
+   Msg::fill_from_channel (c);
+-  c->readuint32 (job_id);
+-  c->readuint32 (port);
+-  c->read_string (hostname);
+-  c->read_string (host_platform);
+-  c->readuint32( got_env );
+-  c->readuint32( client_id );
++  *c >> job_id;
++  *c >> port;
++  *c >> hostname;
++  *c >> host_platform;
++  *c >> got_env;
++  *c >> client_id;
++  if (IS_PROTOCOL_28(c))
++    *c >> matched_job_id;
++  else
++    matched_job_id = 0;
+ }
+ 
+ void
+ UseCSMsg::send_to_channel (MsgChannel *c) const
+ {
+   Msg::send_to_channel (c);
+-  c->writeuint32 (job_id);
+-  c->writeuint32 (port);
+-  c->write_string (hostname);
+-  c->write_string (host_platform);
+-  c->writeuint32( got_env );
+-  c->writeuint32( client_id );
++  *c << job_id;
++  *c << port;
++  *c << hostname;
++  *c << host_platform;
++  *c << got_env;
++  *c << client_id;
++  if (IS_PROTOCOL_28(c))
++    *c << matched_job_id;
+ }
+ 
+ void
+@@ -1172,11 +1282,11 @@ CompileFileMsg::fill_from_channel (MsgCh
+   uint32_t id, lang;
+   list<string> _l1, _l2;
+   string version;
+-  c->readuint32 (lang);
+-  c->readuint32 (id);
+-  c->read_strlist (_l1);
+-  c->read_strlist (_l2);
+-  c->read_string (version);
++  *c >> lang;
++  *c >> id;
++  *c >> _l1;
++  *c >> _l2;
++  *c >> version;
+   job->setLanguage ((CompileJob::Language) lang);
+   job->setJobID (id);
+   ArgumentsList l;
+@@ -1188,7 +1298,7 @@ CompileFileMsg::fill_from_channel (MsgCh
+   job->setEnvironmentVersion (version);
+ 
+   string target;
+-  c->read_string( target );
++  *c >> target;
+   job->setTargetPlatform( target );
+ }
+ 
+@@ -1196,12 +1306,12 @@ void
+ CompileFileMsg::send_to_channel (MsgChannel *c) const
+ {
+   Msg::send_to_channel (c);
+-  c->writeuint32 ((uint32_t) job->language());
+-  c->writeuint32 (job->jobID());
+-  c->write_strlist (job->remoteFlags());
+-  c->write_strlist (job->restFlags());
+-  c->write_string (job->environmentVersion());
+-  c->write_string( job->targetPlatform() );
++  *c << (uint32_t) job->language();
++  *c << job->jobID();
++  *c << job->remoteFlags();
++  *c << job->restFlags();
++  *c << job->environmentVersion();
++  *c << job->targetPlatform();
+ }
+ 
+ CompileJob *
+@@ -1242,12 +1352,12 @@ CompileResultMsg::fill_from_channel (Msg
+ {
+   Msg::fill_from_channel (c);
+   uint32_t _status = 0;
+-  c->read_string (err);
+-  c->read_string (out);
+-  c->readuint32 (_status);
++  *c >> err;
++  *c >> out;
++  *c >> _status;
+   status = _status;
+   uint32_t was = 0;
+-  c->readuint32( was );
++  *c >> was;
+   was_out_of_memory = was;
+ }
+ 
+@@ -1255,54 +1365,54 @@ void
+ CompileResultMsg::send_to_channel (MsgChannel *c) const
+ {
+   Msg::send_to_channel (c);
+-  c->write_string (err);
+-  c->write_string (out);
+-  c->writeuint32 (status);
+-  c->writeuint32( was_out_of_memory ? 1 : 0 );
++  *c << err;
++  *c << out;
++  *c << status;
++  *c << (uint32_t) was_out_of_memory;
+ }
+ 
+ void
+ JobBeginMsg::fill_from_channel (MsgChannel *c)
+ {
+   Msg::fill_from_channel (c);
+-  c->readuint32 (job_id);
+-  c->readuint32 (stime);
++  *c >> job_id;
++  *c >> stime;
+ }
+ 
+ void
+ JobBeginMsg::send_to_channel (MsgChannel *c) const
+ {
+   Msg::send_to_channel (c);
+-  c->writeuint32 (job_id);
+-  c->writeuint32 (stime);
++  *c << job_id;
++  *c << stime;
+ }
+ 
+ void JobLocalBeginMsg::fill_from_channel( MsgChannel *c )
+ {
+   Msg::fill_from_channel(c);
+-  c->readuint32(stime);
+-  c->read_string( outfile );
+-  c->readuint32(id);
++  *c >> stime;
++  *c >> outfile;
++  *c >> id;
+ }
+ 
+ void JobLocalBeginMsg::send_to_channel( MsgChannel *c ) const
+ {
+   Msg::send_to_channel( c );
+-  c->writeuint32(stime);
+-  c->write_string( outfile );
+-  c->writeuint32(id);
++  *c << stime;
++  *c << outfile;
++  *c << id;
+ }
+ 
+ void JobLocalDoneMsg::fill_from_channel( MsgChannel *c )
+ {
+   Msg::fill_from_channel(c);
+-  c->readuint32(job_id);
++  *c >> job_id;
+ }
+ 
+ void JobLocalDoneMsg::send_to_channel( MsgChannel *c ) const
+ {
+   Msg::send_to_channel( c );
+-  c->writeuint32(job_id);
++  *c << job_id;
+ }
+ 
+ JobDoneMsg::JobDoneMsg (int id, int exit, unsigned int _flags)
+@@ -1323,17 +1433,17 @@ JobDoneMsg::fill_from_channel (MsgChanne
+ {
+   Msg::fill_from_channel (c);
+   uint32_t _exitcode = 255;
+-  c->readuint32 (job_id);
+-  c->readuint32 (_exitcode);
+-  c->readuint32 (real_msec);
+-  c->readuint32 (user_msec);
+-  c->readuint32 (sys_msec);
+-  c->readuint32 (pfaults);
+-  c->readuint32 (in_compressed);
+-  c->readuint32 (in_uncompressed);
+-  c->readuint32 (out_compressed);
+-  c->readuint32 (out_uncompressed);
+-  c->readuint32 (flags);
++  *c >> job_id;
++  *c >> _exitcode;
++  *c >> real_msec;
++  *c >> user_msec;
++  *c >> sys_msec;
++  *c >> pfaults;
++  *c >> in_compressed;
++  *c >> in_uncompressed;
++  *c >> out_compressed;
++  *c >> out_uncompressed;
++  *c >> flags;
+   exitcode = (int) _exitcode;
+ }
+ 
+@@ -1341,17 +1451,17 @@ void
+ JobDoneMsg::send_to_channel (MsgChannel *c) const
+ {
+   Msg::send_to_channel (c);
+-  c->writeuint32 (job_id);
+-  c->writeuint32 ((uint32_t) exitcode);
+-  c->writeuint32 (real_msec);
+-  c->writeuint32 (user_msec);
+-  c->writeuint32 (sys_msec);
+-  c->writeuint32 (pfaults);
+-  c->writeuint32 (in_compressed);
+-  c->writeuint32 (in_uncompressed);
+-  c->writeuint32 (out_compressed);
+-  c->writeuint32 (out_uncompressed);
+-  c->writeuint32 (flags);
++  *c << job_id;
++  *c << (uint32_t) exitcode;
++  *c << real_msec;
++  *c << user_msec;
++  *c << sys_msec;
++  *c << pfaults;
++  *c << in_compressed;
++  *c << in_uncompressed;
++  *c << out_compressed;
++  *c << out_uncompressed;
++  *c << flags;
+ }
+ 
+ LoginMsg::LoginMsg(unsigned int myport, const std::string &_nodename, const std::string _host_platform)
+@@ -1365,16 +1475,16 @@ void
+ LoginMsg::fill_from_channel (MsgChannel *c)
+ {
+   Msg::fill_from_channel (c);
+-  c->readuint32 (port);
+-  c->readuint32 (max_kids);
++  *c >> port;
++  *c >> max_kids;
+   c->read_environments( envs );
+-  c->read_string( nodename );
+-  c->read_string( host_platform );
++  *c >> nodename;
++  *c >> host_platform;
+   uint32_t net_chroot_possible = 0;
+-  c->readuint32 (net_chroot_possible);
++  *c >> net_chroot_possible;
+   chroot_possible = net_chroot_possible != 0;
+   uint32_t net_noremote = 0;
+-  if (IS_PROTOCOL_26( c )) c->readuint32 (net_noremote);
++  if (IS_PROTOCOL_26( c )) *c >> net_noremote;
+   noremote = (net_noremote != 0);
+ }
+ 
+@@ -1382,151 +1492,167 @@ void
+ LoginMsg::send_to_channel (MsgChannel *c) const
+ {
+   Msg::send_to_channel (c);
+-  c->writeuint32 (port);
+-  c->writeuint32 (max_kids);
++  *c << port;
++  *c << max_kids;
+   c->write_environments( envs );
+-  c->write_string( nodename );
+-  c->write_string( host_platform );
+-  c->writeuint32( chroot_possible );
+-  if (IS_PROTOCOL_26( c )) c->writeuint32( noremote );
++  *c << nodename;
++  *c << host_platform;
++  *c << chroot_possible;
++  if (IS_PROTOCOL_26( c )) *c << noremote;
+ }
+ 
+ void
+ ConfCSMsg::fill_from_channel (MsgChannel *c)
+ {
+   Msg::fill_from_channel (c);
+-  c->readuint32 (max_scheduler_pong);
+-  c->readuint32 (max_scheduler_ping);
+-  c->read_string (bench_source);
++  *c >> max_scheduler_pong;
++  *c >> max_scheduler_ping;
++  *c >> bench_source;
+ }
+ 
+ void
+ ConfCSMsg::send_to_channel (MsgChannel *c) const
+ {
+   Msg::send_to_channel (c);
+-  c->writeuint32 (max_scheduler_pong);
+-  c->writeuint32 (max_scheduler_ping);
+-  c->write_string (bench_source);
++  *c << max_scheduler_pong;
++  *c << max_scheduler_ping;
++  *c << bench_source;
+ }
+ 
+ void
+ StatsMsg::fill_from_channel (MsgChannel *c)
+ {
+   Msg::fill_from_channel (c);
+-  c->readuint32 (load);
+-  c->readuint32 (loadAvg1);
+-  c->readuint32 (loadAvg5);
+-  c->readuint32 (loadAvg10);
+-  c->readuint32 (freeMem);
++  *c >> load;
++  *c >> loadAvg1;
++  *c >> loadAvg5;
++  *c >> loadAvg10;
++  *c >> freeMem;
+ }
+ 
+ void
+ StatsMsg::send_to_channel (MsgChannel *c) const
+ {
+   Msg::send_to_channel (c);
+-  c->writeuint32 (load);
+-  c->writeuint32 (loadAvg1);
+-  c->writeuint32 (loadAvg5);
+-  c->writeuint32 (loadAvg10);
+-  c->writeuint32 (freeMem);
++  *c << load;
++  *c << loadAvg1;
++  *c << loadAvg5;
++  *c << loadAvg10;
++  *c << freeMem;
+ }
+ 
+ void
+ UseNativeEnvMsg::fill_from_channel (MsgChannel *c)
+ {
+   Msg::fill_from_channel (c);
+-  c->read_string( nativeVersion );
++  *c >> nativeVersion;
+ }
+ 
+ void
+ UseNativeEnvMsg::send_to_channel (MsgChannel *c) const
+ {
+   Msg::send_to_channel (c);
+-  c->write_string( nativeVersion );
++  *c << nativeVersion;
+ }
+ 
+ void
+ EnvTransferMsg::fill_from_channel (MsgChannel *c)
+ {
+   Msg::fill_from_channel (c);
+-  c->read_string(name);
+-  c->read_string( target );
++  *c >> name;
++  *c >> target;
+ }
+ 
+ void
+ EnvTransferMsg::send_to_channel (MsgChannel *c) const
+ {
+   Msg::send_to_channel (c);
+-  c->write_string(name);
+-  c->write_string( target );
++  *c << name;
++  *c << target;
+ }
+ 
+ void
+ MonGetCSMsg::fill_from_channel (MsgChannel *c)
+ {
+-  GetCSMsg::fill_from_channel (c);
+-  c->readuint32 (job_id);
+-  c->readuint32 (clientid);
++  if (IS_PROTOCOL_29(c)) {
++    Msg::fill_from_channel(c);
++    *c >> filename;
++    uint32_t _lang;
++    *c >> _lang;
++    lang = static_cast<CompileJob::Language>(_lang);
++  }
++  else
++    GetCSMsg::fill_from_channel (c);
++
++  *c >> job_id;
++  *c >> clientid;
+ }
+ 
+ void
+ MonGetCSMsg::send_to_channel (MsgChannel *c) const
+ {
+-  GetCSMsg::send_to_channel (c);
+-  c->writeuint32 (job_id);
+-  c->writeuint32 (clientid);
++  if (IS_PROTOCOL_29(c)) {
++    Msg::send_to_channel (c);
++    *c << shorten_filename(filename);
++    *c << (uint32_t) lang;
++  }
++  else
++      GetCSMsg::send_to_channel (c);
++
++  *c << job_id;
++  *c << clientid;
+ }
+ 
+ void
+ MonJobBeginMsg::fill_from_channel (MsgChannel *c)
+ {
+   Msg::fill_from_channel (c);
+-  c->readuint32 (job_id);
+-  c->readuint32 (stime);
+-  c->readuint32 (hostid);
++  *c >> job_id;
++  *c >> stime;
++  *c >> hostid;
+ }
+ 
+ void
+ MonJobBeginMsg::send_to_channel (MsgChannel *c) const
+ {
+   Msg::send_to_channel (c);
+-  c->writeuint32 (job_id);
+-  c->writeuint32 (stime);
+-  c->writeuint32 (hostid);
++  *c << job_id;
++  *c << stime;
++  *c << hostid;
+ }
+ 
+ void MonLocalJobBeginMsg::fill_from_channel (MsgChannel * c)
+ {
+   Msg::fill_from_channel(c);
+-  c->readuint32 (hostid );
+-  c->readuint32( job_id );
+-  c->readuint32( stime );
+-  c->read_string( file );
++  *c >> hostid;
++  *c >> job_id;
++  *c >> stime;
++  *c >> file;
+ }
+ 
+ void MonLocalJobBeginMsg::send_to_channel (MsgChannel * c) const
+ {
+   Msg::send_to_channel(c);
+-  c->writeuint32( hostid );
+-  c->writeuint32( job_id );
+-  c->writeuint32( stime );
+-  c->write_string( file );
++  *c << hostid;
++  *c << job_id;
++  *c << stime;
++  *c << shorten_filename(file);
+ }
+ 
+ void
+ MonStatsMsg::fill_from_channel (MsgChannel *c)
+ {
+   Msg::fill_from_channel (c);
+-  c->readuint32( hostid );
+-  c->read_string( statmsg );
++  *c >> hostid;
++  *c >> statmsg;
+ }
+ 
+ void
+ MonStatsMsg::send_to_channel (MsgChannel *c) const
+ {
+   Msg::send_to_channel (c);
+-  c->writeuint32(hostid);
+-  c->write_string(statmsg);
++  *c << hostid;
++  *c << statmsg;
+ }
+ 
+ void
+@@ -1545,14 +1671,14 @@ void
+ StatusTextMsg::fill_from_channel (MsgChannel *c)
+ {
+   Msg::fill_from_channel( c );
+-  c->read_string (text);
++  *c >> text;
+ }
+ 
+ void
+ StatusTextMsg::send_to_channel (MsgChannel *c) const
+ {
+   Msg::send_to_channel( c );
+-  c->write_string (text);
++  *c << text;
+ }
+ 
+ /*
+Index: doc/Makefile.am
+===================================================================
+--- doc/Makefile.am	(.../trunk/icecream)	(revision 657903)
++++ doc/Makefile.am	(.../branches/work/icecream-make-it-cool)	(revision 695567)
+@@ -5,3 +5,5 @@ KDE_MANS = AUTO
+ # choose one for your distribution
+ #KDE_XSL_MAN_STYLESHEET = /usr/share/apps/ksgmltools2/customization/kde-man.xsl
+ KDE_XSL_MAN_STYLESHEET = /opt/kde3/share/apps/ksgmltools2/customization/kde-man.xsl
++
++EXTRA_DIST =  man-icecc.1.docbook man-iceccd.1.docbook man-icecream.7.docbook man-scheduler.1.docbook
+Index: configure.in
+===================================================================
+--- configure.in	(.../trunk/icecream)	(revision 657903)
++++ configure.in	(.../branches/work/icecream-make-it-cool)	(revision 695567)
+@@ -4,7 +4,7 @@ AC_PREREQ(2.53)
+ 
+ AC_INIT(client/main.cpp)
+ 
+-AM_INIT_AUTOMAKE(icecc, "0.8.0")
++AM_INIT_AUTOMAKE(icecc, "0.8.0-make-it-cool")
+ AM_CONFIG_HEADER(config.h)
+ AC_CANONICAL_HOST
+ 
+@@ -33,8 +33,9 @@ AC_PROG_LIBTOOL
+ 
+ # Some of these are needed by popt (or other libraries included in the future).
+ 
+-AC_CHECK_HEADERS([unistd.h stdint.h sys/types.h sys/signal.h ifaddrs.h])
+-AC_CHECK_HEADERS([ctype.h sys/resource.h sys/socket.h sys/select.h sys/vfs.h])
++AC_CHECK_HEADERS([unistd.h stdint.h signal.h sys/types.h sys/signal.h ifaddrs.h kinfo.h sys/param.h devstat.h])
++AC_CHECK_HEADERS([ctype.h sys/resource.h sys/socket.h sys/stat.h sys/select.h sys/vfs.h])
++AC_CHECK_HEADERS([mach/host_info.h])
+ AC_CHECK_HEADERS([netinet/in.h], [], [],
+ [#if HAVE_SYS_TYPES_H
+ # include <sys/types.h>
+@@ -57,7 +58,10 @@ AC_CHECK_HEADERS([resolv.h], [], [],
+ #endif
+ ])
+ 
+-AC_CHECK_HEADERS([float.h mcheck.h alloca.h sys/mman.h])
++AC_ARG_VAR(TAR, [Specifies tar path])
++AC_PATH_PROG(TAR, [tar])
++AC_DEFINE_UNQUOTED([TAR], ["$TAR"], [Define path to tar])
++AC_CHECK_HEADERS([float.h mcheck.h alloca.h sys/mman.h netinet/tcp_var.h])
+ AC_CHECK_HEADERS([sys/user.h])
+ 
+ ######################################################################
+@@ -171,6 +175,30 @@ AC_TRY_LINK(dnl
+       AC_MSG_RESULT(no)
+ )
+ 
++save_LIBS=$LIBS
++LIBS="$LIBS -lrsync"
++
++AC_MSG_CHECKING([for librsync])
++AC_TRY_LINK(dnl
++      [
++        #include <stdio.h>
++        #include <stdlib.h>
++        #include <librsync.h>
++      ],
++      [
++        rs_job_t* job = rs_sig_begin (RS_DEFAULT_BLOCK_LEN, RS_DEFAULT_STRONG_LEN);
++      ],
++      [
++        AC_DEFINE(HAVE_RSYNC, 1, [Define if librsync.h exists and can be used])
++        LIBRSYNC="-lrsync"
++	AC_MSG_RESULT(yes)
++      ],
++      AC_MSG_RESULT(no)
++)
++
++AC_SUBST(LIBRSYNC)
++LIBS=$save_LIBS
++
+ # In DragonFlyBSD daemon needs to be linked against libkinfo.
+ case $host_os in
+   dragonfly*) LIB_KINFO="-lkinfo" ;;
+@@ -185,6 +213,7 @@ AC_CONFIG_FILES([ doc/Makefile ])
+ AC_CONFIG_FILES([ minilzo/Makefile ])
+ AC_CONFIG_FILES([ services/Makefile ])
+ AC_CONFIG_FILES([ services/icecc.pc ])
++AC_CONFIG_FILES([ suse/Makefile ])
+ AC_OUTPUT([ suse/icecream.spec ])
+ if test "$prefix" = NONE; then
+   prefix=$ac_default_prefix
+Index: Makefile.am
+===================================================================
+--- Makefile.am	(.../trunk/icecream)	(revision 657903)
++++ Makefile.am	(.../branches/work/icecream-make-it-cool)	(revision 695567)
+@@ -1,5 +1,5 @@
+ 
+-SUBDIRS = minilzo services daemon client doc
++SUBDIRS = minilzo services daemon client doc suse
+ AUTOMAKE_OPTIONS = foreign 1.6
+ 
+ .PHONY: changes
+Index: NEWS
+===================================================================
+--- NEWS	(.../trunk/icecream)	(revision 657903)
++++ NEWS	(.../branches/work/icecream-make-it-cool)	(revision 695567)
+@@ -13,6 +13,12 @@
+           * implement job preloading
+           * asynchronous install of new environments
+           * uses tcp keepalive for network connection tracking
++        - make it work on OS X
++          * don' hardcode tar path
++          * create environments correctly on OS X
++	  * report load correctly on mach kernels (Darwin)
++          * prepend os to the machine type if it's not linux
++            (resulting in e.g. Darwin_PowerMacintosh)
+ 
+ 0.7.14 (583722):
+         - fix current_kids getting out of sync if send_scheduler
+Index: client/main.cpp
+===================================================================
+--- client/main.cpp	(.../trunk/icecream)	(revision 657903)
++++ client/main.cpp	(.../branches/work/icecream-make-it-cool)	(revision 695567)
+@@ -52,7 +52,7 @@
+ #include <sys/time.h>
+ #include <comm.h>
+ #include <sys/types.h>
+-#if defined(__FreeBSD__) || defined(__DragonFly__)
++#ifdef HAVE_SYS_STAT_H
+ #  include <sys/stat.h>
+ #endif
+ #include <sys/wait.h>
+@@ -218,14 +218,9 @@ int main(int argc, char **argv)
+     local |= analyse_argv( argv, job );
+ 
+     /* if ICECC is set to no, then run job locally */
+-    if ( getenv( "ICECC" ) ) {
+-	string icecc;
+-	icecc = getenv( "ICECC" );
+-        /* if the environment variable is set, the user wants to debug if a compile
+-           failure is to blame to icecream, so make sure we do the least we can. */
+-        if ( icecc == "no" )
+-            return build_local( job, 0 );
+-    }
++    char* icecc = getenv("ICECC");
++    if ( icecc && !strcasecmp(icecc, "no") )
++        return build_local( job, 0 );
+ 
+     MsgChannel *local_daemon = Service::createChannel( "127.0.0.1", 10245, 0/*timeout*/);
+     if ( ! local_daemon ) {
+@@ -289,8 +284,6 @@ int main(int argc, char **argv)
+                should be enough for all normal compile or link jobs.  */
+             startme = local_daemon->get_msg (40*60);
+         }
+-        else
+-            log_error() << "can't send joblocalmsg to daemon" << endl;
+ 
+ 	/* If we can't talk to the daemon anymore we need to fall back
+ 	   to lock file locking.  */
+Index: client/Makefile.am
+===================================================================
+--- client/Makefile.am	(.../trunk/icecream)	(revision 657903)
++++ client/Makefile.am	(.../branches/work/icecream-make-it-cool)	(revision 695567)
+@@ -3,7 +3,7 @@ INCLUDES = -I$(srcdir)/../services
+ bin_PROGRAMS = icecc
+ pkglib_SCRIPTS = icecc-create-env
+ icecc_SOURCES = main.cpp arg.cpp cpp.cpp local.cpp remote.cpp util.cpp md5.c safeguard.cpp
+-icecc_LDADD = ../services/libicecc.la
++icecc_LDADD = ../services/libicecc.la $(LIBRSYNC)
+ noinst_HEADERS = client.h md5.h util.h
+ 
+ EXTRA_DIST = icecc-create-env
+Index: client/arg.cpp
+===================================================================
+--- client/arg.cpp	(.../trunk/icecream)	(revision 657903)
++++ client/arg.cpp	(.../branches/work/icecream-make-it-cool)	(revision 695567)
+@@ -42,7 +42,7 @@ using namespace std;
+ #if CLIENT_DEBUG
+ static string concat_args( const list<string> &args )
+ {
+-    int len = args.size() - 1;
++    size_t len = args.size() - 1;
+     string result = "\"";
+     for ( list<string>::const_iterator it = args.begin();
+           it != args.end(); ++it, len-- ) {
+@@ -62,6 +62,32 @@ inline int str_startswith(const char *he
+     return !strncmp(head, worm, strlen(head));
+ }
+ 
++static bool analyze_program(const char* name, CompileJob& job)
++{
++    string compiler_name = find_basename( name );
++
++    string::size_type pos = compiler_name.rfind('/');
++    if (pos != string::npos)
++        compiler_name = compiler_name.substr(pos);
++
++    job.setCompilerName( compiler_name );
++
++    string suffix = compiler_name;
++    if ( compiler_name.size() > 2)
++        suffix = compiler_name.substr(compiler_name.size()-2);
++
++    if (suffix == "++" || suffix == "CC")
++        job.setLanguage (CompileJob::Lang_CXX);
++    else if (suffix == "cc")
++        job.setLanguage (CompileJob::Lang_C);
++    else {
++        job.setLanguage( CompileJob::Lang_Custom );
++        return true;
++    }
++
++    return false;
++}
++
+ bool analyse_argv( const char * const *argv,
+                    CompileJob &job )
+ {
+@@ -75,11 +101,11 @@ bool analyse_argv( const char * const *a
+     trace() << endl;
+ #endif
+ 
+-    bool always_local = false;
++    bool always_local = analyze_program(argv[0], job);
+     bool seen_c = false;
+     bool seen_s = false;
+ 
+-    for (int i = 0; argv[i]; i++) {
++    for (int i = 1; argv[i]; i++) {
+         const char *a = argv[i];
+ 
+         if (a[0] == '-') {
+@@ -241,14 +267,6 @@ bool analyse_argv( const char * const *a
+         args.append( "-c", Arg_Remote );
+     }
+ 
+-    string compiler_name = find_basename( args.front().first );
+-    args.pop_front(); // away!
+-
+-    job.setLanguage( CompileJob::Lang_C );
+-    if ( ( compiler_name.size() > 2 &&
+-           compiler_name.substr( compiler_name.size() - 2 ) == "++" ) || compiler_name == "CC" )
+-        job.setLanguage( CompileJob::Lang_CXX );
+-
+     if ( !always_local ) {
+ 
+         ArgumentsList backup = args;
+@@ -334,8 +352,11 @@ bool analyse_argv( const char * const *a
+             << ", remote args=" << concat_args( job.remoteFlags() )
+             << ", rest=" << concat_args( job.restFlags() )
+             << ", local=" << always_local
+-            << ", lang=" << ( job.language() == CompileJob::Lang_CXX ? "C++" : "C" )
+-            << endl;
++            << ", compiler=" << job.compilerName()
++            << ", lang="
++            << (job.language() != CompileJob::Lang_Custom ?
++               (job.language() == CompileJob::Lang_CXX ? "C++" : "C" ) : "<custom>")
++           << endl;
+ #endif
+ 
+     return always_local;
+Index: client/local.cpp
+===================================================================
+--- client/local.cpp	(.../trunk/icecream)	(revision 657903)
++++ client/local.cpp	(.../branches/work/icecream-make-it-cool)	(revision 695567)
+@@ -27,8 +27,7 @@
+ #include <unistd.h>
+ #include <string.h>
+ #include <errno.h>
+-
+-#if defined(__FreeBSD__) || defined(__DragonFly__)
++#ifdef HAVE_SIGNAL_H
+ #include <signal.h>
+ #endif
+ 
+@@ -47,22 +46,26 @@ extern const char * rs_program_name;
+  * variable set. This is useful for native cross-compilers.
+  * (arm-linux-gcc for example)
+  */
+-static string get_compiler_name( CompileJob::Language lang ) {
+-    string compiler_name = "gcc";
+ 
+-    if ( getenv( "ICECC_CC" ) != 0 )
+-        compiler_name = getenv( "ICECC_CC" );
++static string get_compiler_name( CompileJob::Language lang )
++{
++    string compiler_name = "gcc";
+ 
+-    if ( lang == CompileJob::Lang_CXX )
+-        compiler_name = getenv( "ICECC_CXX" ) != 0 ?
+-                        getenv( "ICECC_CXX" ) : "g++";
++    const char* env;
++    if ( (env = getenv( "ICECC_CC" )) )
++        compiler_name = env;
++
++    if (lang == CompileJob::Lang_CXX)
++        compiler_name = "g++";
++    if ((env = getenv ("ICECC_CXX")))
++        compiler_name = env;
+ 
+     return compiler_name;
+ }
+ 
+-string find_compiler( CompileJob::Language lang )
++
++static string path_lookup(const string& compiler)
+ {
+-    string compiler = get_compiler_name( lang );
+     if ( compiler.at( 0 ) == '/' )
+         return compiler;
+ 
+@@ -113,6 +116,13 @@ string find_compiler( CompileJob::Langua
+     return best_match;
+ }
+ 
++string find_compiler( CompileJob::Language lang )
++{
++    string compiler = get_compiler_name( lang );
++
++    return path_lookup(compiler);
++}
++
+ static volatile int lock_fd = 0;
+ static volatile int user_break_signal = 0;
+ static volatile pid_t child_pid;
+@@ -145,14 +155,20 @@ static void handle_user_break( int sig )
+  * log our resource usage.
+  *
+  **/
+-int build_local(CompileJob &job, MsgChannel *local_daemon, struct rusage *used)
++int build_local(CompileJob& job, MsgChannel *local_daemon, struct rusage *used)
+ {
+     list<string> arguments;
+ 
+-    string compiler_name = find_compiler( job.language() );
++    string compiler_name;
++    if (job.language() != CompileJob::Lang_Custom )
++        compiler_name = find_compiler( job.language() );
++    else
++        compiler_name = path_lookup(job.compilerName());
++
++    trace() << "invoking: " << compiler_name << endl;
+ 
+     if ( compiler_name.empty() ) {
+-        log_error() << "could not find " << get_compiler_name (job.language() ) << " in PATH." << endl;
++        log_error() << "could not find " << job.compilerName() << " in PATH." << endl;
+         return EXIT_NO_SUCH_FILE;
+     }
+ 
+@@ -187,7 +203,8 @@ int build_local(CompileJob &job, MsgChan
+         lock_fd = fd;
+     }
+ 
+-    bool color_output = colorify_wanted();
++    bool color_output = job.language() != CompileJob::Lang_Custom
++        && colorify_wanted();
+     int pf[2];
+ 
+     if (color_output && pipe(pf))
+Index: client/remote.cpp
+===================================================================
+--- client/remote.cpp	(.../trunk/icecream)	(revision 657903)
++++ client/remote.cpp	(.../branches/work/icecream-make-it-cool)	(revision 695567)
+@@ -42,6 +42,9 @@
+ #include <algorithm>
+ #include <netinet/in.h>
+ #include <arpa/inet.h>
++#ifdef HAVE_RSYNC
++#include <librsync.h>
++#endif
+ 
+ #include <comm.h>
+ #include "client.h"
+@@ -198,6 +201,7 @@ static UseCSMsg *get_server( MsgChannel 
+         delete umsg;
+         throw( 1 );
+     }
++
+     UseCSMsg *usecs = dynamic_cast<UseCSMsg *>(umsg);
+     return usecs;
+ }
+@@ -215,6 +219,20 @@ static void write_server_cpp(int cpp_fd,
+ {
+     unsigned char buffer[100000]; // some random but huge number
+     off_t offset = 0;
++    size_t uncompressed = 0;
++    size_t compressed = 0;
++
++#ifdef HAVE_RSYNC
++    unsigned char buffer_sig_out[256];
++    rs_job_t* sig_job = rs_sig_begin (RS_DEFAULT_BLOCK_LEN, RS_DEFAULT_STRONG_LEN);
++    rs_buffers_t sig_buffer;
++
++    sig_buffer.next_in = (char*) buffer;
++    sig_buffer.avail_in = 0;
++
++    sig_buffer.next_out = (char*) buffer_sig_out;
++    sig_buffer.avail_out = sizeof(buffer_sig_out);
++#endif
+ 
+     do
+     {
+@@ -230,6 +248,9 @@ static void write_server_cpp(int cpp_fd,
+           }
+           break;
+         } while ( 1 );
++#ifdef HAVE_RSYNC
++        sig_buffer.avail_in += bytes;
++#endif
+         offset += bytes;
+         if (!bytes || offset == sizeof( buffer ) )
+         {
+@@ -238,11 +259,16 @@ static void write_server_cpp(int cpp_fd,
+                 FileChunkMsg fcmsg( buffer, offset );
+                 if ( !cserver->send_msg( fcmsg ) )
+                 {
++                    Msg* m = cserver->get_msg(2);
++                    check_for_failure(m, cserver);
++
+                     log_error() << "write of source chunk to host " << cserver->name.c_str() << endl;
+                     log_perror("failed ");
+                     close( cpp_fd );
+                     throw( 15 );
+                 }
++                uncompressed += fcmsg.len;
++                compressed += fcmsg.compressed;
+                 offset = 0;
+             }
+             if ( !bytes )
+@@ -250,6 +276,10 @@ static void write_server_cpp(int cpp_fd,
+         }
+     } while ( 1 );
+ 
++    if (compressed)
++        trace() << "sent " << compressed << " bytes (" << (compressed * 100/uncompressed) <<
++            "%)" << endl;
++
+     close( cpp_fd );
+ }
+ 
+@@ -263,7 +293,11 @@ static int build_remote_int(CompileJob &
+     bool got_env = usecs->got_env;
+     job.setJobID( job_id );
+     job.setEnvironmentVersion( environment ); // hoping on the scheduler's wisdom
+-    trace() << "Have to use host " << hostname << ":" << port << " - Job ID: " << job.jobID() << " - environment: " << usecs->host_platform << " got environment: " << (got_env ? "true" : "false") << "\n";
++    trace() << "Have to use host " << hostname << ":" << port << " - Job ID: "
++        << job.jobID() << " - env: " << usecs->host_platform 
++        << " - has env: " << (got_env ? "true" : "false") 
++        << " - match j: " << usecs->matched_job_id
++        << "\n";
+ 
+     int status = 255;
+ 
+@@ -352,7 +386,6 @@ static int build_remote_int(CompileJob &
+     }
+ 
+     {
+-        log_block write_end("write of end msg");
+         if ( !cserver->send_msg( EndMsg() ) ) {
+             log_info() << "write of end failed" << endl;
+             throw( 12 );
+@@ -408,11 +441,15 @@ static int build_remote_int(CompileJob &
+         int obj_fd = open( tmp_file.c_str(), O_CREAT|O_TRUNC|O_WRONLY|O_LARGEFILE, 0666 );
+ 
+         if ( obj_fd == -1 ) {
+-            log_error() << "open failed\n";
++            std::string errmsg("can't create ");
++            errmsg += tmp_file + ":";
++            log_perror(errmsg.c_str());
+             return EXIT_DISTCC_FAILED;
+         }
+ 
+         msg = 0;
++        size_t uncompressed = 0;
++        size_t compressed = 0;
+         while ( 1 ) {
+             delete msg;
+ 
+@@ -434,12 +471,18 @@ static int build_remote_int(CompileJob &
+             }
+ 
+             FileChunkMsg *fcmsg = dynamic_cast<FileChunkMsg*>( msg );
++            compressed += fcmsg->compressed;
++            uncompressed += fcmsg->len;
+             if ( write( obj_fd, fcmsg->buffer, fcmsg->len ) != ( ssize_t )fcmsg->len ) {
+                 unlink( tmp_file.c_str());
+                 delete msg;
+                 throw ( 21 );
+             }
+         }
++        if (uncompressed)
++            trace() << "got " << compressed << " bytes ("
++                << (compressed * 100 / uncompressed) << "%)" << endl;
++
+ 
+         delete msg;
+         if( close( obj_fd ) == 0 )
+Index: client/icecc-create-env
+===================================================================
+--- client/icecc-create-env	(.../trunk/icecream)	(revision 657903)
++++ client/icecc-create-env	(.../branches/work/icecream-make-it-cool)	(revision 695567)
+@@ -6,6 +6,11 @@
+ 
+ target_files=
+ 
++is_darwin=0
++if test `uname` = Darwin; then
++  is_darwin=1
++fi
++
+ is_contained ()
+ {
+   case " $target_files " in
+@@ -44,15 +49,24 @@ add_file ()
+ 		#         libc.so.6 => /lib/tls/libc.so.6 (0xb7e81000)
+ 		#         /lib/ld-linux.so.2 (0xb7fe8000)
+ 		# covering both situations ( with => and without )
+-          for lib in `ldd "$path" | sed -n 's,^[^/]*\(/[^ ]*\).*,\1,p'`; do
++           for lib in `ldd "$path" | sed -n 's,^[^/]*\(/[^ ]*\).*,\1,p'`; do
++	      test -f "$lib" || continue
++	      # Check wether the same library also exists in the parent directory,
++	      # and prefer that on the assumption that it is a more generic one.
++	      local baselib=`echo "$lib" | sed 's,\(/[^/]*\)/.*\(/[^/]*\)$,\1\2,'`
++	      test -f "$baselib" && lib=$baselib
++              add_file "$lib"
++           done
++        fi
++    elif test "$is_darwin" = 1; then
++          for lib in `otool -L "$path" | sed -n 's,^[^/]*\(/[^ ]*\).*,\1,p'`; do
+ 	    test -f "$lib" || continue
+ 	    # Check wether the same library also exists in the parent directory,
+ 	    # and prefer that on the assumption that it is a more generic one.
+ 	    local baselib=`echo "$lib" | sed 's,\(/[^/]*\)/.*\(/[^/]*\)$,\1\2,'`
+ 	    test -f "$baselib" && lib=$baselib
+-	  add_file "$lib"
+-        done
+-      fi
++            add_file "$lib"
++         done
+     fi
+   fi
+ }
+@@ -85,6 +99,18 @@ add_file $added_gcc /usr/bin/gcc
+ add_file $added_gxx /usr/bin/g++
+ add_file /usr/bin/as
+ 
++if test "$is_darwin" = 1; then
++    # add dynamic linker
++    add_file /usr/lib/dyld
++    real_file=`/usr/bin/gcc --version | head -n 1 2>&1 | cut -d" " -f1`
++    add_file /usr/bin/$real_file
++    real_file=`/usr/bin/g++ --version | head -n 1 2>&1 | cut -d" " -f1`
++    add_file /usr/bin/$real_file
++    real_file=`/usr/bin/as -micha -- < /dev/null 2>&1 | cut -d: -f1`
++    add_file $real_file
++fi
++
++
+ add_file `$added_gcc -print-prog-name=cc1` /usr/bin/cc1
+ add_file `$added_gxx -print-prog-name=cc1plus` /usr/bin/cc1plus
+ specfile=`$added_gcc -print-file-name=specs`
+Index: client/util.cpp
+===================================================================
+--- client/util.cpp	(.../trunk/icecream)	(revision 657903)
++++ client/util.cpp	(.../branches/work/icecream-make-it-cool)	(revision 695567)
+@@ -205,7 +205,7 @@ bool colorify_wanted()
+ {
+   const char* term_env = getenv("TERM");
+ 
+-  return isatty(2) && !getenv("EMACS") && term_env && strcmp(term_env, "DUMB");
++  return isatty(2) && !getenv("EMACS") && term_env && strcasecmp(term_env, "DUMB");
+ }
+ 
+ void colorify_output(const string& _s_ccout)

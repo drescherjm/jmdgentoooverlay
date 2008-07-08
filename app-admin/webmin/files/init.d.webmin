@@ -27,8 +27,7 @@ start() { # copied from /etc/usermin/start
 
 	unset PERLIO
 	export PERLIO
-	start-stop-daemon --start --exec /usr/bin/perl \
-		/usr/libexec/webmin/miniserv.pl \
+	start-stop-daemon --start --exec "/usr/bin/perl /usr/libexec/webmin/miniserv.pl" \
 		--pidfile /var/run/webmin.pid \
 		-- /etc/webmin/miniserv.conf
 	eend $?

@@ -2,7 +2,7 @@ inherit webapp depend.php eutils
 
 DESCRIPTION="Web based (PHP Script) bacula status viewer."
 HOMEPAGE="http://www.bacula.org/"
-SRC_URI="mirror://sourceforge/bacula-gui-${PV}.tar.gz"
+SRC_URI="mirror://sourceforge/bacula/bacula-gui-${PV}.tar.gz"
 
 LICENSE="GPL-2"
 KEYWORDS="~amd64 ~x86"
@@ -11,7 +11,8 @@ IUSE="mysql postgres"
 RDEPEND="virtual/httpd-php
 	dev-php/PEAR-DB
         dev-php/smarty
-	>=app-backup/bacula-${PV}"
+        app-backup/bacula"
+#	>=app-backup/bacula-${PV}"
 
 S=${WORKDIR}/bacula-gui-${PV}/bacula-web
 
@@ -19,7 +20,6 @@ src_unpack() {
         unpack ${A}
 	cd ${S}
 	pwd
-	epatch ${FILESDIR}/bacula-web-${PV}-cvs_updates.patch
 	epatch ${FILESDIR}/bacula-web-${PV}-nulldate.patch
 	epatch ${FILESDIR}/bacula-web-${PV}-dbsize.patch
 

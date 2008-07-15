@@ -8,7 +8,7 @@ MY_P=${PN}-${PV/_/}
 
 DESCRIPTION="A suite of SMB and CIFS client/server programs for UNIX"
 HOMEPAGE="http://www.samba.org/"
-SRC_URI="mirror://samba/${MY_P}.tar.gz
+SRC_URI="mirror://samba/stable/${MY_P}.tar.gz
 	mirror://samba/old-versions/${MY_P}.tar.gz"
 LICENSE="GPL-2"
 SLOT="0"

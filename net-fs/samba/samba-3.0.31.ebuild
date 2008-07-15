@@ -51,11 +51,11 @@ src_unpack() {
 
 	# lazyldflags.patch: adds "-Wl,-z,now" to smb{mnt,umount}
 	# invalid-free-fix.patch: Bug #196015 (upstream: #5021)
+#		"${FILESDIR}/3.0.28-libcap_detection.patch" \
 
 	epatch \
 		"${FILESDIR}/3.0.26a-lazyldflags.patch" \
 		"${FILESDIR}/3.0.26a-invalid-free-fix.patch" \
-		"${FILESDIR}/3.0.28-libcap_detection.patch" \
 		"${FILESDIR}/3.0.28-fix_broken_readdir_detection.patch" \
 		"${FILESDIR}/3.0.28-autoconf-2.62-fix.patch" \
 		"${FILESDIR}/3.0.28a-wrong_python_ldflags.patch"

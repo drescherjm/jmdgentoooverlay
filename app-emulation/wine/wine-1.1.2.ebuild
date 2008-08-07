@@ -86,6 +86,7 @@ src_unpack() {
 
 	sed -i '/^UPDATE_DESKTOP_DATABASE/s:=.*:=true:' tools/Makefile.in || die
 	epatch "${FILESDIR}"/wine-gentoo-no-ssp.patch #66002
+        epatch "${FILESDIR}"/wine-1.1.2-noiocp.patch
 	sed -i '/^MimeType/d' tools/wine.desktop || die #117785
 }
 

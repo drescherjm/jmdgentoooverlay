@@ -1,0 +1,20 @@
+diff -Naur kdebase-workspace-4.0.82.orig/plasma/plasma/desktopcorona.cpp kdebase-workspace-4.0.82/plasma/plasma/desktopcorona.cpp
+--- kdebase-workspace-4.0.82.orig/plasma/plasma/desktopcorona.cpp	2008-06-11 03:41:28.000000000 +0200
++++ kdebase-workspace-4.0.82/plasma/plasma/desktopcorona.cpp	2008-06-11 13:19:33.000000000 +0200
+@@ -93,16 +93,6 @@
+         c->setFormFactor(Plasma::Planar);
+         c->flushPendingConstraintsEvents();
+ 
+-        // put a folder view on the first screen
+-        if (i == 0) {
+-            Plasma::Applet *folderView =  Plasma::Applet::load("folderview", c->id() + 1);
+-            c->addApplet(folderView, QPointF(KDialog::spacingHint(), KDialog::spacingHint()), true);
+-            KConfigGroup config = folderView->config();
+-            config.writeEntry("url", "desktop:/");
+-            folderView->init();
+-            folderView->flushPendingConstraintsEvents();
+-        }
+-
+         if (g.x() <= topLeftCorner.x() && g.y() >= topLeftCorner.y()) {
+             topLeftCorner = g.topLeft();
+             topLeftScreen = i;

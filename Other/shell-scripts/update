@@ -1,0 +1,4449 @@
+#!/bin/bash
+# update - a bash wrapper script for emerge
+# © 2007 by Ranjit Singh & Steven J. Long. All rights reserved.
+# Distributed under the GPLv3.
+# Usage: update --help, -h (options) and -{h,-help} config
+# Bug reports: http://forums.gentoo.org/viewtopic-t-546828.html
+# Kudos to Griz, bonsaikitten, welp, nox-Hand, uberpinguin; NeddySeagoon, zmedico, jakub, ferringb, solar.
+# Thanks to masterdriverz, antarus, agaffney, loki_val, zlin (#gentoo*) -- RobbieAB|away ;)
+# - TheBonsai, lhunath, greycat, xmb, go|dfish (#bash) on irc.freenode.org -- y0 VIMtermute ;P
+# TODO: FILTERS - if you can run gentoo, you can write scripts -- so HELP! ;P
+# For release: (depclean); prelink; eclean; autounmask; BSD sed +?; clean /var/tmp/portage.
+# - category exclusions; fix-libtool.sh and toolchain/ kernel building
+# - change filters based on usr feedback (yes that means you!)
+# 	PAX markings
+# - refine server/cron option based on usr feedback; do we need bdeps depclean?
+# - test toolchain handling for emptytree
+# - compatibility with pkgcore
+# - backup 2 prior versions
+# - filter-check for unresolved symbols, meaning revdep required (failed pkgs)
+# - i18n heh
+# Contact info: steveL on http://forums.gentoo.org/
+# - or: #friendly-coders on irc.freenode.org
+# Continuation Algorithm based on conversation around
+#  guenther's upgrade - see http://forums.gentoo.org/viewtopic-t-494331.html and
+#  update-world 1.6.1 (count_zero 2006) see http://forums.gentoo.org/viewtopic-p-3798148.html#3798148
+Version=0.1.4.0_beta3b
+[[ $1 = --version ]] && { echo $Version; exit 0; }
+
+# Toolchain is currently: sys-apps/portage sys-devel/gcc sys-kernel/linux-headers
+# ** Possible regressions:
+# Don't ask me, everything's been changed quite a bit ;p
+#  - next version will be cleaner, promise (after depclean is finished.)
+
+configFile=/etc/update
+# NB: tmp dir for locking is in /tmp/<program>
+
+# Exit codes (please let us know if you get wrong exit code):
+# 0 - all operations carried out successfully
+# 1 - generic error (eg resolve error)
+# 2 - user aborted
+# 3 - bad config file
+# 4 - exited on signal (waits til current pkg is emerged)
+# 5 - aborted (install failure)
+# On abort:
+#  - server mode will attempt to run all maintenance first
+#  - interactive mode will ask user
+
+: <<'EOF' # default config file
+# Set to 0 when you've had enough Gentoo hints ;)
+#novice=1
+# ditto for hints re program
+#intro=1
+#kernel=sys-kernel/gentoo-sources
+#configUpdater="cfg-update dispatch-conf etc-update"
+# where to store emergeList, target and status
+#dir=~/emerge
+# unionfs is fussy about kernel ver, openoffice and firefox are monsters ;P
+# set it to what you like ofc, this is Gentoo ;)
+noCompile=(sys-fs/unionfs app-office/openoffice www-client/mozilla-firefox)
+#noRebuild=()
+#noDowngrade=()
+kdep=(sys-apps/hal sys-fs/unionfs)
+# -m: tmpfs size in MB (for machines with 512MO, 1GO, 2G0 or 4GO)
+size=256
+#size=512
+#size=1280
+#size=3072
+# BSD (yes, you can set aliases to play mad games ;) -- for Roy
+# alias sed=gsed
+# if you are on an odd console, uncomment and edit this:
+#TAB_WIDTH=8
+# Luv to gentoo from igli ;)
+EOF
+
+# Base noCompile, rebuild and downgrade arrays
+nc=()
+nr=()
+nd=()
+wl=()
+# make sure to use full cat/pkg spec
+toolchain=(sys-apps/portage sys-devel/gcc sys-kernel/linux-headers)
+updateSysURL="update system after gcc upgrade: http://forums.gentoo.org/viewtopic-t-494331.html
+	emwrap.sh http://forums.gentoo.org/viewtopic-t-282474.html
+	http://www.gentoo.org/doc/en/gcc-upgrading.xml
+or search 'site:forums.gentoo.org change chost posted 2007' on google"
+
+WARN_FORMAT='pkg	from	buildBefore	buildAfter	buildPost	libs	message'
+aux=(gnuconfig gcc-config patch m4 flex binutils-config bison binutils autoconf libtool gettext )
+auxTC=(sys-libs/zlib "${aux[@]/#/sys-devel/}")
+unset aux
+
+postPkg=(sys-devel/binutils sys-apps/coreutils)
+postAction=('source /etc/profile' 'hash -r')
+
+usage() {
+	echo " ${GN}Usage$NO: $HI$prog$NO $MA<options>$NO ${HI}[target list]$NO"
+	echo " ${MA}Options:$NO -eapqvurnDNo[bB][gG][kK]imsfFlRCSMhxXWYzc"
+	[[ $HELP ]] || echo "or $HI$prog -h$NO or $HI-?$NO (command-line) or $HI--help$NO for help."
+}
+
+helpMsg() {
+	progName="${GN}update$NO"
+	line=$NA'================================================================='$NO
+	bug="  ${MA}Bug reports: ${BR}http://forums.gentoo.org/viewtopic-t-546828.html
+$line"
+	echo "$BR$line
+			   $progName
+     an ${GR}emerge$NO wrapper to cut cruft and retry failed packages
+$line"
+	for i; do case "$i" in
+		--help) verbose=1;;
+		config) configHelp=1;;
+		esac
+	done
+	if ((configHelp)); then
+		echo "${HI}export UPDATE_CONFIG=/path/to/file$NO to test config files
+$BU**$MA Default settings from the script:$NO ie always up to date"
+		ed -s /sbin/update <<< $'H\n?Options which can be set in config?;/warnFile=/p\nq'|sed -e "/^# -/ { s/^# - /${GN}*$NO $NA/;s/$/$NO/; }" -e "/^# / { s/^# /${GN}*$NO $HI/;s/$/$NO/; }" -e "s/\([[:alpha:]_-]*\)=/$OR\1$NO=/g"
+		echo "$line"
+		echo "  $progName will also pick up --quiet or --verbose from
+${HI}EMERGE_DEFAULT_OPTS$NO in /etc/make.conf and set the default
+cruft filter accordingly.
+  $BR-q$NO or $BR-v$NO will turn the level down/up from config and you can
+use eg $BR-vv$NO to get normal verbosity from a quiet default.
+  If you have ${HI}NOCOLOR=true$NO or ${HI}yes$NO in make.conf $progName will
+disable colour. See ${HI}man make.conf$NO
+$bug"
+	else
+		HELP=yes
+		usage
+		if ((verbose)); then
+			echo "
+ If no target is given this script will ${GN}emerge -auDN world$NO.
+ If no parameter at all is given, it is equivalent to
+	$prog -auDNR world
+ ie: ${GN}emerge -auDN world$NO, then run:
+	emerge --depclean !${BU}experimental$NO         -- C
+	${GN}revdep-rebuild$NO                          -- R
+ if used with $BR-S$NO, ${GN}glsa-check -f affected$NO will be run before
+	depclean.
+ This is the recommended way to update your system.
+ Shortcuts for common usage:
+	$HI$prog -([sqvp]fFH*)$NO
+	 -- is equivalent to $prog -[sqvpfFH]auNR world
+ $HI$prog -[SCR]*|M$NO with any of the above options
+   -- and no target (eg world, system)
+   -- will only perform the specified maintenance
+ $HI$prog -R libA.so libB.so.2$NO
+	- will run revdep on specified libs
+$line
+	Try: $progName on its own for first use
+	Most common usage:
+		$HI$prog
+		$prog -s$NO
+	 followed by: $HI$prog -ar$NO if required
+	Or, to install a pkg: $HI$prog -ia <pkg>$NO
+
+   resume will install the correct targets to world, so you can
+ restart long installations, and also check GLSAs, run depclean
+ or ${MA}revdep-rebuild$NO; if you specified them to the original
+ $progName.
+   If not under ${MA}X$NO (or output redirected), $progName won't use xterm
+ titles. Under ${MA}screen$NO there is no spinner. Colour is disabled by
+ ${MA}portage$NO config, if output is redirected, or $BR-c$NO is used.
+   ${BR}BinHost handling$NO ($BR-G$NO or $BR-g$NO) uses ${HI}qmerge$NO and Packages file
+ made by ${HI}genpkgindex$NO [from ${MA}gentoolkit$NO] with custom header check.
+   ${BU}NB$NO ${MA}portage 2.2$NO will use Packages; until then this is the
+ quickest method we know to install ${GR}Gentoo$NO. ;)
+
+ If another $prog is running, this won't be allowed to run
+ until it has exited.
+  - $progName will allow you to signal the running instance to
+	tell it to stop after next the next package.
+  - you can also use $HI$prog --stop$NO to do the same thing.
+$line
+   $HI$prog -h$NO will tell you about command-line options
+   $HI$prog --help config$NO about settings in $configFile
+$bug"
+		else
+			echo "          -eapunDNo[bB][kK][gG] : same as ${HI}emerge$NO
+	$HI$prog --version$NO for version string
+$line
+	$BR-a ask$NO before installing
+	$BR-s sync$NO first (does eix if installed)
+	$BR-f fetch$NO files first (no parallel-fetch)
+	$BR-i install$NO target/s to world
+   (use ${HI}emerge -q --depclean <pkg>$NO to uninstall)
+	$BR-r resume$NO (after -p|a, ctrl-c, or halt)
+	$BR-m use tmp-fs$NO for build
+	$BR-c disable colour$NO
+
+	$BR-S GLSA$NO check -- after update
+	$BR-C depclean$NO   -- after GLSA !${BU}experimental$NO
+	$BR-R revdep-rebuild$NO -- after update/ install
+	$BR-M maintenance$NO
+	   -- run GLSA, depclean, revdep
+	$BR-l log$NO via syslog
+	$BR-x server/ automated$NO : implies -lfc, no spinner
+
+	$BR-W rebuild kernel modules$NO (uses module-rebuild)
+	$BR-Y rebuild kernel deps$NO like hal (config)
+	$BR-X force$NO toolchain downgrade
+	 or ${BR}skip$NO Packages file check for ${BR}binHost$NO
+	$BR-z skip checks$NO -- with ${HI}emerge -p$NO output:
+	# ${HI}UPDATE_FILE='/path/to/blah' $prog$NO
+   checks meaning no{Compile,Rebuild,Downgrade} in config
+	You can also set SKIP env var, eg:
+	# ${HI}export SKIP='catA/pkg1 catB/pkg2'$NO
+	# $HI$prog$NO
+   for temporary noCompiles
+	$BR-[0-9] Output run$NO similar to emerge -1 ie
+   for temporary runs, builds entire new list
+$line
+    $BR-q$NO and $BR-v$NO are for seeing less or more of the compile
+   $HI$prog -h config$NO for settings in $configFile
+   $HI$prog --help$NO for an explanation of $progName
+$bug"
+		fi
+	fi
+	((EUID)) && echo $ERR' You must be root to run this script.'
+	exit 0
+}
+
+checkFlags() {
+	status=
+	while getopts ":-0123456789eapqvurnDNobBgGkKimsfFlRSCMhxXWYzcT" opt
+	do
+		case $opt in
+		[eunDNo] ) param+=$opt;;
+		[bBkK] ) binOpt+=$opt;;
+		[0-9] ) [[ $outputRun ]] && abort 'Can only specify one output run'
+			echo "$ALT Run $opt"; outputRun="$opt/"; setOutputFiles
+;;		a ) ask=1;;
+		p ) pretend=1;;
+		q ) if [[ $defaultVerb = v ]]; then
+				verbose=0
+				defaultVerb=
+			else let quiet++
+			fi;;
+		v ) if [[ $defaultVerb = q ]]; then
+				quiet=0
+				defaultVerb=
+			else let verbose++
+			fi
+;;		r ) resume=1;;
+		C ) doDepclean=1;; #echo "--depclean is not finished";;
+		i ) install=1;;
+		m ) mount_tmpfs;;
+		s ) syncFirst=1;;
+		f ) fetch=1;;
+		F ) fetchOnly=1; fetch=1;;
+		l ) [ -x /usr/bin/logger ] || abort '/usr/bin/logger not found'
+			logging=1;;
+		r ) resume=1;;
+		R ) doRevdep=1;;
+		S ) doGLSA=1;;
+		M ) let doGLSA=doDepclean=doRevdep=1;;
+		t ) doTC=1;;
+		W ) doKmods=1; ask=1;;
+		x ) server=1;;
+		X ) force=1;;
+		Y ) doKdeps=1; ask=1;;
+		z ) skipChecks=1
+			[[ -f $UPDATE_FILE ]] || abort 'Please set: UPDATE_FILE=/path/to/emergeOutput env var.'
+;;		Z ) doKernel=1; ask=1; abort 'Unimplemented -- whinge at igli ;)';;
+		h ) helpMsg;;
+		- ) arg=${!OPTIND}
+			arg=${arg#--}
+			case $arg in
+			stage*) status=${arg#*=}
+				[[ $status = $arg ]] && {
+					((arg=OPTIND+1))
+					status=${!arg}
+				}
+				echo "$PF2 stage $status"
+	;;		*) abort "Unknown long option -$OPTARG chosen.";;
+			esac
+;;		g ) binHost=1
+;;		G ) binOnly=1
+;;		c) colour=0
+;;		T) useTerminal=1
+;;		* ) usage
+			abort "Unknown option -$OPTARG chosen.";;
+		esac
+	done
+	# This is how BASH does C-style flags
+	((ask&&pretend)) && abort 'Cannot both ask and pretend.'
+	((quiet&&verbose)) && abort 'Cannot set quiet and verbose.'
+	((resume)) && {
+		if ((crashed)); then
+			param=
+			syncFirst=0
+		else
+			[[ $param ]] && abort 'Cannot set tree options during resume.'
+			((syncFirst)) && abort 'Cannot --sync and resume'
+		fi
+	}
+	((doKmods)) && echo 'Updating kernel modules'
+	((doKdeps)) && echo 'Emerging kernel dependencies'
+	((doKernel&&(doKmods||doKdeps))) && echo '-Z implies -WY'
+	((force)) && checkedPkgFile=1
+	[[ $param ]] && param="-$param"
+	[[ $outputRun ]] && {
+		if [[ -d "$dir/$outputRun" ]]; then
+			((resume)) || rm "$dir/$outputRun"*
+		else mkdir "$dir/$outputRun"
+		fi
+	}
+	macro
+	return $((OPTIND-1))
+}
+
+shopt -s expand_aliases
+unalias -a
+# This is handy -- you can use it in a pipe ;) thanks to nanafunk for the sed seq to get rid of colours
+alias mono="sed $'s/\033\[[^m]*m//g'"
+alias stripError="sed $'s/\033\[[^m]*m//g;/^!!!/!d'"
+alias stripList="sed -r $'s/\033''\[[^m]*m//g;/^\[(ebuild|binary|blocks)/!d;s:^\[(ebuild|binary)([^]]*)\] ([^ ]*) ?(\[[^]]*\])? ?(USE=\".*\")? ?([0-9,]* .B)?.*:[\2]\t\3\t\4\t\5\t\6:'"
+alias stripQuiet="sed -r $'s/\033''\[[^m]*m//g;/^\[(ebuild|binary)/!d;s:^\[(ebuild|binary)([^]]*)\] ([^ ]*) ?(\[[^]]*\])?:[\2]\t\3\t\4:'"
+alias needMaint='((doGLSA||doDepclean||doRevdep))'
+
+abort() {
+	set +x
+	exec > /dev/tty
+	doTrace=0
+	[[ $1 = TRACE ]] && {
+		shift
+		doTrace=1
+	}
+	if ((numPhases&&!bailOut)) && [[ ${phaseErr[numPhases-1]} ]]; then
+		[[ $abortMsg ]] && abortMsg+=": ${phaseErr[numPhases-1]}" || abortMsg=${phaseErr[numPhases-1]}
+	fi
+	if [[ $1 ]]; then
+		[[ $abortMsg ]] && f="$abortMsg -- $1" || f="$1"
+	else
+		[[ $abortMsg ]] && f="$abortMsg" || f=
+		doTrace=1
+	fi
+	if ((doTrace)); then
+		f+="
+Internal error in ${FUNCNAME[1]}(${BASH_LINENO[0]})"
+		n=${#FUNCNAME[@]}
+		if ((n>3)); then
+			for ((i=2;i<n-1;i++)); do
+				f+=" :${FUNCNAME[i]}(${BASH_LINENO[i-1]})"
+			done
+			f+=" : line ${BASH_LINENO[i-1]}"
+		fi
+	fi
+	finalMsg=
+	((bailOut)) && final "$progName: $f" || final "$ERR $progName: $f"
+	((tmpMounted)) && sleep 1
+	((verbose==1&&!bailOut)) && final 'You can troubleshoot with -vv'
+	[[ $outputRun ]] && ((!bailOut&&!server)) && final "$TIP You can see status files in $dir/$outputRun"
+	[[ $2 ]] && exit $2 || exit 1
+}
+
+die() {
+	echo "$ERR $1" > /dev/tty
+	[[ $2 ]] && exit $2 || exit 1
+}
+
+# need this for reset() which can get called before checkFlags()
+# we have server set before call, but it gets tricky, so bare minimum outside macro()
+# macro() will set it to most efficient for normal script usage
+if [[ $DISPLAY ]]; then
+# thanks to agaffney
+	setT() {
+		((server)) || echo -en "\033]0;$*\007"
+	}
+else
+	setT() { : ; }
+fi
+logW() { :; }
+reset() {
+	((editedMaskFile)) && {
+		if ((eraseMaskFile)); then
+			rm -f "$maskFile"
+		else
+			cp "$backupMask" "$maskFile" && rm -f "$backupMask" || logErr "$maskFile has been amended and could not be reset, backup version in $backupMask"
+		fi
+	}
+	[[ -f $childFile ]] && {
+		read pid < "$childFile" && [[ $pid ]] && kill -0 $pid 2>/dev/null && {
+			echo -n "$PFX Terminating.."
+			d=0
+			kill $pid
+			now=$SECONDS
+			while ((SECONDS-now<2)); do
+				kill -0 $pid 2>/dev/null || { d=1; break; }
+			done
+			((d)) && echo 'done.' || {
+				kill -9 $pid 2>/dev/null
+				echo 'forcefully.'
+			}
+		}
+		rm -f "$childFile" 2>/dev/null
+	}
+	wait
+	umount_tmpfs
+	[[ $PWD = $HOME ]] && dir='~' || dir=${PWD##*/}
+	setT "$LOGNAME@$dir"
+	rm -fR "$tmpDir"
+	[[ $finalMsg ]] && echo -n "$finalMsg"
+	((configUpdatesPending)) && logW 'Config file updates pending'
+#	echo "Status $status"
+#	cat "$targetFile" 2>/dev/null
+} > /dev/tty
+
+# List testing functions: lists should have full cat/pkg (version not required)
+# NB: for small arrays only. Use getPkgPos for position in main list (which can be massive.)
+# inList $pkg "${list[@]}"
+# -- list elements are checked to see if any is substring of pkg
+inList() { local arg pkg=$1; shift; for arg; do [[ $pkg = *$arg* ]] && return 0; done; return 1; }
+# -- pkg is checked to see if it is substring of any list element
+inListBroad() {
+	local arg pkg=$1; shift
+	for arg; do [[ $arg = *$pkg* ]] && return 0
+	done
+	return 1
+}
+# faster - simple equality check for when pkg and list are both versioned, cf getArrPos.
+inArr() { local i s="$1"; shift; for i; do [[ $s = $i ]] && return 0; done; return 1; }
+
+# pkg (unversioned) is checked to see if it is at start of any list element, followed by number or cvs.number
+# - if no category, will be checked against pkg names in list elements
+pkgInList() {
+	local arg pkg=$1; shift
+	if [[ $pkg = */* ]]; then
+		for arg do [[ $arg = "$pkg-"[0-9]* || $arg = "$pkg-cvs."[0-9]* ]] && return 0; done
+	else
+		for arg do [[ $arg = *"/$pkg-"[0-9]* || $arg = *"/$pkg-cvs."[0-9]* ]] && return 0; done
+	fi
+	return 1
+}
+
+printArr() { IFS="$EOL"; echo "$*"; unset IFS; }
+# countdown [len=5]
+countdown() {
+	local i
+	i=${1:-5}
+	echo -n "$WRN ${MA}CTRL-C$NO to abort "
+	while ((i))
+	do
+		echo -n " $OR$i$NO"
+		sleep 1
+		let i--
+	done
+	echo
+} >/dev/tty
+
+skipCompile() {
+	skippedPkgs+=("$1")
+	skip+=("$1")
+	nc+=("$1")
+	msg "$ALT Not compiling $1"
+}
+
+# fail pkg [silent]
+fail() {
+	[[ $logFile ]] && {
+		process_reasons 
+		fR+=("$1: tail -n30 $logFile")
+		echo "$1: tail -n30 $logFile" >> "$reasonsFile"
+		logFile=
+	}
+
+	echo "$1" >> "$failFile"
+	failList+=("$1")
+
+	if [[ $emergeFile = $warnList ]]; then
+		grep -qF "$1" "$mainEmergeFile" && let pA++
+	fi
+	let p++
+	[[ $2 ]] || echo "${EOL}$ERR $1 failed to install." >&2
+	((round)) || log "$1 failed"
+}
+
+process_reasons() {
+	tail -n30 $logFile > $dir/lastFailure
+#  	grep failure $dir/lastFailure
+#	grep undefined $dir/lastFailure
+	
+#	grep undefined $dir/lastFailure | awk '{ print $1 }' | uniq | grep : | sed 's/://' | xargs -n1 -i equery belongs {} | head -1 >> "$failFile"
+	fail_other `grep undefined $dir/lastFailure | awk '{ print $1 }' | uniq | grep : | sed 's/://' | xargs -n1 -i equery belongs {}`
+
+#	fail_no_pkg `grep No\ package $dir/lastFailure | awk '{print $3}' | uniq | sed s#\'##g | sed  -e 's/"//g' -e 's/>//g' -e 's/=//g' -e 's/-[0123456789][^ ]*//' | xargs -n1 -i equery list {}`
+	fail_no_pkg `grep No\ package $dir/lastFailure  | awk '{print $3}' | sed s#\'##g`
+	
+	echo $failList
+}
+
+CpArray_Mac() {
+# Assignment Command Statement Builder
+
+    echo -n 'eval '
+    echo -n "$2"                    # Destination name
+    echo -n '=( ${'
+    echo -n "$1"                    # Source name
+    echo -n '[@]} )'
+
+# That could all be a single command.
+# Matter of style only.
+}
+
+declare -f CopyArray                # Function "Pointer"
+CopyArray=CpArray_Mac               # Statement Builder
+
+InsertArray() {
+
+# Input the array named $1.
+# Insert string $2.
+# Pos to insert $3
+
+    [ -z "$3" ] &&  return;
+
+    local n=$3
+
+    local -a TMP
+
+    local -a First
+
+    $($CopyArray $1 First)
+    TMP=( ${First[@]:0:n} $2 ${First[@]:n} )
+    $($CopyArray TMP $1)
+}
+
+fail_other() {
+	until [ -z "$1" ]  # Until all parameters used up . . .
+	do
+                InsertArray buildType "R" $p
+		InsertArray list "$1" $p
+		InsertArray oldVer "$1" $p
+		InsertArray sizes "0" $p
+
+	        echo -n "${buildType[p]}" "${list[p]}" "${oldVer[p]}" "${sizes[p]}"
+
+		let p++
+		let added++
+		fR+=("$1: tail -n30 $logFile")
+	        echo "$1: tail -n30 $logFile" >> "$reasonsFile"
+
+		emerge -pv ="$1" 2> /dev/tty |tee >(stripList >> "$emergeFile")
+		echo emerge -pv ="$1" 2> /dev/tty |tee >(stripList >> "$emergeFile")
+
+#  		emerge -pv ="$1" | grep USE >> "$emergeFile"
+		
+		echo "$1" >> "$failFile"
+        	failList+=("$1")
+  		shift
+	done
+	
+}
+
+fail_no_pkg() {
+	until [ -z "$1" ]  # Until all parameters used up . . .
+	do
+		echo $1
+		local pkg
+		pkg=`echo $1 | sed  -e 's/"//g' -e 's/>//g' -e 's/=//g' -e 's/-[0123456789][^ ]*//'`
+		pkg_1=`equery list $pkg | grep $pkg`
+		if [[ -z "$pkg_1" ]]; then
+		  fail_other $pkg
+		else
+		  fail_other $pkg_1
+		fi
+		
+		shift
+	done
+	
+}
+
+installedNow=()
+# installed pkg [silent]
+installed() {
+	local pos
+	installedNow+=("$1")
+	log "$1 installed"
+	getListPos "$1" "${postPkg[@]}" || {
+		pos=$?
+		let pos--
+		if [[ "${postAction[pos]}" ]]; then
+			[[ $2 ]] || {
+				msg "$PF2 Running action for $HI${postPkg[pos]}$NO:
+$PFX     ${postAction[pos]}"
+			}
+			${postAction[pos]} || {
+				logErr "${postPkg[pos]}: '' ${postAction[pos]} '' failed"
+				confirmY 'Continue with build' || die
+			}
+		else errMsg "${postPkg[pos]} has no associated action"
+		fi
+	}
+	if grep -qF "$1" "$emergeFile"; then
+		sed -i "\]$1] d" "$emergeFile"
+		sed -i "\]$1] d" "$usrFile"
+	fi
+	# if non-standard, need to check mainlist too
+	[[ $emergeFile = $mainEmergeFile ]] || {
+		if [[ -f $mainEmergeFile ]] && grep -qF "$1" "$mainEmergeFile"; then
+			sed -i "\]$1] d" "$mainEmergeFile"
+			sed -i "\]$1] d" "$dir/"colourOutput
+			[[ $emergeFile = $warnList ]] && {
+				let nA++
+				let pA++
+			}
+		fi
+	}
+	let n++
+	let p++
+	[[ $2 ]] || {
+		backUp
+		msg "$PF2 $1 installed successfully."
+	}
+}
+
+getListPos() {
+	local arg c=0 pkg=$1
+	shift
+	for arg; do
+		[[ $pkg = $arg* ]] && return $((++c))
+		let c++
+	done
+	return 0
+}
+
+wasInstalled() {
+	inArr "$1" "${installedNow[@]}"
+}
+
+# `Pre-processor' stuff
+macro() {
+# aliases (eg alias msg=:) don't work here - not in main?
+# not an issue as still faster; aliases in main would be harder to maintain
+# -- foo() { :; } is less cycles than foo() { ((flag)) || cmd; }
+# -- so is foo() { cmd; }
+# in general we're taking checks out of frequently-used functions
+# Yes, installPkg could be tweaked ;)
+	((server)) && { logging=1; fetch=1; colour=0; }
+	((useTerminal)) && { colour=1; inCron=0; interactive=1; errToTerm=1; }
+	if ((quiet||!interactive)); then
+		msg() { :; }
+	else
+		msg() {
+			echo "$*" > /dev/tty
+		}
+	fi
+
+	if ((verbose)); then
+		verb() {
+			if [[ $2 = WARN ]]; then
+				echo "$WRN $1"
+			else echo "$*"
+			fi
+		} > /dev/tty
+	else verb() { :; }
+	fi
+
+	if ((quiet>1)); then
+		warn() { :; }
+	fi
+
+	if ((inCron|| ((!interactive||server)&&!ask) )); then
+		confirmY() { :; }
+		confirmN() { false; }
+		choose() { chooseMsg=; }
+		# server always continues with maintenance
+		continueMaintenance() { needMaint || exit 1; }
+		countdown() { :; }
+	else
+		# defaults to Y unless user inputs n/N
+		# optional params:
+		# 1) what we are confirming
+		# 2) window title (for xterm)
+		confirmY() {
+			if (($#)); then
+				echo "$PF2 $1 (Y/n)?"
+				[[ $2 ]] && setT "$2" || setT 'Proceed ?'
+			else
+				echo $PF2' About to proceed (Y/n)?'
+				setT 'Proceed ?'
+			fi
+			read -sn 1 a </dev/tty
+			[[ $a != [nN] ]]
+		} > /dev/tty
+		confirmN() {
+			if (($#)); then
+				echo "$ALT $1 (y/N)?"
+				[[ $2 ]] && setT "$2" || setT 'Cancel? Y to proceed'
+			else
+				echo $ALT' About to cancel, Y to proceed (y/N)?'
+				setT 'Cancel? Y to proceed'
+			fi
+			read -sn 1 a </dev/tty
+			[[ $a = [Yy] ]]
+		} > /dev/tty
+		# choose "prompt" mM yY nN
+		# First option is default, and returned as true
+		# - other options returned in order from 1 (ie false)
+		# Set chooseMsg for phase prefix (reset when finished)
+		# If no parameters will present Yn with [chooseMsg: ] Proceed?
+		choose() {
+			local a opt o=0
+			(($#)) && {
+				a=$1
+				shift
+			} || a='Proceed? '
+			[[ $chooseMsg ]] && chooseMsg+=": $a" || chooseMsg=$a
+			echo -n "$PF2 $chooseMsg"
+			chooseMsg=
+			(($#)) || set yY nN
+			echo -n "(${1#[a-z]} "
+			a=("${@:2}")
+			echo -n "${a[*]%[A-Z]}) "
+			read -sn 1 a </dev/tty
+			for opt
+			do
+				[[ $a = [$opt] ]] && { echo ${opt#[a-z]}; return $o; }
+				let o++
+			done
+			echo ${1#[a-z]}
+			return 0
+		} > /dev/tty
+		# interactive defaults to N if maintenance error
+		continueMaintenance() {
+			case $1 in
+			GLSA) ((doDepclean||doRevdep))
+;;			DepClean) ((doGLSA||doRevdep))
+;;			*) needMaint
+;; 		esac || exit 1
+			confirmN 'Continue with maintenance' || usrQuit 1
+		}
+	fi
+	if ((inCron)); then
+		console() { :; }
+	else
+		console() {
+			echo -n "$*" > /dev/tty
+		}
+	fi
+	if [[ $DISPLAY ]] && ((interactive)); then
+	# thanks to agaffney
+		setT() {
+			echo -en "\033]0;$*\007"
+		}
+		if ((quiet)); then
+			setTitle() {
+				echo -en "\033]0;$*\007"
+				echo "$PF2 $*"
+			}
+		else
+			setTitle() {
+				echo -en "\033]0;$*\007"
+			}
+		fi
+		# this doesn't work under KDE, TODO test under xfce
+		setTitleIcon() {
+			echo -en "\033]2;$1\007\033]1;$2\007"
+		}
+		if [[ $PROMPT_COMMAND = *\033*\007* ]]; then
+			resetT() {
+				$PROMPT_COMMAND
+			}
+		else
+			resetT() {
+				echo -en "\033]0;$LOGNAME@${HOSTNAME%%.*}:${PWD/"$HOME"/~}\007"
+			}
+		fi
+	else
+		setT() { : ; }
+		if ((quiet||!interactive)); then
+			setTitle() {
+				echo "** $*"
+			}
+		else
+			setTitle() { : ; }
+		fi
+		setTitleIcon() { : ; }
+		resetT() { :;}
+	fi
+
+	if ((logging)); then
+		log() {
+			 /usr/bin/logger -t $prog -- "$*"
+		}
+		logM() {
+			log "$*"
+			msg "$*"
+		}
+		logW() {
+			/usr/bin/logger -t $prog -- "* $*"
+			warn "$*"
+		}
+		logErr() {
+			/usr/bin/logger -t $prog -- '!! '"$*"
+			errMsg "$*"
+		}
+	else
+		log() { :; }
+		logM() {
+			msg "$*"
+		}
+		logW() {
+			warn "$*"
+		}
+		logErr() {
+			errMsg "$*"
+		}
+	fi
+
+	if ((intro&&!(server||quiet))); then
+		helpM() {
+			[[ $2 ]] && msg "$WRN $1" || msg "$TIP $1"
+		}
+		if ((verbose)); then
+			helpV() {
+				helpM "$@"
+			}
+		else helpV() { :; }
+		fi
+	else
+		helpM() { :; }
+		helpV() { :; }
+	fi
+
+	if ((server||screen||!interactive)); then
+		spin() { :; }
+		backUp() { :; }
+	else
+		sp="/-\|"
+		sc=0
+		spin() {
+			echo -n ${sp:sc++:1}
+			((sc==4)) && sc=0
+			spun=1
+		}
+		backUp() {
+			((spun)) && {
+				echo -n $BSP
+				spun=0
+			}
+		}
+	fi
+	if ((interactive)); then
+		BSP=$'\b'
+		RET=$'\r'
+		CLR=$'\033[K'
+		SAVE=$'\033[s'
+		RSTR=$'\033[u'
+		if ((quiet||(server&&!verbose))); then
+			progress() { echo -n "$RSTR${BASH_REMATCH[1]}%"; }
+		else
+			bars='####################'
+			back='--------------------'
+			progress() {
+				perc=${BASH_REMATCH[1]}
+				let next=perc/5
+				((next-curr)) && let curr=next
+				echo -n "${RSTR}[ $GR${bars::curr}$NA${back:curr} $NO] $BR$perc$NO%"
+			}
+			startDL() {
+				nextDL=${l##*/}
+				[[ $currDL = $nextDL ]] && return
+				currDL=$nextDL
+				echo "$PFX Downloading $currDL"
+				curr=0
+				echo -n "  ${SAVE}[ $NA$back $NO] $BR-%$NO"
+				dl=1
+			}
+		fi
+	else
+		# no messing about with the cursor
+		BSP=; RET=; CLR=; SAVE=; RSTR=
+		progress() { :; }
+	fi
+	# need PORTAGE_TMPDIR in filter
+	setFilters
+}
+
+resetColours() {
+	colourOpt='--color n'
+	NO=; BR=; NA=; BL=; TO=; CY=; GR=; GN=; OR=; YL=; BU=; RD=; MA=; PI=
+}
+
+setColours() {
+	((colour)) && {
+		colourOpt='--color y'
+		NO=$'\033[0m'; BR=$'\033[0;01m'; NA=$'\033[34m'; BL=$'\033[34;01m'; TO=$'\033[36m'; CY=$'\033[36;01m'; GR=$'\033[32;01m'
+		GN=$'\033[32m'; OR=$'\033[33m'; YL=$'\033[33;01m'; BU=$'\033[31m'; RD=$'\033[31;01m'; MA=$'\033[35m'; PI=$'\033[35;01m';
+	} || resetColours
+	HI=$BL
+	PFX=$GN'*'$NO
+	PF2=$GR'**'$NO
+	PF3=$OR'*'$NO
+	TIP=$HI'#'$NO
+	ALT=$HI'@'$NO
+	WRN=$RD'!'$NO
+	ERR=$BU'!!'$NO
+	progName="${GN}update$NO"
+}
+
+warn() {
+	echo "$WRN $*" >&2
+}
+
+# Check List for install type of package
+# If only one parameter, will check list
+# - second param, will also check $now array and be silent if not found
+# - if Setup, won't check list at all
+checkType() {
+local l idx= line=
+	echo "Checking $*" "$TAB$1"
+	old=
+	new=
+	pfx=
+	sfx=
+	installType=
+	bt=
+	grep -qF "$TAB$1" "$emergeFile" || return 1
+	if [[ $1 = *-[0-9]* || $1 = *-cvs[0-9]* ]]; then
+		if [[ ${list[currIndex]} = $1 ]]; then ((idx=currIndex))
+		elif [[ ! $2 && ${list[p]} = $1 ]]; then ((idx=p))
+		fi
+	else
+		if [[ ${list[currIndex]} = $1-[0-9]* || ${list[currIndex]} = $1-cvs[0-9]* ]]
+			then ((idx=currIndex))
+		elif [[ ! $2 && ( ${list[p]} = $1-[0-9]* || ${list[p]} = $1-cvs[0-9]* ) ]]; then ((idx=p))
+		fi
+	fi
+	[[ $idx ]] || if [[ $2 != Setup ]] && getPkgPos "$@"; then
+		((idx=currPos))
+	else
+		if [[ $2 ]]; then
+			((${#now[@]})) || return 1
+			for l in "${now[@]}"; do
+				if [[ $l = *"$1"* ]]; then
+					line="$l"
+					break
+				fi
+			done
+			[[ $line ]] || return 1
+			IFS=$'\t'
+			read -r bt new old <<< "$line"
+			unset IFS
+			bt=${bt//[ fFS]}
+			[[ $bt && $new ]] || {
+				errMsg "Unable to find $1 in list"
+				abort "$line"
+			}
+			[[ $bt = UD ]] && {
+				if [[ $2 != Warn ]] && inList "$1" "${nd[@]}" && ! isTarget "$1"
+				then logW "$2: Not downgrading $new"
+					return 1
+				fi
+				bt=D
+			}
+		else
+			warn "Unable to resolve $1"
+			return 1
+		fi
+	fi
+	[[ $idx ]] && {
+		bt=${buildType[idx]}
+		bt=${bt//[ fFS]}
+		old=${oldVer[idx]}
+		new=${list[idx]}
+		((currIndex=idx))
+	}
+	case $bt in
+		D ) installType='Downgrading'; pfx=$BU;;
+		U ) installType='Upgrading'; pfx=$GN;;
+		R ) installType='Rebuilding'; pfx=$MA;;
+		N ) installType='Installing'; pfx=$TO;;
+		* ) abortMsg="Unknown install type for $1: $bt
+($idx) $line"; abort;;
+	esac
+	splitNew
+	category=${packageName%/*}
+	package=${packageName#*/}
+	case bt in
+	[UD] ) [[ $old ]] && sfx=" from $old to $new" || sfx=" to $new"
+		typeTxt="$pfx$installType $package$NO$sfx"
+;;	R) typeTxt="$pfx$installType $1$NO"
+;;	*) typeTxt="$pfx$installType $packageName$NO"
+;; esac
+	return 0
+}
+
+splitNew() {
+	if [[ $new = *-cvs[0-9]* ]]; then
+		packageName=${new%-cvs*}
+		new="cvs${new#*-cvs}"
+	elif [[ $new = *-[0-9]* ]]; then
+		packageName=${new%%-[0-9]*} # strip from first -N
+		new=${new#$packageName-}
+	else abortMsg="From: $old to: $new"
+		abort
+	fi
+}
+
+getType() {
+local line out l
+	if [[ $1 = *-[0-9]* || $1 = *-cvs[0-9]* ]]; then line=$(sed -e "\:$1:"'!d' -e '/\[blocks/d' "$emergeFile")
+	else line=$(sed -e "\:$1-"'\(cvs[0-9]\)\?[0-9]:!d' -e '/\[blocks/d' "$emergeFile")
+	fi
+	out=${line%%$'\t'*} # f1
+	out=${out//[] fFS[]}
+	case $out in
+		UD ) instType='D'; pfx=$BU;;
+		U ) instType='U'; pfx=$GN;;
+		R ) instType='R'; pfx=$MA;;
+		N ) instType='I'; pfx=$TO;;
+		* ) abort "Unknown install type: $out
+$line";;
+	esac
+}
+
+# Decide whether we need to bail out because of a gcc upgrade
+# GCC x.y.z, when x or y changes -- this may not be needed anymore
+# Packages that need to be emerged first, before ABI updates etc (if in list)
+checkToolchain() {
+# Trying to codify when changes in toolchain require system update; opinions vary.
+# <loki_val> With linux-headers you re-emerge glibc. Not strictly needed always, but a nice precaution.
+# <masterdriverz> glibc is backwards compatible, so should normally not require recompile
+# <antarus> binutils changes shouldn't matter in most cases
+	local i OPS text ohNoes
+	toolchainBuild=()
+	toolchainBT=()
+	for i in "${toolchain[@]}"
+	do
+		now=()
+		getPkgPos "$i" || continue
+		bt="${buildType[currPos]}"
+		old="${oldVer[currPos]}"
+		new="${list[currPos]}"
+		splitNew
+		ohNoes=0
+		if [[ $bt = D && $force != 1 ]]; then
+			logW "Toolchain: Attempt to downgrade $i"
+			msg "This is not allowed by this script, so $i will not be emerged"
+			((tot==1)) && abort 'Nothing to install'
+			ohNoes=1
+		elif [[ $bt = [UD] ]]; then
+			case $bt in
+			D) installType='downgrading'
+				text=downgrade
+				errMsg "You are force downgrading $i 
+	Please make sure you know what you are doing."
+;;			U) [[ $i = sys-apps/portage ]] || {
+				msg "${BU}Toolchain:$NO $GN$i$NO is being upgraded"
+				installType='upgrading'
+				text=upgrade
+			}
+;;			esac
+			case $i in
+			sys-devel/gcc )
+				if [[ ${old:0:1} != ${new:0:1} || ${old:2:1} != ${new:2:1} ]]
+				then
+					msg "GCC going from version $old to $new
+This will necessitate a system recompile and will not be done by this script.
+Please see: $updateSysURL"
+					final "GCC $text from $old to $new - will require system recompile"
+					ohNoes=1
+				else
+					msg "	This is a minor $text ($old to $new)
+which will be carried out now in order to ensure optimal future compilation"
+				fi
+;;			sys-kernel/linux-headers )
+				# check new is not later than running kernel
+				IFS='.-'
+				uv=($(uname -r))
+				nv=($new)
+				unset IFS
+				# might as well do sanity check ;P
+				[[ ${uv[0]} = ${nv[0]} && ${uv[1]} = ${nv[1]} ]] || abort \
+					"$i ${nv[*]} is a different series than running kernel ${uv[*]}"
+				if ((${nv[2]} > ${uv[2]})); then
+					nv="${nv[*]::3}"; nv=${nv// /.}
+					uv="${uv[*]::3}"; uv=${uv// /.}
+					warn "$i ($nv) is newer than running kernel ($uv)"
+					msg " - so it will not be installed; upgrade your kernel first"
+					((tot==1)) && die 'Nothing to install' 0
+					getPkgPos 'sys-libs/glibc' && {
+						((tot==2)) && die 'Nothing to install' 0
+						skipCompile "sys-libs/glibc-$ver"
+					}
+					final "$i ($nv) is newer than running kernel ($uv)"
+					ohNoes=1
+				else
+					msg '	This requires a rebuild of glibc afterwards which will be done by this script.'
+				fi
+;;			esac
+		fi
+		if ((ohNoes)); then
+			skipCompile "$i-$new"
+			unset toolchain[j]
+		else
+			toolchainBT+=("$bt")
+			toolchainBuild+=("$i-$new")
+		fi
+	done
+	checkWarn Pretend
+}
+
+doToolchain() {
+	local i j=0
+	for i in "${toolchainBuild[@]}"
+	do
+		getPkgNameVer "$i"
+		bt=${toolchainBT[$j]}
+		case $bt in
+			U ) installType='upgrading'
+;;			D ) warn "${MA}Toolchain$NO: ${RD}force-downgrade$NO of $pN"
+				countdown
+				installType='downgrading'
+;;			R ) installType='rebuilding'
+;;			N ) installType='installing'
+;;			* ) abortMsg="Unknown Install Type '$bt'"; abort
+;;			esac
+		# Install
+		log "Toolchain: $installType $i"
+		[[ $bt = D ]] || {
+			console "$PF2 ${MA}Toolchain$NO: $installType $GN$pN$NO$EOL"
+		}
+		if [[ $i = sys-kernel/linux-headers-* && $bt = U ]]; then
+			setTitle "Toolchain: $i before glibc"
+			bailMsg="$i has been emerged; it is important that you emerge glibc ASAP."
+			handleInstall "=$i" Toolchain || abort "Emerge of $i failed."
+			unset bailMsg
+			setTitle 'Toolchain: sys-libs/glibc after linux-headers'
+			abortMsg="$ERR $i has been emerged; it is important that you ${GN}emerge glibc$NO ${RD}ASAP$NO."
+			handleInstall 'sys-libs/glibc' Toolchain || abort "Emerge of sys-libs/glibc failed."
+			abortMsg=
+		else
+			setTitle "Toolchain: $installType $i"
+			handleInstall "=$i" Toolchain || abort "Emerge of $i failed."
+		fi
+		# Post-install
+		case $i in
+			sys-apps/portage-* ) :
+;;			sys-devel/gcc-* )
+				msg "$PFX Sourcing $BR/etc/profile$NO"
+				OPS="$PS1"
+				source /etc/profile
+				PS1="$OPS"
+;;			sys-kernel/linux-headers-* ) :
+;;			* ) abort "Unknown toolchain app $i"
+;;		esac
+		let j++
+	done
+	if ((n)); then
+		msg 'Toolchain apps emerged: '$n
+		getList
+		((tot||tot-${#blocked[@]})) || {
+			if ((tot)); then msg $WRN' All other packages are blocked.'
+			else msg $PF2' All packages compiled successfully.'
+			fi
+			finish
+		}
+		let tot+=n
+	fi
+	return 0
+}
+
+stripVer() {
+	local i
+	stripped=()
+	for i; do
+	case "$i" in
+	*-[0-9]*) stripped+=("${i%%-[0-9]*}");;
+	*-cvs[0-9]*) stripped+=("${i%%-cvs[0-9]*}");;
+	:*) stripped+=("${i%%:*}");;
+	*) stripped+=("$i");;
+	esac
+	done
+}
+
+_buildPkgList() {
+	(($#)) || return
+	local i j l slot n slotS
+	for i; do
+		[[ $i = *:* ]] && {
+			[[ $i != */* || $i = 'list('* ]] && abort TRACE "Illegal slot search $BU$i$NO"
+			slotS=${i##*:}
+			i=${i%:*}
+		} || slotS=
+		case "$i" in
+			'list('*/*')') i=${i%\)}; l=(/var/db/pkg/*${i#list\(}*);;
+			'list('*')') i=${i%\)}; l=(/var/db/pkg/*/*${i#list\(}*);;
+			*/*) l=(/var/db/pkg/*$i-cvs[0-9]* /var/db/pkg/*$i-[0-9]*);;
+			*) l=(/var/db/pkg/*/$i-cvs[0-9]* /var/db/pkg/*/$i-[0-9]*);;
+		esac
+		n=${#l[@]}
+		if ((n==1)); then
+			read slot < "$l/SLOT"
+			j="${l#/*/*/*/}"
+			getPkgNameVer "$j"
+			[[ $slotS ]] && {
+				[[ $slot = $slotS ]] || continue
+				pName+=:$slot
+			} || {
+				if isMultiSlot; then
+					((m)) || { console "${MA}Multi-slot$NO (1 installed): "; m=1; }
+					console "${pName}"
+					n=$(portageq best_visible / "$pName") || continue
+					#console " $n"
+					slotS=$(getSlot "$(findEbuild "$n")") || abort "Unable to find $n"
+					# console " $slotS$EOL"
+					[[ $slot = $slotS ]] || pName+=":$slot"
+				elif [[ $? = 2 ]]; then
+					continue
+				fi
+			}
+			res+=("$pName")
+			f=1
+		elif ((n)); then
+			[[ $i = 'list('* ]] && {
+				stripVer "${l[@]#/*/*/*/}"
+				"$FUNCNAME" "${stripped[@]}"
+				continue
+			}
+			for j in "${l[@]}"; do
+				read slot < "$j/SLOT"
+				[[ $slotS ]] && { [[ $slot = $slotS ]] || continue; }
+				j="${j#/*/*/*/}"
+				stripVer "$j"
+				res+=("$stripped:$slot")
+				f=1
+				[[ $slotS ]] && break
+			done
+		fi
+	done
+	((m)) && console "$EOL"
+}
+
+buildPkgList() {
+	local f=0 s=0 res m=0 stage
+	shopt -q nullglob && s=1 || shopt -s nullglob
+	#set -x
+	case "$1" in After\ *|Before\ *)
+		stage=$GN$1$NO
+		shift
+;; esac
+	_buildPkgList "$@"
+	((f)) || { console "$PFX Nothing installed $*
+"; return; }
+	echo "${res[*]}"
+	console "$PFX $stage ${HI}emerge$NO ${res[*]}
+"
+	((s)) || shopt -u nullglob
+}
+
+# getSlot /path/to/foo.ebuild
+getSlot() {
+	ed -s "$1" <<< $'H\n/^SLOT="/s///\ns/"//p\nq' 2> /dev/null || return 1
+}
+
+# getPkgNameVer first
+isMultiSlot() {
+	local d f pd s fnd
+#	set -x
+	for d in $PORTDIR_OVERLAY "$PORTDIR"; do
+		pd="$d/$pCat/$pN"
+		[[ -d $pd ]] || continue
+		for f in "$pd/"*.ebuild; do
+			s=$(getSlot "$f") || return 1
+			if [[ $fnd ]]; then
+				[[ $fnd = $s ]] || return 0
+			else fnd=$s
+			fi
+		done
+	done
+#	set +x; exit
+	[[ $fnd ]] && return 1
+	errMsg "$pName no longer in tree/overlays"
+	return 2
+}
+
+warnABI() {
+	((warned)) || {
+		errMsg 'You have ABI warning packages'
+		helpV 'installing could mean a large revdep and possible breakages'
+		helpM $progName' will give you the option to mask or skip WARN packages, or apply a fix if available'
+		warned=1
+	}
+	[[ $2 ]] && echo -n $TIP || echo -n $WRN
+	echo " $packageName-$new is in ABI WARN list ($1)"
+}
+
+# checkWarn [Pretend]
+warnBuild=0
+checkWarn() {
+	local i j v m=0 $WARN_FORMAT d pkgs pos edCmd c
+	[[ $1 ]] || {
+		rm "$taskList" "$preRevdep" 2>/dev/null
+		((warnBuild)) && helpM 'Emerges will only happen if the package is already installed' warn
+	}
+	warned=0
+	for ((j=0;j<${#WARN[@]};j++)); do
+		i="${WARN[j]}"
+#		echo "Checking $i : ${WARN_FULL[j]}"
+		getPkgPos "$i" Warn || continue
+		((pos=currPos))
+		checkType "$i" Warn || abort
+		[[ $installType = Rebuilding ]] && continue
+		if isTarget "$i"; then
+			[[ $1 ]] && warn "Installing ${i%.} normally"
+			continue
+		fi
+		if [[ $i = ${WARN_FULL[j]} ]]; then
+			i=${i%.}
+			[[ $1 ]] && { warnABI "$i"; continue; }
+			confirmY 'Do you want to temporarily mask $i, and resolve again; or N to continue skipping '$packageName && {
+				logW "Masking $i -- ABI breakage"
+				tempMask "=$i*"
+				m=1
+				continue
+			}
+		else
+			# we have a fix (or at least more info)
+			IFS=$'\t'
+			read $WARN_FORMAT <<< "${WARN_FULL[j]}"
+			for v in $WARN_FORMAT
+			do [[ ${!v} = "''" ]] && declare $v=
+#				echo "$v	: ${!v}"
+			done
+#			exit
+			unset IFS
+			i=${i%.}
+			abortMsg="WARN Format Error for $i$EOL${WARN_FULL[j]}$EOL"
+			[[ $from ]] || abort "No info as to which existing version this applies to"
+			verMatch "$old" "$from" || {
+				msg "$packageName-$old does not match from ($from) - you might wish to edit $warnFile."
+				continue
+			}
+			[[ $libs ]] || {
+				[[ $buildAfter ]] && abort "Incorrect format (set buildPost not buildAfter if no libs)"
+				[[ $buildBefore || $buildPost ]] || abort "Nothing to build"
+				[[ $buildBefore ]] && abort "buildBefore is unimplemented for noLibs (do you have a real use?)"
+			}
+			abortMsg=
+			if [[ $1 ]]; then
+				[[ $libs ]] && warnABI "$i" info
+				[[ $message ]] && {
+					[[ $libs ]] && msg "$PFX $message -- revdep on $BU$libs$NO" || echo "$PFX $message"
+				}
+				[[ $buildBefore || $buildAfter || $buildPost ]] && warnBuild=1
+				continue
+			fi
+			((colour)) && package=$GN$package$NO
+			chooseMsg="Do you want to run the fix for $package?"
+			[[ $buildBefore || $buildAfter || $buildPost ]] && {
+				if ((interactive)); then
+					[[ $buildBefore ]] && msg "$TIP First emerge: $buildBefore"
+					[[ $buildAfter ]] && msg "$TIP $package: $buildAfter directly after $package"
+					[[ $buildPost ]] && {
+						message="$package: $buildPost"
+						[[ $libs ]] && message+=' before revdep' || message+=' after main emerge'
+						msg "$TIP $message"
+					}
+				fi
+			} || chooseMsg+=' This is a simple revdep.'
+			# script mode will automatically mask
+			choose "$EOL - M to mask =$i* or N to continue skipping $i" mM yY nN && {
+				tempMask "=$i*"
+				m=1
+				continue
+			}
+			if [[ $? = 1 ]]; then
+				if [[ $libs ]]; then
+					warned=1
+					revdepParam+=" $libs"
+					{
+					[[ $buildBefore ]] && buildPkgList "Before $package" $buildBefore
+					echo $packageName-$new
+					[[ $buildAfter ]] && buildPkgList "After $package" $buildAfter
+					}  >> "$taskList"
+					[[ $buildPost ]] && buildPkgList 'Before revdep' $buildPost  >> "$preRevdep"
+				else
+					pkgs=($(buildPkgList $buildPost))
+					[[ ${pkgs[*]} ]] || { continue; }
+					for d in "${pkgs[@]}"
+					do
+						getPkgNameVer "$d"
+						if getPkgPos "$d"; then # check where it is in list
+							((incoming=currPos))
+							if ((incoming<pos)); then
+								a="${pName/\//\\/}"
+								b="${packageName/\//\\/}"
+								msg "$PF Moving $pName to after $package"
+								edCmd="/$a/m/$b/"$'\nw\nq'
+								ed -s "$emergeFile"<<< "$edCmd" || abort
+								ed -s "$usrFile" <<< "$edCmd" || abort
+							else msg "$PF $pName is already in list after $package"
+							fi
+						else
+							msg "$PF2 Appending $pName to list"
+							grep -Eq "^$pName(:?|$)" "$worldFile" && c=$GR || c=$GN
+							d=$(portageq best_visible / "$pName")
+							echo "[   R    ]	$d		USE=\"Automated build for $package\"" >> "$emergeFile"
+							echo "[${MA}ebuild   ${YL}R$NO   ] $c$d$NO  "'USE="Automated build for '"$MA$i$NO"'"' >> "$usrFile"
+						fi
+					done
+				fi
+				continue
+			fi
+		fi
+		skipCompile "$i"
+		helpM "You can upgrade later with $GR$prog $packageName$NO or by editing $warnFile and trying again."
+		[[ $url ]] && msg "See $url for more information about this issue."
+	done
+	[[ $1 ]] && return
+	((m)) && return $m
+	if [[ $revdepParam ]]; then
+		((quiet)) || {
+			echo "$PF2 $progName ${MA}ABI Upgrade$NO -- Packages:"
+			cat "$taskList"
+			[[ -f "$preRevdep" ]] && {
+				echo "$PFX Before Revdep:"
+				cat "$preRevdep"
+			}
+			echo "$PF2 Revdep Libraries:"
+			echo "$revdepParam"
+		}
+		((interactive)) && { confirmY 'Proceed with ABI Upgrades (after toolchain)' || usrQuit; }
+		addRevLib $revdepParam
+	fi
+	return 0
+}
+
+continueABI() {
+	confirmY 'Continue with ABI maintenance' || usrQuit 5
+	ret=1
+}
+
+doWarn() {
+	[[ $1 ]] || ((warned)) || return 0
+	local emergeFile usrFile list target tot param install=0 s ret=0 normal=1 pA=0 nA=0 pOrig=$p nOrig=$n
+	usrFile="$warnColour"
+	emergeFile="$warnList"
+	[[ $1 = resume ]] && {
+		normal=0
+		case "$status" in
+		*': Completed')
+			case "$currentStage" in
+			'ABI Stage1') s='ABI Stage2';;
+			'ABI Stage2') s='ABI Revdep';;
+			'ABI Revdep') s='ABI RevdepFinal';;
+			'ABI RevdepFinal') return 0;;
+			*) abort "Unknown stage in doWarn resume: '$status'";;
+			esac
+			setStatus "$s"
+;;		'ABI Revdep'*': '*)
+			if getList ABI; then
+				installList "$currentStage" || {
+					[[ $currentStage = 'ABI RevdepFinal' ]] && {
+						confirmN 'Continue with update' && return 1
+						exit 5
+					}
+					continueABI
+				}
+				[[ $currentStage = 'ABI RevdepFinal' ]] && return 0
+				setStatus 'ABI RevdepFinal' loud
+			else abort TRACE 'Unable to get list'
+			fi
+;;		'ABI '*': Resolved'|'ABI '*': Installing') setStatus "$currentStage"
+;;		'ABI '*) :
+;;		*) abort "Unknown stage in doWarn resume: '$status'";;
+		esac
+	}
+	if ((normal)) || [[ $status = 'ABI Stage1' ]]; then
+		buildSet "$taskList" 'ABI Stage1'
+		normal=1
+	fi
+	if ((normal)) || [[ $status = 'ABI Stage2' ]]; then
+		buildSet "$preRevdep" 'ABI Stage2'
+		normal=1
+	fi
+	if ((normal)) || [[ $status = 'ABI Revdep' ]]; then
+		[[ $status = 'ABI Revdep' ]] || setStatus 'ABI Revdep' loud
+		revdep UPDATE-LIBS || continueABI
+		normal=1
+	fi
+	if ((normal)) || [[ $status = 'ABI RevdepFinal' ]]; then
+		[[ $status = 'ABI RevdepFinal' ]] || setStatus 'ABI RevdepFinal' loud
+		revdep || ret=1
+	fi
+	((ret)) && { confirmY 'Continue with update' || usrQuit 5; }
+	let p=pOrig+pA
+	let n=nOrig+nA
+	return $ret
+}
+
+# buildSet file stage
+# file is list of targets, one set per line
+buildSet() {
+	local job=() prefix ret=0 jobNum=1 pk line toDo origList
+	[[ -f $1 ]] || return 0
+	[[ $(<"$1") ]] || { rm "$1"; return 0; }
+	[[ $status = $2 ]] || setStatus "$2" loud
+	[[ $2 = ABI* ]] && prefix="$ALT $2" || prefix=$PF2
+ IFS="$EOL"
+	job=($(<"$1"))
+	unset IFS
+#	while read -r line
+#	do job+=("$line")
+#	done < "$1"
+#	printArr "${job[@]}"; exit
+	for line in "${job[@]}"
+	do
+		target=
+		# ugh this is horrible! Still, unlikely to get spaces in pkgNames
+		for pk in $line; do
+			getPkgNameVer "$pk" && target+="=$pk " || target+="$pk "
+		done
+		# echo "emerge $target"; continue
+		msg "$prefix: Resolving $line"
+		if resolve "$2"; then
+			if getList "$2"; then
+				m="$PFX $tot Package"
+				((tot>1)) && {
+					m+=s
+					origList=("${list[@]}")
+				}
+				toDo=tot
+				msg "$m"
+				if installList "$2"; then
+					m="H
+/${line//\//\/}/d
+w
+q"
+				ed -s "$1" <<< "$m" || abort TRACE "Unable to run ed: $m
+"
+				else
+					warn "$2 Unable to emerge: $target"
+					((toDo>1)) && if getList "$2"; then
+						((toDo==tot)) || {
+							for pk in $line; do
+								inList "$pk" "${list[@]}" || continue
+								getPkgNameVer "$pk" && target+=" =$pk" || target+=" $pk"
+							done
+							$'H\n'"?$line?s@$line@$n@"$'\n,p'
+m="H
+s/${line//\//\/}/d
+w
+q"
+						}
+					else errMsg 'No packages in list'
+					fi
+					ret=1
+				fi
+			else
+				abort "$2 Unable to get list: $target"
+			fi
+		else abort "$2 Unable to resolve: $target"
+			ret=1
+		fi
+		let jobNum++
+	done
+	((ret)) || rm "$1"
+	return $ret
+}
+
+tmpMounted=0
+# thanks to uberpinguin for original tmpfs fns (from enlightenment ebuild)
+mount_tmpfs(){
+	echo "$PF2 Mounting ramdisk of size ${size}MB on $PORTAGE_TMPDIR/portage"
+	mount -t tmpfs tmpfs "$PORTAGE_TMPDIR"/portage -o "size=${size}M" && tmpMounted=1 \
+		|| echo $ERR' Mounting of tmpfs failed...
+	continuing with ordinary emerge.'
+}
+
+umount_tmpfs(){
+	if ((tmpMounted)); then
+		umount "$PORTAGE_TMPDIR"/portage && echo $PF2' Unmounted ramdisk' || echo $ERR' Error unmounting tmpfs: umount '"$PORTAGE_TMPDIR"/portage
+	fi
+}
+
+# helper functions for before macro
+confirmYes() {
+	((server)) && return 0
+	if (($#)); then
+		echo "$PF2 $1 (Y/n)?"
+	else
+		echo $PF2' About to proceed (Y/n)?'
+	fi
+	read -sn 1 a </dev/tty
+	[[ $a = [nN] ]] && return 1 || return 0
+} > /dev/tty
+confirmNo() {
+	((server)) && return 1
+	if (($#)); then
+		echo "$ALT $1 (y/N)?"
+	else
+		echo $ALT'About to cancel (y/N)?'
+	fi
+	read -sn 1 a </dev/tty
+	[[ $a = [Yy] ]] && return 0 || return 1
+} > /dev/tty
+
+[[ -t 0 ]] && inCron=0 || inCron=1
+[[ -t 1 ]] && interactive=1 || interactive=0
+
+# delete pkg from list - eg zap x11-libs/gtk+
+# optional type specifier eg R or D
+zap() {
+	local search
+	[[ $2 ]] && search='^\[[^]\/]*'"$2"'[^]\/]*\].'${1/\//\\/} || search=${1/\//\\/}
+	case search in *-[0-9]*|*-cvs[0-9]*) : ;;
+	*) search+='-\(cvs\.\)\?[0-9]';;
+	esac
+	search="H
+/$search/d'"$'\nw\nq'
+	echo ed -s "$usrFile" '<<<' "$search"
+	exit
+	ed -s "$emergeFile" <<< "$search"
+}
+
+# emerge $param $target -- or UPDATE_FILE
+# optional param means skip checks if not retry (WARN/ Setup only atm)
+# NB if unable to resolve, will abort script
+MASKED='\(dependency required by "([^"]*)" *\[([^]]*)\]\)'
+resolve() {
+local par l errorCheck pk pt mp=()
+	if [[ -z $1 || $1 = retry ]]; then
+		# don't want to repeat warnings; ?!revLibs no longer valid if normal resolve
+		finalMsg=
+		#[[ -f "$revLibs" ]] && rm "$revLibs"
+	fi
+	[[ $UPDATE_FILE && -z $1 ]] && stripList "$UPDATE_FILE" > "$emergeFile" || {
+		> "$errFile"
+		setTitle "Resolving emerge $param $target"
+		msg "$PF2 Resolving.."
+		par=${param:--}pv
+		#((quiet)) || [[ $1 ]] && par+=q || par+=v # need v for pkg sizes
+		startPhase "Resolve: emerge $target "$param
+		emerge $colourOpt $par $target 2> /dev/tty |tee "$usrFile" >(stripList > "$emergeFile")
+		r=$PIPESTATUS
+		((r)) && {
+			[[ $r = 141 ]] && usrQuit
+			if ((interactive&&hasAU)) && grep -q 'One of the following masked packages is required' "$usrFile"; then
+				while read -r l
+				do [[ $l =~ $MASKED ]] && {
+					pk=${BASH_REMATCH[1]}
+					pt=${BASH_REMATCH[2]}
+					case "$pt" in
+						ebuild|binary) :;;
+						*) abort "$FUNCNAME Unkown build type [$pt]";;
+					esac
+					mp+=("$pk")
+				}
+				done < <(mono "$usrFile")
+				((${#mp[@]})) || abort 'Unable to determine unmasking required'
+				((server)) || {
+					echo $PF2' Do you want to unmask the following packages?'
+					printArr "${mp[@]}"
+					confirmY 'Autounmask' || abort "Unable to resolve emerge $target [$param] due to masked packages"
+				}
+				autounmask -n "${mp[@]}"
+				quitPhase
+			else
+#				msg "Exit code $r"
+#				cat "$errFile"
+#				mv "$errFile" "$dir"
+				errMsg="Please review the errors : try emerge ${param:--}pv $target for more info
+		or search site:forums.gentoo.org"
+#				rm -f "$usrFile"
+				abort "$errMsg"
+			fi
+		}
+		#rm -f "$errFile"
+	}
+	[[ $1 ]] && setStatus "$1: Resolved" || setStatus Resolved
+	endPhase
+	return 0
+}
+
+resolveUnmask() {
+	resolve || {
+		while ! resolve retry; do :; done
+	}
+}
+
+finalMsg=
+final() {
+	finalMsg+="$*
+"
+}
+
+phase=()
+phaseErr=()
+declare -i numPhases=0
+startPhase() {
+	phase[numPhases]=$1
+	phaseErr[numPhases++]=$2
+}
+
+endPhase() {
+	((numPhases)) || abort TRACE 'Mismatched Phase'
+	unset phase[--numPhases]
+	unset phaseErr[numPhases]
+}
+
+ctrlC() {
+	local m="$progName: user cancelled"
+	((numPhases)) && {
+		m+=": $phase"
+		((numPhases>1)) && {
+			if ((verbose>1)); then
+				for ((i=1;i<numPhases;i++)); do
+					m+=" @ ${phase[i]}"
+				done
+			else m+=" @ ${phase[--numPhases]}"
+			fi
+		}
+	}
+	((spun)) && echo "$BSP "
+	echo "$m"
+	trap INT
+	kill -INT $$
+}
+
+bail() {
+	echo -n "$progName: "
+	[[ $bailMsg ]] && echo "$bailMsg" || echo 'Exiting on signal'
+	trap USR1
+	kill -USR1 $$
+} > /dev/tty
+
+usrQuit() {
+	finalMsg=
+	[[ $1 ]] && exit $1
+	exit 2
+}
+
+# make an array into an awk regex we can match against
+arrAwkRE() {
+	AWK_RE=
+	for i
+	do AWK_RE+="${i//\//\\\/}|"
+	done
+	AWK_RE=${AWK_RE%|}
+}
+
+# tie it down to package (assume no versions)
+pkgAwkRE() {
+	AWK_RE=
+	for i
+	do AWK_RE+="${i//\//\\\/}-(cvs)?[0-9]+|"
+	done
+	AWK_RE=${AWK_RE%|}
+}
+
+arrRE() {
+	BASH_RE=("${@/%/|}")
+	IFS=''
+	BASH_RE="${BASH_RE[*]/#/^}"
+	unset IFS
+	BASH_RE="${BASH_RE%|}"
+}
+
+pkgRE() {
+	BASH_RE=("${@/%/-(cvs)?[0-9]+|}")
+	IFS=''
+	BASH_RE="${BASH_RE[*]/#/^}"
+	unset IFS
+	BASH_RE="${BASH_RE%|}"
+}
+
+# find param somewhere on line
+edRE() {
+	ED_RE=("${@//\//\\/}")
+	ED_RE=("${ED_RE[@]/%//}")
+	ED_RE=("${ED_RE[@]/#//}")
+}
+
+# find any of param somewhere on line (GNU only)
+edArrRE() {
+	ED_RE=("${@//\//\\/}")
+	ED_RE=("${ED_RE[@]/%/\|}")
+	IFS=''
+	ED_RE="${ED_RE[*]/#//}"
+	unset IFS
+	ED_RE=("${ED_RE[@]/#//}")
+}
+
+edPkgRE() {
+	ED_RE=("${@//\//\\/}")
+	ED_RE=("${ED_RE[@]/%/-(cvs)?[0-9]+/}")
+	ED_RE=("${ED_RE[@]/#//}")
+}
+
+printPkgs() {
+	local n
+	for ((n=0;n<tot;n++))
+	do echo -n "${buildType[n]}" "${list[n]}" "${oldVer[n]}" "${sizes[n]}"
+		((verbose>1)) && echo "${flags[n]}" || echo
+	done
+}
+
+# getList [retry|stage]
+# if stage set, will not run checks
+getList() {
+	local bt new old sz n doChecks=1
+	tot=0
+	# gent2
+	((useTerminal)) && sleep 1 || sync
+	[[ -s "$emergeFile" ]] || { rm "$usrFile" "$emergeFile" 2>/dev/null; return 1; }
+	[[ $1 && $1 != retry ]] || [[ $UPDATE_FILE && ((skipChecks)) ]] && doChecks=0
+	#list=($(awk -F'\t' '$1 !~ /blocks/ {print $2}' "$data"))
+	list=()
+	fetchRestricted=()
+:<<'EOF'
+	msg "$PF2 List"
+	awk -F '\t' '$1 !~ /^\[blocks/ {
+		gsub(/[][]/,"")
+		gsub(/[ fS]/,"",$1)
+		sub("UD","D",$1)
+		sub(/USE=\"/,"",$4)
+		sub(/[\"]/,"",$4)
+		sub(" [kK]B","",$5)
+		print $1"\t"$2"\t"$3"\t"$5"\t"$4
+}' "$emergeFile" || abort $?
+EOF
+	while IFS=$'\t' read bt new old sz use #overlay
+	do
+		[[ $bt = *F* ]] && {
+			fetchRestricted+=("$new")
+			bt=${bt/F}
+		}
+#		set -x
+		buildType[n]="$bt"
+		list[n]="$new"
+		oldVer[n]="$old"
+		sizes[n]="$sz"
+		flags[n]="$use"
+		if ((doChecks)) && ! isTarget "$new"; then
+			if inList "$new" "${nc[@]}"; then
+				skippedPkgs+=("$new")
+				msg "Not compiling $new"
+				skip+=("$new")
+			elif [[ $bt = D ]]; then
+				downgrades+=("$new")
+				if inList "$new" "${nd[@]}"; then
+					skippedPkgs+=("$new")
+					msg "Not downgrading $new"
+					skip+=("[D] $new")
+				fi
+			elif [[ $bt = R ]] && inList "$new" "${nr[@]}"; then
+				skippedPkgs+=("$new")
+				msg "Not rebuilding ($num) $i"
+				skip+=("[R] $i")
+			elif [[ $SKIP ]] && inList "$new" $SKIP; then
+				skippedPkgs+=("$new")
+				msg "Skipping $i"
+				skip+=("[$i]")
+			fi
+		elif [[ $bt = D ]]; then
+			downgrades+=("$new")
+		fi
+#	set +x; read -s -p 'Any key to continue' -n 1 < /dev/tty
+	let n++
+	done < <(awk -F '\t' '$1 !~ /^\[blocks/ {
+		gsub(/[][]/,"")
+		gsub(/[ fS]/,"",$1)
+		sub("UD","D",$1)
+		sub(/USE=\"/,"",$4)
+		sub(/[\"]/,"",$4)
+		sub(" [kK]B","",$5)
+		print $1"\t"$2"\t"$3"\t"$5"\t"$4
+}' "$emergeFile")
+	unset IFS
+	((${#skip[@]})) && final "$TIP Skipped: ${skip[@]}"
+	tot=${#list[@]}
+	((tot!=n)) && abort TRACE "$tot != $n"
+	((tot)) || return 1
+	((tot-${#skipped[@]})) || {
+		msg $ALT' All packages are excluded by configuration'
+		return 1
+	}
+	return 0
+}
+
+# findEbuild cat/pkg-ver [quiet]
+findEbuild() {
+	local d f first newest="$tmpFile"
+	pDir=
+	cLog=
+	getPkgNameVer "$1" || { msg "$ERR $FUNCNAME called with $1 (no version) by ${FUNCNAME[1]}(${BASH_LINENO[0]})"; return 1; }
+	touch -t 197112310030 "$newest"
+	for d in $PORTDIR_OVERLAY "$PORTDIR"; do
+		pDir="$d/$pCat/$pN"
+		[[ -d $pDir ]] || continue
+		cLog="$pDir/ChangeLog"
+		f="$pDir/$pN-$pVer.ebuild"
+		#echo "$pDir $cLog $f"
+		if [[ -f $f ]]; then
+			if [[ -f $cLog ]]; then
+				[[ $2 ]] || echo "$f"
+				return 0
+			fi
+			[[ $first ]] || first=$pDir
+		else [[ -f $cLog && $cLog -nt $newest ]] && newest=$cLog
+		fi
+	done
+	[[ $newest = $tmpFile ]] && cLog= || cLog=$newest
+	[[ $first ]] && {
+		pDir=$first
+		verb "Found $pDir for $1 cLog=$cLog"
+		return 0
+	}
+	msg "$WRN $catName/$pName seems to have gone from tree, no changelog in overlays or portage"
+	return 1
+}
+
+displayList() {
+	if ((quiet&&tot<20)); then echo "List: ${list[*]}"
+	elif ((interactive&&(verbose||tot<10))); then sed '/\[[^]]*\(ebuild\|binary\)/!d' "$usrFile"
+	else
+		local tc wrl wrn cols
+		pkgAwkRE "${toolchain[@]}"; tc=$AWK_RE
+		pkgAwkRE "${wl[@]}"; wrl=$AWK_RE
+		arrAwkRE "${WARN[@]}"; wrn=$AWK_RE
+		if ((server||quiet||!interactive)); then cols=0
+		else cols=$(tput cols) || cols=0
+		fi
+		gawk -F '\t' -v "show=$showVer" -v "toolchain=$tc"  -v "warn=$wrn" -v "cols=$cols" -v "list=$wrl"	'
+BEGIN { multi=(cols>64) }
+$1 !~ /blocks/ {
+	s=index($2,"/")
+	c=substr($2,1,s-1)
+	len=currLen[c]
+	p=substr($2,s+1)
+	pf=""
+	if (at=match(p,/-cvs[0-9]/)) {
+		pName=substr(p,1,at-1)
+		pVer=substr(p,at+4)
+	} else if (at=match(p,/-[0-9].*/)) {
+		pName=substr(p,1,at-1)
+		pVer=substr(p,at)
+	} else {
+		pName=p
+		pVer=""
+	}
+	if (!res[c]) idx[i++]=c
+	t=gensub("[] fFS[]","","g",$1)
+	w=($2 ~ warn)
+	if (!w && !show) p=pName
+	if (w || $2 ~ toolchain) t="W"
+	if ('$colour') {
+		flag=gensub(/-([^ ]*)%/,"-'$OR'\\1'$NO'%","g",$4)
+		flag=gensub(/-([^ ]*)\*/,"-'$GN'\\1'$NO'*","g",flag)
+		sub(/^USE/,"'$GN'USE'$NO'",flag)
+		sub(/USERLAND=/,"'$MA'USERLAND'$NO'=",flag)
+		flag=gensub(/( [A-Z_]*)="/,"'$NA'\\1'$NO'=\"","g",flag)
+	} else flag=$4
+	if (cols&&(t=="W"||t=="R")) {
+		if (t=="R") {
+			pf="'$MA'Rebuild"
+			if (multi) pf=pf"\t"
+		} else if (w) pf="'$RD'** WARN:"
+		else pf="'$BU'Toolchain:'$RD'"
+		if (multi) pf=pf"\t"
+		else pf=pf" "
+		pf=pf""p"'$NO'"
+		l=length(p)
+		if (multi && l<(showVer?'$((TAB_WIDTH*3))':'$((TAB_WIDTH*2))')) {
+			if (l<'$TAB_WIDTH') pf=pf"\t"
+			if (l<'$((TAB_WIDTH*2))') pf=pf"\t"
+			if (showVer && l<'$((TAB_WIDTH*3))') pf=pf"\t"
+		} else pf=pf" "
+		p="\n"pf""flag
+		if (t=="W"&&length($3)) p=p" "gensub(/\[(.*)]\]/,"['$OR'\\1'$NO']",1,$3)
+		len=0
+	} else {
+		if (t!=curr[c]) {
+			switch(t) {
+				case "UD":
+					pf="'$BU'Downgrade"
+					len=9
+					break
+				case "U":
+					pf="'$GN'Upgrade'$NO'"
+					len=7
+					break
+				case "N":
+					pf="'$TO'New"
+					len=3
+					break
+				case "R":
+					pf="'$MA'Rebuild"
+					break
+				case "W":
+					if (w) pf="'$RD'WARN"
+					else pf="'$BU'TOOLCHAIN'$RD'"
+					break
+				default:
+					pf="err"
+			}
+			if (pf=="err") {
+				p="\t'$RD'!!'$NO' "$0
+				if (curr[c]) p="\n"p
+				t="E"
+				len=0
+			} else {
+				if (cols) {
+					if (multi) {
+						if (curr[c]) {
+							pf="\n\t\t"pf
+							len+='$((TAB_WIDTH*2))'
+						} else if (length(c)>='$((TAB_WIDTH*2))') {
+							len+=1+length(c)
+						}
+					} else {
+						if (curr[c]) pf="\n "pf
+						else len+=length(c)+1
+						pf=pf" "
+					}
+					l=length(p)
+					if (len+l>cols) {
+						pf=pf"\n "
+						len=++l
+					} else if (multi) {
+						if (len<'$((TAB_WIDTH*3))') pf=pf"\t"
+						if (len<'$((TAB_WIDTH*4))') {
+							pf=pf"\t"
+							len='$((TAB_WIDTH*4))'
+							len+=l
+						} else {
+							len+=l+1
+							pf=pf" "
+						}
+					} else len+=l
+				} else {
+					if (curr[c]) pf="\n "pf
+					pf=pf" "
+				}
+				p=pf""p
+				if (t=="W"||t=="R") p=p"'$NO' "flag
+			}
+		} else {
+			p=" "p
+			if (cols) {
+				l=length(p)
+				len+=l
+				if (len>cols) {
+					res[c]=res[c]"\n"
+					len=l
+				}
+			}
+		}
+	}
+	res[c]=res[c]p
+	curr[c]=t
+	currLen[c]=len
+}
+END {
+	for (j=0;j<i;j++) {
+		if (multi) {
+			printf("'$BL'%s'$NO'",idx[j])
+			l=length(idx[j])
+			if (l<'$TAB_WIDTH') printf("\t")
+			if (l<'$((TAB_WIDTH*2))') printf("\t")
+			else printf(" ")
+		} else printf ("'$BL'%s'$NO' ",idx[j])
+		printf ("%s\n",res[idx[j]])
+	}
+}' "$emergeFile"
+	fi
+}
+
+# checkList when resuming will display list
+# checkList or checkList <param> will not show list
+checkList() {
+local d BLOCKING out l restricted b r ret=0 n i
+BLOCKING='(.*) \(is blocking (.*)\)'
+	warned=0
+	getList "$1" > "$tmpFile" || {
+		cat "$tmpFile"
+		[[ $target = world || $param = *u* ]] && {
+			msg 'System is up to date.'
+			exit 0
+		}
+		abort 'There are no packages eligible for install.'
+	}
+	if [[ ! $1 ]] && ((resume)); then displayList; fi
+	cat "$tmpFile"; rm "$tmpFile"
+	((tot>4)) && echo "$PFX $tot in total"
+	#exit
+	# FETCH RESTRICTION
+	((${#fetchRestricted[@]})) && {
+		restricted=0
+		((resume)) && msg 'There were fetch-restricted packages (checking).'
+		for l in "${fetchRestricted[@]}"; do
+			out=$(fetchReason "=$l")
+			if [[ $out ]]; then
+				restricted=1
+				final "$out"
+			fi
+		done
+		((restricted)) && abort 'You have fetch restricted packages which need to be downloaded.'
+	}
+	unset fetchRestricted
+	# DOWNGRADES
+	d=$(grep -c '\[[^/]*UD[^/]*\]' "$emergeFile")
+	if ((d)); then
+		echo -n "$RD**$NO $d Downgrade"
+		((d>1)) && echo 's:' || echo ':'
+		awk -F '\t' '/\[[^/]*UD[^/]*\]/ {
+	$4=gensub(/^USE="([^"]*)".*/,"'$NA'USE'$NO'=\"\\1\"",1,$4)
+	gsub(/[][]/,"",$3)
+	print "\t'$BU'"$2"'$NO' ['$GN'"$3"'$NO']\t" $4
+	print $2,$3 > "'"$tmpFile"'"
+}' "$emergeFile"
+  IFS="$EOL"
+		downgrades=($(<"$tmpFile"))
+		unset IFS
+		((${#downgrades[@]}==d)) || errMsg '${#downgrades[@]} '${#downgrades[@]}" != d $d"
+		for i in "${downgrades[@]}"; do
+			read pk old <<< "$i"
+			findEbuild "$pk" quiet
+			[[ $cLog ]] && {
+				ed -s "$cLog" <<< "H
+/$pN-$old.ebuild/p"'
++1,/^[[:space:]]*$/-1p
+q' 2> /dev/null || ed -s "$cLog" <<< "H
+/${pk#*/}.ebuild/p"'
++1,/^[[:space:]]*$/-1p
+q' 2> /dev/null || verb "Unable to find anything in $cLog for $pN-$old or ${pk#*/}"
+			}
+		done
+	fi
+	# BLOCKERS
+	blocked=()
+	grep -q '^\[[^/]*B[^/]*\]' "$emergeFile" && {
+		msg $WRN' There are blocking packages:'
+#		grep '^\[[^/]*B[^/]*\]' "$emergeFile"
+		while read -r l
+		do
+			[[ $l =~ $BLOCKING ]] && {
+				r="${BASH_REMATCH[1]}"
+				b="${BASH_REMATCH[2]}"
+				#set -x
+				if checkBlock "$r" "$b"; then
+					getPkgNameVer "$b"
+					msg "$typeTxt before emerge of $pName"
+					continue
+				elif ((server)); then log "$b blocked by $r"
+				else
+					warn "$l"
+					if confirmN "Press Y to unmerge $r, any other key to skip $b, CTRL-C to quit." "$b blocked"
+					then
+						trap : INT
+						emerge -Cq "$r" || checkCTRLC $? 'unblock' "Unable to unmerge $r"
+						trap ctrlC INT
+						return 1
+					fi
+				fi
+				blocked+=("$b")
+				final "$b blocked by $r"
+			}
+		done < <(sed -n '\@^\[[^/]*B[^/]*\] @ { s///; p; }' "$emergeFile")
+		n=${#blocked[@]}
+		((n)) && {
+			((tot-n)) || abort 'All eligible packages are blocked.'
+			echo "$WRN Skipping: ${blocked[@]}"
+		}
+ 	}
+	if ((!resume && !ask && (d||n))); then countdown
+	fi
+	return 0
+}
+
+# returns true if there was a version
+getPkgNameVer() {
+	local c=0
+	# strip off any cruft at beginning
+	while [[ ${1:c:1} = [^[:alpha:]] ]]; do let c++; done
+	pVer=${1:c}
+	case "$pVer" in
+	*-cvs[0-9]*)
+		pName=${pVer%-cvs[0-9]*}
+		pVer=${pVer#$pName-}
+;;	*-[0-9]*)
+		pName=${pVer%%-[0-9]*} # from first -N
+		pVer=${pVer#$pName-}
+;;	*)
+		pName=$pVer
+		pVer=
+;;	esac
+	pCat=${pName%/*}; pN=${pName#*/}
+	[[ $pVer ]] && return 0
+	return 1
+}
+
+if [[ -t 2 ]]; then
+	errMsg() {
+		echo "$ERR $*" >&2
+	}
+	errToTerm=1
+else
+	errMsg() {
+		echo "!! $*" >&2
+	}
+	errToTerm=0
+fi
+
+# Is blocker about to be resolved before we hit the blocked package?
+# $1 - blocker eg <=kde-base/kmail-3.5.6-r1 or <kde-base/kdesktop-3.5.6-r1
+# $2 - blocked package eg kde-base/libkdepim-3.5.7-r1 or kde-base/kdebase-kioslaves-3.5.7-r1
+checkBlock() {
+	local incoming outgoing loose oper tmp
+	getPkgNameVer "$1"
+	[[ $pVer ]]|| { errMsg "$1 has no version" ; return 1; }
+	checkType "$pName" Block || { errMsg "$pName is not in the list"; return 1; }
+	incoming=$currIndex
+	[[ $installType = Rebuilding ]] && return 1
+	oper=${1%%[a-zA-Z]*}
+	[[ $oper ]] || { errMsg "$1 has no operator" ; return 1; }
+	[[ $oper = '~' && $new = $pVer* ]] && return 1
+	verCompare "$new" "$pVer"
+	tmp=$?
+	[[ $tmp = 3 ]] && { errMsg "Error comparing $new with $pVer"; return 1; }
+	case $oper in
+		=) [[ $tmp = 0 ]] && return 1;;
+		'<') [[ $tmp = 2 ]] && return 1;;
+		'<=') [[ $tmp = 2 || $tmp = 0 ]] && return 1;;
+		'>=') [[ $tmp = 1 || $tmp = 0 ]] && return 1;;
+		'>') [[ $tmp = 1 ]] && return 1;;
+	esac
+	if getPkgPos "$2"; then ((outgoing=currPos))
+	else
+		errMsg "$2 is not in the list"
+		return 1
+	fi
+	((incoming<outgoing)) && return 0
+	return 1
+}
+
+# match version to operator string
+# $1 - version of package (eg 1.95.08)
+# $2 - string to check (eg <2)
+verMatch() {
+	local ver tmp
+	oper=${2%%[0-9]*}
+	[[ $oper ]] || { errMsg "No operator in: $2" ; return 1; }
+	ver=${2#$oper}
+	[[ $ver ]] || { errMsg "No version in: $2" ; return 1; }
+	if [[ $oper = '~' ]]; then
+		[[ $1 = $ver* ]] && return 0 || return 1
+	fi
+	#set -x
+	verCompare "$1" "$ver"
+	tmp=$?
+	[[ $tmp = 3 ]] && { errMsg "Error comparing $1 with $pVer"; return 1; }
+	case $oper in
+		=) [[ $tmp = 0 ]] && return 0;;
+		'<') [[ $tmp = 2 ]] && return 0;;
+		'<=') [[ $tmp = 2 || $tmp = 0 ]] && return 0;;
+		'>=') [[ $tmp = 1 || $tmp = 0 ]] && return 0;;
+		'>') [[ $tmp = 1 ]] && return 0;;
+	esac
+	return 1
+}
+
+editedMaskFile=0
+eraseMaskFile=0
+tempMask() {
+	((editedMaskFile)) || {
+		if [[ -f "$maskFile" ]]; then
+			cp "$maskFile" "$backupMask" || abort "Unable to create backup of $maskFile"
+		else eraseMaskFile=1
+		fi
+		echo "# $prog $(date '+%Y-%m-%d %T')" >> "$maskFile"
+		editedMaskFile=1
+	}
+	echo "$1" >> "$maskFile"
+}
+
+fetchReason() {
+local l
+	while read -r l
+	do
+		[[ $l = \** ]] && echo "$l";
+	done < <(emerge -fq "$1" 2> /dev/null)
+}
+
+currDL=
+endDL() {
+	echo "$RSTR$RET$PFX ${l#[0-9][0-9]:[0-9][0-9]:[0-9][0-9] }"
+	currDL=
+	dl=0
+}
+
+startDL() {
+	nextDL=${l##*/}
+	[[ $currDL = $nextDL ]] && return
+	currDL=$nextDL
+	echo "$PFX Downloading $currDL"
+	dl=1
+}
+
+
+getPyCleanLoc() {
+	pyc=1
+	loc=${l#$PYC}
+	loc=${loc% .*}
+	echo "$PF2 Cleaning $loc"
+}
+
+needConfigUpdate() {
+	local i j
+	i=${l#'* IMPORTANT:'}
+	let j="${i%config files*}"
+	((j)) || abort TRACE "$j from $i"
+	((j==configUpdatesPending)) && return
+	echo "$j" > "$configNeededFile"
+	((configUpdatesPending=j))
+	((errToTerm)) && errMsg "${RD}IMPORTANT$NO: $GR$j$NO etc-updates" || errMsg "${l#'* '}"
+}
+
+isTarget() {
+	local s incoming incomingN
+	getPkgNameVer "$1"
+	incoming=$pName
+	incomingN=$pN
+	for s in "${t[@]}"
+	do
+		if [[ $s = [^[:alpha:]]* ]]; then
+			getPkgNameVer "$s"
+			[[ $incoming = $pName ]] && return 0
+		elif [[ $s = */* ]]; then
+			[[ $s = $incoming ]] && return 0
+		else
+			[[ $s = $incomingN ]] && return 0
+		fi
+	done
+	return 1
+}
+
+addRevLib() {
+	local i
+	for i; do
+		i=${i//[^[:alnum:].]}
+		[[ -f "$revLibs" ]] && grep -q "$i" "$revLibs" || echo "$i" >> "$revLibs" || abort 'Unable to write to revdepLibs file'
+	done
+}
+
+# regex vars
+BUILD="^\* A complete build log is located at '(.*)'."
+UPDATING='^\* *IMPORTANT.*updating'
+CONFIGURING='^\* Configuring .* with:$'
+DOWNLOADING='^--[0-9][0-9]:[0-9][0-9]:[0-9][0-9]--  (cvs|svn|ftp|http[s]?)://([^ ]*).*'
+PATCHING='^\* *Applying |\*.*\.diff|\*.*\.patch.*|^\* >'
+COLLISION='^existing file (.*) is not owned by this package$'
+UNPACKING='^>>> Unpacking (.*) to /var/tmp/portage/(.*)/work$'
+MERGING='^>>> Merging (.*) to'
+UNMERGING='^>>> Unmerging (.*)\.\.\.$'
+CFG_UPDATE='^>>>.*cfg-update-.*: .*[cC]hecksum index'
+
+PERCENT='([0-9]*)%'
+STAY_IN_AM='^\*\*\*|.*: warning:|.*Extending.aclocal|^make.*: |make '
+
+ELIBTOOLING='^\* *Running elibtoolize in: (.*)'
+ERECONFING="^\* *Running eautoreconf in '(.*)'"
+RUNNING='^\* *Running ([^ ]*) in.*(/[.-a-zA-Z0-9/]*).*\.\.\.$'
+
+setFilters() {
+VERB_SKIP="nstall.* into $PORTAGE_TMPDIR|^\* *econf: updating.*config\.(guess|sub)|^\* *Man pages are not installed|^\* *Please use perldoc instead|^\* man page to learn how to update config files|^\* Replacing obsolete head/tail with POSIX compliant ones|^\* -include, to avoid long list of -D defines on the compile command-line|^\* Do not edit.$"
+# quoting is a funny thing ;)
+NORMAL_SKIP='^\* *Changing|^\* *Fixing|^\* *- fixed |^\* *Linking /.* to /|^\* Regenerating GNU info directory index|^\* Processed [0-9]+ info files; 0 errors|^\* GNU info|^\* Removing|^\* Installing GNOME 2 GConf schemas|^\* Byte compiling python modules for python-|'$VERB_SKIP
+
+SERVER_SKIP=$NORMAL_SKIP'|^\* *Applying|^\* *Building|^\* *Cleaning|^\* [cC]hecking|^\* *Converting|^\* *Determining|^\* *Found|^\* *Generating|^\* Rebuilding|^\* *Running|^\* *Touching|^\* *Updating|^\* *Using .*::|^\*\*\* automake.*found|^\*\*\* Creating|^\*\*\* Postprocessing|^\*\*\* Finished'
+
+NORMAL_SKIP+='|^\* checking|^\*   *Touching|^\* [^T]Touching|^\*  *Updating|^\* *Using ::'
+
+QUIET_SKIP=$SERVER_SKIP'|^\* *Configuring|^\* *Disabled|^\* *Disabling|^\* *Enabled|^\* *Enabling|^\* *module:|^\* *Optional prerequisite.*is not installed'
+
+PHASE_SKIP="^Done.$|^'Selected' packages are slated for removal|^'Protected' and 'omitted' packages will not be removed|^Auto-cleaning packages|^Regenerating /etc/ld.so.cache|^Emerging (1 of 1) |^Downloading |^Test phase [not enabled]"
+}
+
+PYC='* Cleaning orphaned Python bytecode from '
+PAXM='* Fallback PaX marking -m'
+FILECHECK=' ;-) ...'
+######################
+# Wrapper for emerge #
+######################
+installPkg() {
+local am param patching l logFile pk perc curr pyc=0 dl=0 bailOut=0 lib currFile
+	pk="${1#=}"
+	# test
+	#installed "$pk"; return 0
+	#fail "$pk"; return 1
+	logFile=
+	problemFiles=()
+	buildDir=
+	log "Starting install: $pk"
+	startPhase "Install $pk"
+	echo 1 > "$resFile" || abort
+	let am=patching=collisionDetect=bailOut=0
+	((binHost)) && {
+		[[ -f "$PKGDIR/$pk.tbz2" || -f "$PKGDIR/All/$packageName-$new.tbz2" ]] || {
+			dlBinPkg "$pk" && msg "$PF2 Binary install of $packageName" || {
+				((binOnly)) && {
+					fail "$pk"
+					missingBins+=("$pk")
+					return 1
+				}
+			}
+		}
+	}
+	if ((install)) && isTarget "$pk"; then
+		msg "$PF2 Installing $pk to world"
+		[[ $binOpt ]] && param="-$binOpt"
+	else
+		((num>1)) && msg "$PFX $installType $pk"
+		param="-1$binOpt"
+	fi
+	# die "emerge $param $@ -- $# params"
+	trap 'bailOut=1' USR1
+## QUIET INSTALL ##
+	if ((quiet)); then
+		while read -r l
+		do
+			[[ $l =~ $BUILD ]] && logFile="${BASH_REMATCH[1]}"
+			backUp
+			if [[ $l = '!!!'* ]]; then
+				errMsg "${l#!!!}"
+			elif ((pyc)); then
+				case $l in 
+				*$loc*) spin;;
+				$PYC*) getPyCleanLoc;;
+				*) pyc=0
+					[[ $l = '* '* && ! $l =~ $QUIET_SKIP ]] && echo "$l" || spin
+				;;
+				esac
+			elif [[ $l = $PYC* ]]; then getPyCleanLoc
+			elif ((!server)) && [[ $l =~ $DOWNLOADING ]]; then
+				echo "$PFX Downloading ${l##*/}"
+			elif [[ $l =~ $UPDATING ]]; then
+				needConfigUpdate
+				errMsg "${RD}IMPORTANT$NO${l#* *IMPORTANT}"
+				read l; read l
+			elif [[ $l =~ $COLLISION ]]; then
+				collisionDetect=1
+				problemFiles+=("${BASH_REMATCH[1]}")
+				errMsg "$l"
+				read l;
+			elif [[ $l = '* '* && ! $l =~ $QUIET_SKIP ]]; then
+				echo "$PF3${l:1}"
+			else spin
+			fi
+		done < <(emerge $param "$@" 2>&1 && kill -0 $$ 2>/dev/null && echo 0 > "$resFile")
+## SEE EVERYTHING ##
+	elif ((verbose>1)); then
+		#((colour)) && param+=' --color y'
+		while read -r l
+		do
+			if [[ $l = '!!!'* ]]; then
+				errMsg "${l#!!!}"
+			elif [[ $l =~ $BUILD ]]; then logFile="${BASH_REMATCH[1]}"
+			elif [[ $l =~ $UPDATING ]]; then needConfigUpdate
+			elif [[ $l =~ $COLLISION ]]; then
+				collisionDetect=1
+				problemFiles+=("${BASH_REMATCH[1]}")
+			fi
+			echo "$l";
+		done < <(emerge $param "$@" 2>&1 && kill -0 $$ 2>/dev/null && echo 0 > "$resFile")
+## VERBOSE INSTALL ##
+	elif ((verbose)); then
+		while read -r l
+		do
+			[[ $l =~ $BUILD ]] && logFile="${BASH_REMATCH[1]}"
+			backUp
+			if [[ $l = '!!!'* ]]; then
+				errMsg "${l#!!!}"
+			elif ((pyc)); then
+				case $l in 
+				*$loc*) spin;;
+				$PYC*) getPyCleanLoc;;
+				*) pyc=0
+					[[ $l = '* '* && ! $l =~ $VERB_SKIP ]] && echo "$l" || spin
+				;;
+				esac
+			elif ((dl)); then
+				if [[ $l = [0-9][0-9]:[0-9][0-9]:[0-9][0-9]\ \(* ]]; then
+					endDL
+				elif [[ $l =~ $PERCENT ]]; then
+					progress
+				else spin
+				fi
+			elif ((am)); then
+				if [[ $l = '*** Finished' ]];then
+					echo $PFX' Completed automake'
+					am=0
+				elif [[ $l =~ $STAY_IN_AM ]]; then
+					spin
+				else
+					am=0
+					echo "$l"
+				fi
+			elif [[ $l = $PYC* ]]; then getPyCleanLoc
+			elif [[ $l = gpg:* ]]; then
+				echo "$TIP GPG ${l#gpg:}"
+			elif [[ $l = '>>> '[^/]* ]]; then
+				l=${l#>>> }
+				if [[ $l =~ $PHASE_SKIP ]]; then spin
+				elif [[ $l = 'Compiling source in '* ]]; then
+					echo $PF2' Compiling Source ...'
+					buildDir=${l#>>> Compiling source in }
+					buildDir=${buildDir%/work*}
+				else echo "$TIP $l"
+				fi
+			elif [[ $l =~ $UPDATING ]]; then
+				needConfigUpdate
+				errMsg "${RD}IMPORTANT$NO${l#* *IMPORTANT}"
+				read l; read l
+			elif [[ $l =~ $COLLISION ]]; then
+				collisionDetect=1
+				problemFiles+=("${BASH_REMATCH[1]}")
+				errMsg "$l"
+				read l;
+			elif [[ $l =~ $DOWNLOADING ]]; then
+				startDL
+			elif [[ $l = '*** automake'*'found.' ]]; then
+				echo $PFX' Starting automake'
+				am=1
+			elif [[ $l =~ $UNPACKING ]]; then
+				echo "$PFX Unpacking ${BASH_REMATCH[1]} to ${BASH_REMATCH[2]}"
+			elif [[ $l =~ $UNMERGING ]]; then
+				echo "$PF2 Uninstalling ${BASH_REMATCH[1]}"
+			elif [[ $l =~ $ELIBTOOLING ]]; then
+				echo "$PFX Elibtoolize: ${BASH_REMATCH[1]##*/}"
+			elif [[ $l =~ $ERECONFING ]]; then
+				echo "$PFX Eautoreconf ${BASH_REMATCH[1]##*/}"
+			elif [[ $l =~ $RUNNING ]]; then
+				echo "$PFX ${BASH_REMATCH[1]}: ${BASH_REMATCH[2]##*/}"
+			elif [[ $l = '* '* && ! $l =~ $VERB_SKIP ]]; then
+				echo "$PF3${l:1}"
+#			elif [[ $l = '>>> Verifying ebuild Manifests...' ]]; then
+#				echo $PF2' Completed compile'
+#				read -r l
+#				while [[ ! $l = '>>> Emerging '* ]]; do [[ $l ]] && echo "$l"; read -r l; done
+			else spin
+			fi
+		done < <(emerge $param "$@" 2>&1 && kill -0 $$ 2>/dev/null && echo 0 > "$resFile")
+## SERVER INSTALL ##
+	elif ((server)); then
+		while read -r l
+		do
+			[[ $l =~ $BUILD ]] && logFile="${BASH_REMATCH[1]}"
+			if [[ $l = '!!!'* ]]; then errMsg "${l#!!!}"
+			elif ((pyc)); then
+				case $l in 
+				*$loc*) :;;
+				$PYC*) getPyCleanLoc;;
+				*) pyc=0
+					[[ $l = '* '* && ! $l =~ $SERVER_SKIP ]] && echo "$l"
+				;;
+				esac
+			elif [[ $l = $PYC* ]]; then getPyCleanLoc
+			elif [[ $l =~ $UPDATING ]]; then
+				needConfigUpdate
+				echo "$l" >&2
+				read l; read l
+			elif [[ $l =~ $COLLISION ]]; then
+				collisionDetect=1
+				problemFiles+=("${BASH_REMATCH[1]}")
+				echo "$l"
+				read l;
+			elif ((dl)); then
+				if [[ $l = [0-9][0-9]:[0-9][0-9]:[0-9][0-9]\ \(* ]]; then
+					endDL
+				elif [[ $l =~ $PERCENT ]]; then
+					progress
+				fi
+			elif [[ $l =~ $DOWNLOADING ]]; then
+				startDL
+			elif [[ $l = gpg:* ]] \
+				|| [[ $l = '* '* && ! $l =~ $SERVER_SKIP ]]
+			then echo "$l"
+				# TODO Test this against normal version (see below)
+				[[ $l =~ $CONFIGURING ]] && {
+					read -r l
+					while [[ $l = '--'* ]]
+					do echo "$l"
+						read -r l
+					done
+				}
+			fi
+		done < <(emerge $param "$@" 2>&1 && kill -0 $$ 2>/dev/null && echo 0 > "$resFile")
+## NORMAL INSTALL ##
+	else
+		while read -r l
+		do
+			# test
+			#echo "'$l'"; continue
+			[[ $l ]] || continue
+			[[ $l =~ $BUILD ]] && logFile="${BASH_REMATCH[1]}"
+			backUp
+			if [[ $l = '!!!'* ]]; then
+				errMsg "${l#!!!}"
+			elif ((pyc)); then
+				case $l in 
+				*$loc*) spin;;
+				$PYC*) getPyCleanLoc;;
+				*) pyc=0
+					[[ $l = '* '* && ! $l =~ $NORM_SKIP ]] && echo "$l" || spin
+				;;
+				esac
+			elif ((dl)); then
+				if [[ $l = [0-9][0-9]:[0-9][0-9]:[0-9][0-9]\ \(* ]]; then
+					endDL
+				elif [[ $l =~ $PERCENT ]]; then
+					progress
+				fi
+			elif ((am)); then
+				if [[ $l = '*** Finished' ]];then
+					echo $PFX' Completed automake'
+					am=0
+				elif [[ $l =~ $STAY_IN_AM ]]; then
+					spin
+				else
+					am=0
+					echo "$l"
+				fi
+			elif [[ $l = $PYC* ]]; then getPyCleanLoc
+			elif [[ $l = 'Determining the layout of your Qt installation...' ]]; then
+				echo "$PF2 Configuring for QT.."
+			elif [[ $l = '* checking '* ]]; then
+				spin
+			elif [[ $l = '* QA Notice: '* ]]; then
+				echo "$OR* QA Notice:$NO${l#'* QA Notice:'}"
+			elif [[ $l = '* '*"$FILECHECK"*'[ ok ]' ]]; then
+				lib=${l% *"$FILECHECK"*}
+				lib=${lib#'* '}
+				[[ $lib = $currFile ]] || {
+					currFile=$lib
+					echo "$PFX Checking $BR$lib$NO"
+				}
+			elif [[ $l = *'revdep-rebuild '*'--library '* ]]; then
+				while [[ $l = *'--library'* ]]; do
+					l=${l#*--library}
+					read lib l <<< "$l"
+					echo "${RD}revdep req'd$NO on $GN$lib$NO"
+					addRevLib "$lib"
+				done
+				echo "$l"
+			elif [[ $l =~ $DOWNLOADING ]]; then
+				startDL
+			elif [[ $l =~ $UNPACKING ]]; then
+				echo "$PFX Unpacking ${BASH_REMATCH[1]} to ${BASH_REMATCH[2]}"
+			elif [[ $l =~ $MERGING ]]; then
+				echo "$PF2 Installing $GR${BASH_REMATCH[1]}$NO"
+			elif [[ $l =~ $UNMERGING ]]; then
+				echo "$PF2 Uninstalling $OR${BASH_REMATCH[1]}$NO"
+			elif [[ $l =~ $UPDATING ]]; then
+				needConfigUpdate
+				read l; read l
+			elif [[ $l =~ $COLLISION ]]; then
+				collisionDetect=1
+				problemFiles+=("${BASH_REMATCH[1]}")
+				errMsg "$l"
+				read l
+			elif [[ $l =~ $CFG_UPDATE ]]; then
+				spin
+			elif [[ $l = '*** automake'*'found.' ]]; then
+				((patching)) && { patching=0; echo 'done'; }
+				echo $PFX' Starting automake'
+				am=1
+			elif [[ $l =~ $PATCHING ]]; then
+				((patching)) && echo -n '.' || {
+					echo -n $PFX' Patching:'
+					patching=1
+				}
+			elif [[ $l = '>>> Compiling source in '* ]]; then
+				buildDir=${l#>>> Compiling source in }
+				buildDir=${buildDir%/work*}
+				echo "$PF2 Compiling Source ... "
+			elif [[ $l = gpg:* ]]; then
+				echo "$TIP GPG ${l#gpg:}"
+			elif [[ $l = '* '* && ! $l =~ $NORMAL_SKIP ]]; then
+				((patching)) && {
+					[[ $l = '* /'* ]] && { echo -n '.'; continue; }
+					patching=0
+					echo 'done'
+					[[ $l = '* Done with patching' ]] && continue
+				}
+				if [[ $l =~ $ELIBTOOLING ]]; then
+					echo "$PFX Elibtoolize: ${BASH_REMATCH[1]##*/}"
+				elif [[ $l =~ $ERECONFING ]]; then
+					echo "$PFX Eautoreconf ${BASH_REMATCH[1]##*/}"
+				elif [[ $l =~ $RUNNING ]]; then
+					echo "$PFX ${BASH_REMATCH[1]}: ${BASH_REMATCH[2]##*/}"
+				elif [[ $l != '* Running '* ]]; then
+					echo "$PF3${l:1}"
+					# TODO - check whether we need to use following
+					#[[ $l =~ $CONFIGURING ]] && {
+					[[ $l = *' with:' ]] && {
+						read -r l
+						# TODO check this test (blank line)
+						while [[ $l ]]
+						#while [[ $l = '--'* ]]
+						do echo "$l"
+							read -r l
+						done
+					}
+				fi
+			elif ((patching)); then
+				[[ $l = *'[ ok ]'* || $l = '* Converting'* ]] && echo -n '.' || {
+					echo 'done'
+					patching=0
+					# test
+					#echo "'$l'"
+				}
+			else spin
+			fi
+		done < <(emerge $param "$@" 2>&1 & doChild)
+#		done < <(emerge $param "$@" 2>&1 && kill -0 $$ 2>/dev/null && echo 0 > "$resFile")
+	fi
+	backUp
+	read ret < "$resFile" || abort TRACE 'Unable to read emerge result'
+	[[ $ret ]] || abort TRACE 'No emerge result'
+	if ((ret)); then
+		fail "$pk"
+	else
+		installed "$pk"
+	fi
+	rm "$resFile"
+	if ((tot>5&&p<tot)); then
+		let l=tot-p
+		if ((tot>14)); then
+			if ((l<5)); then l="$GR$l$NO"
+			elif ((l<10)); then l="$OR$l$NO"
+			else l="$BR$l$NO"
+			fi
+		else
+			if ((l<=tot/3)); then l="$GR$l$NO"
+			elif ((l<=2*tot/3)); then l="$OR$l$NO"
+			else l="$BR$l$NO"
+			fi
+		fi
+		msg "Packages installed so far: $BR$n of $p$NO.	$l remaining"
+	fi
+	((${#failList[@]})) && msg "$WRN Failed so far: ${failList[*]}"
+	trap bail USR1
+	((bailOut)) && bail
+	endPhase Install
+	return $ret
+}
+
+# Higher level wrapper - checks deps if a package has failed or been skipped
+# if no second parameter (installList) checkType has already been called
+# 2nd param (optional) indicates not being called from usual: Toolchain, Kmods, Revdep, GLSA, Setup
+# - only checks dependencies for TC; checkType allows for pkgs in $now, not just in main list
+handleInstall() {
+local j pk checkParam col prefix currList cP r
+	pk="${1#=}"
+	let cP=p+1
+	now=()
+	if ((haveSkipped)) || [[ $2 = Toolchain ]] ;then
+		((quiet||!interactive)) || echo -n "$PFX Checking dependencies for $pk.."
+		startPhase depCheck
+  IFS="$EOL"
+		now=($(emerge -pq "$1"|stripQuiet))
+		r=$PIPESTATUS
+		unset IFS
+		((r)) && abort "Unable to check deps for $1"
+		num=${#now[@]}
+		((num)) || {
+			errMsg "For some reason portage does not want to emerge $pk"
+			emerge -pq "$1" >&2
+			fail "$pk" silent
+			return 1
+		}
+		((quiet||!interactive)) || echo 'done'
+		endPhase
+	else num=1
+	fi
+	if [[ $2 ]]; then
+		checkType "$pk" "$2" || {
+			warn "$2: $pk not in list"
+			return 1
+		}
+		let cP=1
+	elif [[ -z $installType ]]; then
+		msg "$pk not in list"
+		return 1
+	fi
+	# Handle cases where portage insists pkgs need to be installed together
+	if ((num>1)); then
+		[[ $2 ]] && checkParam=$2 || checkParam=depcheck
+		currList=("${now[@]#*$'\t'}")
+		currList=("${currList[@]%%$'\t'*}")
+		for j in "${currList[@]}"; do
+			[[ $j = $pk ]] && continue
+			if shouldSkip "$j" "$checkParam"; then
+				case "$skipReason" in
+					*failed ) col=$NA; prefix=$ALT;;
+					*blocked ) col=$MA; prefix=$WRN;;
+					*WARN ) col=$RD; prefix=$ERR;;
+					*NoCompile) col=$OR; prefix=$TIP;;
+					*SKIP ) col=$BL; prefix=$ALT;;
+				esac
+				msg "$prefix Dependency Error - $pk requires $col$j$NO which $skipReason"
+				fail "$1" silent
+				return 1
+			fi
+			if [[ ! $2 ]] && ! inList "$j" "${list[@]}"; then
+				abort "Dependency Error - $MA$pk$NO requires $RD$j$NO which is not in the install list!"
+			fi
+		done
+		[[ $2 ]] || warn "$pk is pulling in list deps which have not been skipped?"
+		msg "portage will emerge these $num packages"
+		((quiet)) || printArr "${currList[@]}"
+		for j in "${currList[@]}"; do
+			# NB Changed behaviour to fail if checkType fails - this can be merged with loop above?
+			if checkType "$j" "$2"; then
+				if [[ $2 ]]; then
+					msg "${BR}[$2]$NO $typeTxt"
+					setTitleIcon "$2 $cP of $num - $installType $packageName" "$2 $cP of $num"
+				else
+					setTitleIcon "$cP of $tot - $installType $packageName" "$prog $cP of $tot"
+				fi
+			else
+				echo "Unable to find $j in install list"
+				fail "$1" silent
+				return 1
+			fi
+			installPkg =$j '--nodeps' || {
+				# being cautious and failing target pkg if a dep doesn't install
+				# remember this is where there is close dependency
+				[[ $j = $pk ||  $j = $pk-[0-9]* || $j = $pk-cvs.[0-9]* ]] || fail "$1" silent
+				return 1
+			}
+			let cP++
+		done
+		return 0
+	fi
+	if [[ $2 ]]; then
+		[[ $2 = Toolchain ]] || setTitle "$2 - $installType $packageName"
+		msg "${BR}[$2]$NO $typeTxt"
+		#[[ $1 = =* ]] || pk="$pk-$new"
+	else setTitleIcon "$cP of $tot - $installType $packageName" "$prog $cP of $tot"
+		((tot>1)) && msg "$PF2 $typeTxt - $cP of $tot" || msg "$PF2 $typeTxt"
+	fi
+	installPkg "$1" '--nodeps'
+}
+
+FAIL_FILE=': tail -n30 (/.*)'
+reportFailure() {
+	num=${#fR[@]}
+	if ((verbose)); then
+		echo 'The following '${#failList[@]}' packages failed to install:'
+		cat "$failFile"
+		helpM "This information is in $failFile"
+	else
+		if ((num)); then msg "Please check $failFile and $reasonsFile"
+		else [[ -f $failFile ]] && msg "Please check $failFile for failed pkg names"
+		fi
+	fi
+	((num&&!quiet)) && {
+		if [[ $num = 1 ]]; then
+			[[ ${fR[0]} =~ $FAIL_FILE  ]] && tail -n30 "${BASH_REMATCH[1]}" || echo "${fR[0]}"
+		else
+			helpM 'To view log files for failed ebuilds -'
+   IFS="$EOL"
+			echo "${fR[*]}"
+			unset IFS
+		fi
+	}
+}
+
+checkConfigUpdates() {
+	((configUpdatesPending&&!server)) && {
+		setTitle "Running $etcUpdater"
+		msg "$PF2 Running $etcUpdater"
+		# thanks to swimmer for cfg-update fix
+		if [[ $etcUpdater = /usr/bin/cfg-update ]]; then
+			"$etcUpdater" -u
+		else
+			"$etcUpdater"
+		fi && {
+			configUpdatesPending=0
+			rm -f "$configNeededFile"
+		}
+		resetT
+	}
+}
+
+# finish [err|resume]
+finish() {
+	local err=0
+	resetT
+	[[ $1 = err ]] && {
+		log "Failed to install: ${failList[@]}"
+		needMaint || {
+			checkConfigUpdates
+			exit 5
+		}
+		continueMaintenance
+	}
+	if ((doGLSA)); then
+		if glsa; then
+			completeStage GLSA
+		else
+			errMsg 'glsa-check failed.'
+			log "Failed to install: ${failList[*]}"
+			continueMaintenance GLSA
+			err=1
+		fi
+	fi
+	if ((doDepclean)); then
+		if depclean; then
+			completeStage DepClean
+		else
+			errMsg '--depclean failed.'
+			continueMaintenance DepClean
+			err=1
+		fi
+	fi
+	if ((doRevdep)); then
+		if revdep; then
+			completeStage Revdep
+		else
+			errMsg 'revdep-rebuild failed.'
+			log "Failed to install: ${failList[*]}"
+			err=1
+		fi
+	fi
+	setStatus Completed
+	checkConfigUpdates
+	((err)) || [[ $1 = err ]] || {
+		[[ $outputRun ]] && rm -r "$dir/$outputRun"
+	}
+	[[ $1 = err ]] && exit 5 || exit $err
+}
+
+# setStatus NewStatus [noisy]
+setStatus() {
+	local s
+	echo "$1" > "$statusFile" && status="$1" || abort
+#	msg "$PF2 $1"
+	[[ $2 ]] || ((verbose>1)) && msg "$PF2 $1"
+#	read -r s < "$statusFile"; [[ $status = $s ]] || abort
+}
+
+# checkCTRLC status process [ errorMsg ]
+#  -- convenience exit function
+# Check if CTRL-C -- emerge returns 102
+# If no errorMsg, then return 0 if CTRL-C or ret value otherwise
+# -- so use cmd || checkCTRLC $? cmd (or you'll think a successful cmd was CTRL-C)
+# If errorMsg given, bail out
+# -- if it was CTRL-C exit 2, with "Cancelled process"
+# -- otherwise abort (exit 1) with errorMsg
+checkCTRLC() {
+	if (($1==102||$1>127)); then
+		echo "Cancelled $2" > /dev/tty
+		[[ $3 ]] && usrQuit
+		return 0
+	else echo "Exit: $3 $1" > /dev/tty
+		[[ $3 ]] && abort "$3 ($1)" "$1"
+	fi
+	return 1
+}
+
+doChild() {
+	pid=$!
+	echo "$pid" > "$childFile"
+	echo 1 > "$resFile"
+	trap "" EXIT
+	wait $pid; r=$?
+	kill -0 $$ 2>/dev/null && {
+		echo $r > "$resFile"
+		rm "$childFile" 2>/dev/null
+	}
+} 2>/dev/null
+
+# sets $ret (and returns its value)
+getResult() {
+	[[ -f "$resFile" ]] || abort TRACE 'No result file'
+	read ret < "$resFile"
+	[[ $ret ]] || abort TRACE 'Unable to read result'
+	rm "$resFile"
+	return $ret
+}
+
+doSync() {
+	startPhase 'emerge --sync' 'Unable to sync tree'
+	if ((server||quiet||!interactive)); then
+		emerge -q --sync || abort
+	else
+		local l inFiles=0
+		msg "$PF2 Syncing portage tree$SAVE [getting file list] .."
+		spun=0
+		while read -r l
+		do
+			[[ $l ]] || continue
+			backUp
+			if [[ $l = */* && $l != *\ * && $l != *://* ]]; then
+				((inFiles)) && echo -n "$RSTR$l$CLR" || {
+					echo -n "$RSTR$CLR
+$SAVE$l"
+					inFiles=1
+				}
+			elif [[ $l = 'deleting '* ]]; then echo -n "$RSTR<< ${l#deleting }$CLR"
+			else spin
+			fi
+		done < <(emerge --sync 2>&1 & doChild)
+		echo -n "$RSTR$CLR"
+		getResult || abort
+	fi
+	endPhase
+	if ((hasEIX)); then
+		startPhase eix-sync 'Unable to sync eix'
+		msg $PF2' Updating eix'
+		if ((quiet||server)); then
+			eix-sync -m -q
+		else
+			eix-sync -m
+		fi || abort
+		endPhase
+	fi
+}
+
+# should package in list be skipped
+# $1   -- atom to check
+# [$2] -- silent; if not depcheck, don't check noCompile
+# -- if $2 is ABI* won't check warn (doh ;)
+shouldSkip() {
+	local m h f
+	skipReason=
+	if inArr "$1" "${failList[@]}"; then
+		skipReason='has failed'
+		[[ $2 ]] || msg "$PF2 Skipping $1 - already failed"
+		return 0
+	elif inList "$1" "${blocked[@]}"; then
+		m="$WRN Skipping $1 - blocked"
+		f="BLOCKED"
+	elif isTarget "$1"; then
+		return 1
+	elif [[ $2 != ABI* ]] && inList "$1" "${WARN[@]}"; then
+		m="$ERR Skipping $1 - WARN"
+		h="This is typically as the package requires a major rebuild."
+		f="WARN"
+	elif [[ $SKIP ]] && inList "$1" $SKIP; then
+		m="$WRN Skipping $1"
+		f="SKIP"
+	elif [[ -z $2 || $2 = depcheck ]]; then
+		if inList "$1" "${nc[@]}"; then
+			m="$PF2 Skipping $1"
+			f="Skipped"
+#		elif inList "$1" "${nr[@]}"; then
+#			m="$PF2 Not Rebuilding $1"
+#			f="Not Rebuilt"
+		else return 1
+		fi
+	else return 1
+	fi
+	if [[ $2 ]]; then
+		[[ $2 = depCheck ]] || return 0
+		case $f in
+			BLOCKED ) m="is blocked";;
+			WARN ) m="is in WARN";;
+			Skipped ) m="is in NoCompile";;
+			SKIP ) m="is in SKIP";;
+#			'Not Rebuilt' ) m='is in NoRebuild';;
+			*) abort "Unknown: $f";;
+		esac
+		skipReason="$m"
+	else
+		msg "$m"
+		final "$f: $1"
+		[[ $h ]] && {
+			helpM "$h" warn
+			log "WARN: skipped $1"
+		}
+		haveSkipped=1
+	fi
+	return 0
+}
+
+# Main Control Loop
+# install packages in list array (which must have versions)
+# optional param means not a normal list (eg revdep)
+# - not checked against nc array; handleInstall diffs
+# - also resets package index p to zero
+installList() {
+	if [[ $1 ]]; then
+		p=0
+		setStatus "$1: Installing"
+	else setStatus "Installing"; fi
+	round=0
+	missingBins=()
+	while :
+	do
+		for i in "${list[@]}"
+		do
+			# one run thru the list of pkgs
+			#[[ $1 ]] && { echo "Installing $i"; } #set -x; }
+			if checkType "$i"; then # not compiled already
+				if shouldSkip "$i" "$1"; then
+					[[ $skipReason = 'has failed' ]] || let p++
+				else
+					handleInstall "=$i" "$1"
+					if ((collisionDetect)); then
+      IFS="$EOL"
+						echo "$i encountered a collision detect with:
+${problemFiles[*]}" >&2
+						unset IFS
+						msg 'This should be reported as a QA bug: see http://www.gentoo.org/doc/en/bugzilla-howto.xml' >&2
+					fi
+				fi
+			else wasInstalled "$i" || let p++
+			fi
+		done # next in list
+		((p==tot)) || errMsg "$tot packages, $p processed."
+		# Stop when can't install anything
+		((n+added)) || { reportFailure; return 1; }
+		# Installed something; any failures?
+		f=${#failList[@]}
+		if ((f)); then
+			((f==1)) && text=package || text=packages
+			verb "$f $text failed to install:
+  ${failList[*]}"
+			[[ -f $failFile ]] || abort TRACE "Can't find $failFile"
+			list=("${failList[@]}")
+			tot=${#list[@]}
+			((tot==f)) || abort TRACE 'tot!=failed'
+			((quiet)) || {
+				f=${#fR[@]}
+				if ((f>1)); then printArr "${fR[@]}"
+				else ((f)) && $fR
+				fi
+			}
+			m="${list[*]/%/,}"
+			m=${m%,}
+			msg "$ALT Retrying $tot $text:
+  $m
+"
+			m=
+			failList=()
+			fR=()
+			let round++
+		else # all done
+			[[ $1 ]] && setStatus "$1: Completed" || setStatus "Completed"
+			rm -f "$usrFile"
+			rm -f "$emergeFile"
+			return 0
+		fi
+		rm -f "$failFile" || abort TRACE "Unable to remove $failFile"
+		rm -f "$reasonsFile" 2>/dev/null
+		let n=p=0
+	done # next run thru list
+}
+# Maintenance functions: revdep depclean glsa
+
+# Wrapper for revdep-rebuild
+# kudos to kojiro and FuzzyRay for the new version :-)
+# - adds revdepOpts to command line
+# If called with revdep UPDATE-LIBS will update from revLibs file
+# If called with parameters, assumes checking soname/s (for command line use)
+# revLibs file is added to whenever a package message states a revdep is needed on a library
+# If called with sonames, revLibs are automatically added
+# - otherwise, if there are revLibs, they will be done first (calls self with UPDATE-LIBS)
+revdep() {
+	local OK runWith=$revdepOpts how=Revdep rl=() r
+	[[ -f "$revLibs" ]] && rl=($(<"$revLibs"))
+	OK='There are no dynamic links to'
+	[[ $status = ABI* ]] && how=$status
+	if [[ $1 = UPDATE-LIBS ]]; then
+		((${#rl[@]})) || {
+			warn 'No revdep libs to rebuild'
+			rm "$revLibs" 2>/dev/null
+			return 0
+		}
+	elif (($#)); then
+		for i; do
+			[[ " ${rl[*]} " = *" $i "* ]] || rl+=("$i")
+		done
+	else
+		((${#rl[@]})) && {
+			rl=()
+			revdep UPDATE-LIBS || {
+				if ((ask)); then confirmY 'Continue with standard revdep' || return 1; fi
+			}
+		}
+		OK='Dynamic linking on your system is consistent'
+		libs=
+	fi
+	((colour)) || runWith+=' -nc'
+	msg "$PF2 Running revdep-rebuild $runWith ${rl[*]}"
+	setTitle "Running revdep-rebuild"
+#	[[ -d $tmpDir ]] || abort
+	if ((${#rl[@]})); then
+		local ret=0
+		for i in "${rl[@]}"; do
+			if revdepR $runWith --library "$i"; then
+				edCmd="H$EOL?$i?s@$i@@${EOL}w${EOL}q"
+				ed -s "$revLibs" <<< "$edCmd" || abort TRACE "Unable to run $edCmd$EOL"
+			else ret=1
+			fi
+		done
+		((ret)) && return 1
+		rm "$revLibs"
+		return 0
+	else revdepR $runWith
+	fi
+}
+
+alias quitPhase='{ endPhase; return 1; }'
+
+revdepR() {
+	startPhase "$how"
+#	echo "$# args: $*"
+	echo revdep-rebuild -i -pq "$@"
+	revdep-rebuild -i -pq "$@" 2>/dev/null | tee "$usrFile"
+	r=$PIPESTATUS
+	((r)) && { checkCTRLC $r revdep 'Unable to resolve revdep-rebuild'; quitPhase; }
+	grep -qF "$OK" "$usrFile" || {
+		sed -n '/All prepared/,/Build finished/{/All prepared\|Build finished/!p}' "$usrFile" > "$tmpFile"
+		mv "$tmpFile" "$usrFile"
+		stripList "$usrFile" > "$emergeFile"
+		setStatus "$how: Resolved"
+		getList "$how" || quitPhase
+		((ask)) && { confirmY 'Proceed with rebuild of above?' || usrQuit; }
+		installList "$how" || quitPhase
+	}
+	rm "$usrFile"
+	endPhase
+	return 0
+}
+
+depclean() {
+	local f n i ebuild path m d
+	setTitle 'Generating depclean list..'
+	msg "$PFX Finding unused packages.."
+	> "$errFile"
+	emerge -pq $colourOpt --depclean 2> "$errFile" | tee >(mono > "$depFile")
+	r=$PIPESTATUS
+	((r)) && {
+		checkCTRLC $r depClean || {
+			cat "$errFile"
+			logW 'Unable to get depclean list'
+		}
+		rm -f "$depFile" "$errFile"
+		return 1
+	}
+	grep -q 'Dependencies could not be completely resolved' "$depFile" && {
+		rm -f "$depFile"
+		logW 'Unable to get depclean list'
+		return 1
+	}
+	num=$(tail -n 1 "$depFile")
+	numErr=($(wc -l "$errFile"))
+	((numErr)) || [[ ! $num ]] && {
+		log 'Errors with depclean list'
+		((quiet)) || { ((numErr)) && cat "$errFile"; }
+		rm -f "$errFile"
+		msg 'Please review the errors'
+		noob
+		return 1
+	}
+	rm -f "$errFile"
+	num=${num#*:}
+	msg "$num packages to remove"
+ IFS="$EOL"
+	m=($(sed -nr 's_(.*/.*): ([^ ]*) .*_\1@\2_p' "$depFile" |sort -u))
+	unset IFS
+#	exit
+	cmd=(dialog --separate-output --item-help --title 'Packages to be cleaned'
+		--backtitle 'Update -- depclean'
+		--checklist 'Select packages to keep' 0 0 0)
+	# test
+	#for c in "${cmd[@]}"; do [[ $c = *' '* ]] && echo -n "'$c' " || echo -n "$c "; done; echo; exit
+
+	n=${#cmd[@]}
+	baseIndex=n
+	i=0
+	for f in "${m[@]}"; do
+		cmd[n++]=$i
+		cmd[n++]="${f/@/ }"
+		cmd[n++]=off
+		cpv="${f/@/-}"
+		cp="${f%@*}"
+		path="$cp/${cpv#*/}".ebuild
+		ebuild=
+		for d in $PORTDIR_OVERLAY "$PORTDIR"
+		do
+			[[ -f "$d"/"$path" ]] && {
+				ebuild="$d"/"$path"
+				break
+			}
+		done
+		if [[ $ebuild ]]; then
+			cmd[n++]=$(sed -n '/^DESCRIPTION="/ {s///;s/"$//p;q;}' "$ebuild")
+		else
+			d=
+			((hasEIX)) && d=$(eix -n "$cp"|sed -n '/.*Description:[[:space:]]*/ {s///p;q;}') \
+				|| d='Unknown and eix unavailable'
+			cmd[n++]="${d:-Unknown - punted?}"
+		fi
+		let i++
+	done
+	res=$("${cmd[@]}" 2>&1 >/dev/tty) || {
+		case "$?" in
+		-1) abort "Bad cmd: ${cmd[*]}"
+;;		1) :
+;;		2) :
+;;		3) :
+;;		*) :
+;;		esac
+	}
+	# test
+	#echo "Output:
+	#$res
+	echo 'Keeping..'
+ IFS="$EOL"
+	while read i
+	do
+		[[ $i ]] || continue
+		#echo "'$i'"
+		p=${m[i]}
+		echo echo "${p%@*}" '>>' "$worldFile"
+	done <<< "$res"
+	unset IFS
+	return 0
+}
+
+glsa() {
+local curr pkg descr app GLSA_REGEX='([[:alpha:]-]*/[^ ]*) \(([[:alnum:]._-]*)\)' from
+	msg "$PF2"' Checking GLSAs.. this will take a while ;)'
+	list=()
+	# want to append for pretend
+	((pretend)) || {
+		> "$usrFile"
+		> "$emergeFile"
+	}
+	while read -r l
+	do
+		[[ $l ]] || continue
+		if [[ $l = 'Checking GLSA'* ]]; then
+			l="$PFX GLSA $GN${l#Checking GLSA}$NO"
+		elif [[ $l =~ $GLSA_REGEX ]]; then
+			pkg=${BASH_REMATCH[1]}
+			from=${BASH_REMATCH[2]}
+			((pretend)) && {
+				checkType "$pName" && {
+					newer "$pkg" "$packageName-$new" && continue
+					getPkgNameVer "$pkg"
+				}
+			}
+			target+=" $pkg"
+			echo "[  U ]	$pkg	[$from]" >> "$emergeFile"
+			l="[${TO}Upgrade$NO] $pkg [$from]"
+		else continue
+		fi
+		echo "$l"
+		echo "$l" >> "$usrFile"
+	done < <(glsa-check -pn affected 2>/dev/null || checkCTRLC GLSA-check 'GLSA check failed')
+	setStatus 'GLSA: Resolved'
+	tot="${#list[@]}"
+	((tot)) || {
+		msg $TIP' There are no GLSAs to install.'
+		doGLSA=0
+		saveTarget
+ 		return 0
+	}
+	msg "$PFX $tot in total"
+	((pretend)) || {
+		((ask)) && confirmY 'Proceed with GLSA install' || return 0
+		failList=()
+		t=()
+		let n=p=pf=0
+		installList GLSA || return 1
+		doGLSA=0
+		saveTarget
+		rm -f "$glsaFile"
+	}
+	return 0
+}
+
+pwnt=0
+ricer() {
+	((pwnt)) || {
+		echo "$YL** $BR\o/$NO ZOMG U is da l33t ${RD}ricer$NO."
+		pwnt=1
+		final "$RD**$NO If you insist on settings which will ${RD}disqualify$NO you from bug-support, add ${BL}IS_IT_COS_I_IZ_L33T=1$NO
+** to the config file for this script to turn off the $GR'annoying ricer'$NO messages.
+** And yes, ${BR}that$NO's why we don't want to support you, cos u is l33t hax0r and we is l4m3.. $GR;)$NO"
+	}
+	echo "$RD**$NO $*"
+}
+
+learning=0
+noob() {
+	((learning)) || {
+		learning=1
+		((verbose)) && final "$YL**$NO You can turn off tips with ${GN}novice=0$NO in the config file."
+	}
+	[[ $2 ]] && msg "$WRN ${YL}Tip!$NO $1" || [[ $1 ]] && msg "${YL}[Tip]$NO $1" || \
+		msg ${YL}[Tip]$NO'If you are in difficulty search site:forums.gentoo.org
+or the m-l at http://dir.gmane.org/gmane.linux.gentoo.user'
+}
+
+# Save target information
+echoTarget() {
+	echo "$target"
+	((install)) && echo 'install' || echo 'standard'
+	((doRevdep)) && echo 'revdep' || echo 'standard'
+	((doDepclean)) && echo 'depclean' || echo 'standard'
+	((doGLSA)) && echo 'glsa' || echo 'standard'
+	echo "$param"
+	echo "$binOpt"
+	((binHost)) && echo 'binHost' || echo 'standard'
+}
+
+saveTarget() {
+	echoTarget > "$targetFile"
+}
+
+completeStage() {
+	local test=${1:-$currentStage}
+	case $test in
+		GLSA) doGLSA=0;;
+		DepClean) doDepclean=0;;
+		Revdep) doRevdep=0;;
+		*) abortMsg="Unknown stage $currentStage"; abort;;
+	esac
+	saveTarget
+#	setStatus "$test: Completed"
+}
+
+# original portage regex (cleaned up;) slightly modded for inter-revs
+VERSION='^(cvs\.)?([0-9]+)((\.[0-9]+)*)([a-z]?)((_(pre|p|beta|alpha|rc)[0-9]*)*)(-r([0-9.]+))?$'
+# make sure there's only one . and split how we want it
+interRev='^0([0-9]+)\.([0-9]+)$'
+# ordered from lowest to highest (newest)
+suffix=(alpha beta pre rc p)
+LC_ALL=C
+
+# returns true if equal, 1 if $1 newer than $2, 2 if older. 3 on err
+verCompare() {
+local a b c d i n
+	[[ $# = 2 ]] || { abort 'Bad use of compare'; }
+	[[ $1 = $2 ]] && return 0
+	[[ $1 =~ $VERSION ]] && a=("${BASH_REMATCH[@]}")
+	[[ $2 =~ $VERSION ]] && b=("${BASH_REMATCH[@]}")
+	((${#a[@]}!=11)) && { abort "Bad param to compare: $1"; }
+	((${#b[@]}!=11)) && { abort "Bad param to compare: $2"; }
+	[[ ${a[1]} = ${b[1]} ]] || { [[ ${a[1]} = cvs ]] && return 1 || return 2; }
+	# First integer
+	[[ ${a[2]} = ${b[2]} ]] || { ((${a[2]}>${b[2]})) && return 1 || return 2; }
+	# Everything after the 'decimal' point
+	[[ ${a[3]} = ${b[3]} ]] || {
+		IFS=.
+		c=(${a[3]#.})
+		d=(${b[3]#.})
+		unset IFS
+		# go thru as few as possible
+		((${#c[@]} < ${#d[@]})) && n=${#c[@]} || n=${#d[@]}
+		for ((i=0;i<n;i++))
+		do [[ ${c[i]} = ${d[i]} ]] || {
+				comparePart "${c[i]}" "${d[i]}" || return $?
+				abort TRACE "${c[i]} = ${d[i]}"
+			}
+		done
+		# the one with any left (if there is one) is newer
+		((${#c[@]} == ${#d[@]})) || { ((${#c[@]} > ${#d[@]})) && return 1 || return 2; }
+	}
+	# Optional char suffix just use string compare
+	[[ ${a[5]} = ${b[5]} ]] || { [[ ${a[5]} > ${b[5]} ]] && return 1 || return 2; }
+	# Suffix
+	[[ ${a[6]} = ${b[6]} ]] || {
+		IFS=_
+		c=(${a[6]#_})
+		d=(${b[6]#_})
+		unset IFS
+		((${#c[@]} < ${#d[@]})) && n=${#c[@]} || n=${#d[@]}
+		for ((i=0;i<n;i++))
+		do [[ ${c[i]} = ${d[i]} ]] || {
+				compareSuffix "${c[i]}" "${d[i]}" || return $?
+				abort "Internal error in $FUNCNAME ${c[i]} = ${d[i]}"
+			}
+		done
+		# one without any left is implicit _p0 (as per portage)
+		if ((${#c[@]} < ${#d[@]})); then
+			compareSuffix _ "${d[n]}" || return $?
+			abort "Internal error in $FUNCNAME _ = ${d[n]}"
+		elif ((${#c[@]} > ${#d[@]})); then
+			compareSuffix "${c[n]}" _ || return $?
+			abort "Internal error in $FUNCNAME ${c[n]} = _"
+		fi
+	}
+	# Ebuild revision number; if it contains a . it's inter-revision (prefix portage)
+	c=${a[10]}
+	d=${b[10]}
+	[[ $c = $d ]] && return 0
+	[[ $c ]] || return 2
+	[[ $d ]] || return 1
+	if [[ $c = *.* ]]; then
+		[[ $c =~ $interRev ]] || { abort TRACE "$1: Bad inter-revision $c"; }
+		a=${BASH_REMATCH[1]}
+		c=${BASH_REMATCH[2]}
+	else
+		a=_
+		c=${c#-r}
+	fi
+	if [[ $d = *.* ]]; then
+		[[ $d =~ $interRev ]] || { abort TRACE "$2: Bad inter-revision $d"; }
+		b=${BASH_REMATCH[1]}
+		d=${BASH_REMATCH[2]}
+	else
+		b=_
+		d=${d#-r}
+	fi
+	((c>d)) && return 1
+	((d>c)) && return 2
+	[[ $a = $b ]] && return 0
+	((a>b)) && return 1
+	((b>a)) && return 2
+	abort TRACE "Inter-rev error $a [$b] = $c [$d]"
+}
+
+# compare two number parts of versions
+# if either starts with 0, floating point style is used
+comparePart() {
+	local a b
+	[[ $# = 2 ]] || { abort TRACE 'Bad use of comparePart'; }
+	[[ $1 = $2 ]] && return 0
+	a=$1
+	b=$2
+	if [[ ${1:0:1} = 0 || ${2:0:1} = 0 ]]; then
+		((${#1}==${#2})) || {
+			# pad with trailing zeros to length of longest
+			if ((${#1} > ${#2})); then
+				b=$(printf "%-${#1}s" $2)
+				b=${b// /0}
+			else
+				a=$(printf "%-${#2}s" $1)
+				a=${a// /0}
+			fi
+		}
+	fi
+	((a==b)) && return 0
+	((a>b)) && return 1
+	((a<b)) && return 2
+	abort TRACE "$1 $2"
+}
+
+# compare two suffices
+# if either is _, it is an implicit p0 (< p < p0)
+compareSuffix() {
+	local a b c d
+	[[ $# = 2 ]] || { abort TRACE 'Bad use of compareSuffix'; }
+	[[ $1 = $2 ]] && return 0
+	if [[ $1 = _ ]]; then
+		[[ ${2%%[0-9]*} = p ]] && return 2
+		return 1
+	elif [[ $2 = _ ]]; then
+		[[ ${1%%[0-9]*} = p ]] && return 1
+		return 2
+	fi
+	a=${1%%[0-9]*}
+	b=${2%%[0-9]*}
+	[[ $a = $b ]] || {
+		getArrPos "$a" "${suffix[@]}" && { abort TRACE "Unknown suffix $a :$1"; }
+		c=$?
+		getArrPos "$b" "${suffix[@]}" && { abort TRACE "Unknown suffix $b :$2"; }
+		d=$?
+		((c==d))
+		((c>d)) && return 1
+		((c<d)) && return 2
+		abort "Internal error in $FUNCNAME $c=$d :$1 $2"
+	}
+	c=${1#$a}
+	d=${2#$b}
+	[[ $c = $d ]] && return 0
+	[[ $c ]] || { [[ $d ]] && return 2; }
+	[[ $d ]] || { [[ $c ]] && return 1; }
+	# both have value or one of the three tests would have decided it
+	comparePart "$c" "$d" && { abort TRACE "$c=$d :$1 $2"; }
+	return $?
+}
+
+# 0=not found
+# N=index+1
+getArrPos() {
+	local i c=0 s=$1
+	shift
+	for i; do
+		[[ $s = $i ]] && return $((++c))
+		let c++
+	done
+	return 0
+}
+
+# Can't use exit code as only 0-255
+getPkgPos() {
+	local s j opt=$- f=1
+	[[ $opt = *x* ]] && set +x
+	if [[ $2 = Warn ]]; then
+		if [[ ${list[currPos]} = $1* ]]; then
+			f=0
+		else
+			for ((j=0;j<tot;j++)); do
+				[[ ${list[j]} = $1* ]] && { currPos=$j; f=0; break; }
+			done
+		fi
+	elif [[ $1 = *-[0-9]* || $1 = *-cvs.[0-9]* ]]; then
+		if [[ ${list[currPos]} = $1 ]]; then
+			f=0
+		else
+			for ((j=0;j<tot;j++)); do
+				[[ ${list[j]} = $1 ]] && { currPos=$j; f=0; break; }
+			done
+		fi
+	else
+		if [[ ${list[currPos]} = $1-[0-9]* || ${list[currPos]} = $1-cvs.[0-9]* ]]; then
+			f=0
+		else
+			for ((j=0;j<tot;j++)); do
+				if [[ ${list[j]} = $1-* ]]; then
+					ver=${list[j]#$1-}
+					[[ $ver = [0-9]* || $ver = cvs.[0-9]* ]] && { currPos=$j; f=0; break; }
+				fi
+			done
+		fi
+	fi
+	[[ $opt = *x* ]] && set -x
+	return $f
+}
+
+# Convenience wrappers
+newer() {
+	verCompare "$1" "$2"
+	[ $? = 1 ]
+}
+
+older() {
+	verCompare "$1" "$2"
+	[ $? = 2 ]
+}
+
+outputRun=
+setOutputFiles() {
+	emergeFile="$dir/$outputRun"emergeList
+	usrFile="$dir/$outputRun"colourOutput
+	targetFile="$dir/$outputRun"target
+	statusFile="$dir/$outputRun"status
+	failFile="$dir/$outputRun"failList
+	reasonsFile="$dir/$outputRun"failReasons
+	depFile="$dir/$outputRun"depclean-out
+}
+
+# filter a download command
+# usage: download [binhost] < <(cmd)
+download() {
+	local l
+#	spun=0
+	[[ $1 ]] && gotMD5=0
+	while read -r l
+	do
+		#echo "'$l'"; continue
+#		backUp
+		if [[ $l = '!!!'* ]]; then
+			errMsg "${l#!!!}"
+		elif [[ $l =~ $PERCENT ]]; then
+			progress
+		elif [[ $l = [0-9][0-9]:[0-9][0-9]:[0-9][0-9]\ \(* ]]; then
+			endDL
+		elif [[ $l =~ $DOWNLOADING ]]; then
+			startDL
+		elif [[ $1 ]] && [[ $l = MD5:* ]]; then
+			gotMD5=1
+		elif ((verbose>1)); then
+			echo "$l"
+#		else spin
+		fi
+	done
+}
+
+dlBin() {
+	local f b="All/${1#*/}.tbz2" t="$PKGDIR/$1.tbz2"
+	[[ -f $t || -f "$PKGDIR/$b" ]] && return 0
+	msg "$PF2 Downloading binary for $package"
+#	set -x
+	for f in "$1.tbz2" "$b"; do
+		IFS="$EOL"
+		headers=($(curl -I "$PORTAGE_BINHOST/$f" 2>/dev/null|tr -d $'\r'))
+		unset IFS
+		[[ $headers = *200[[:space:]]OK* ]] && break
+	done || { set +x; return 1; }
+#	set +x
+	msg "Downloading $GR${1#*/}$NO"
+	download < <(wget -O "$t" "$PORTAGE_BINHOST/$f" 2>&1 || rm "$t" 2>/dev/null)
+	[[ -f $t ]] || {
+		msg "$EOL$WRN Unable to download $PORTAGE_BINHOST/$f"
+		return 1
+	}
+	#echo "ln -s '$t' '$PKGDIR/$b'"
+	ln -s "$t" "$PKGDIR/$b"
+	return 0
+}
+
+dlQ() {
+	checkPkgFile
+	[[ -f $t || -f "$PKGDIR/$l" ]] && return 0
+	msg "$PF2 Downloading binary for $package"
+	download bin < <(qmerge -F "$1" 2>&1 & doChild)
+	read ret < "$resFile"
+	[[ $ret ]] || abort
+	((ret||!gotMD5)) && {
+		m="Unable to download $1"
+		((ret==1||ret==0)) || m+=" ($ret)"
+		msg "$EOL$WRN $m"
+		ret=1
+	}
+	return $ret
+	echo 1 > "$resFile"
+}
+type -P qmerge >/dev/null && hasQ=1 || hasQ=0
+
+if ((hasQ)); then
+	dlBinPkg() { dlQ "$@"; }
+else
+	dlBinPkg() { dlBin "$@"; }
+fi
+
+checkedPkgFile=0
+checkPkgFile() {
+	((checkedPkgFile)) && return 0
+	local dl= len lm m
+	if [[ $1 ]]; then
+		for f in All/Packages Packages; do
+			msg "$PFX Checking $PORTAGE_BINHOST/$f"
+			download < <(wget -O "$tmpFile" "$PORTAGE_BINHOST/$f" 2>&1 || rm "$tmpFile" 2>/dev/null)
+			[[ -f "$tmpFile" ]] && { mv "$tmpFile" "$packagesFile"; break; }
+		done || abort "Unable to download from $PORTAGE_BINHOST"
+		dl=0
+	else
+		for f in All/Packages Packages; do
+			msg "$PFX Checking $PORTAGE_BINHOST/$f"
+   IFS="$EOL"
+			headers=($(curl -I "$PORTAGE_BINHOST/$f" 2>/dev/null|tr -d $'\r'))
+			unset IFS
+			# printArr "${headers[@]}"
+			[[ $headers = *200[[:space:]]OK* ]] && break
+		done || abort "Unable to download Packages file from $PORTAGE_BINHOST"
+		[[ -f "$dir/"Timestamp ]] && read ts < "$dir/"Timestamp || ts=
+		for i in "${headers[@]:1}"; do
+			[[ $i = Last-Modified:* ]] && {
+				lm=${i#*: }
+			}
+			[[ $i = Content-Length:* ]] && {
+				let len=${i#*: } 2> /dev/null
+				((len)) || abort
+			}
+		done
+		if [[ -f $packagesFile ]]; then
+			if [[ $lm ]]; then
+				msg "$PFX Last Modified: $lm"
+				lm=$(date -d "$lm" +%s)
+				[[ $lm = $ts ]] || dl=1
+			else
+				warn 'No last-modified header'
+				l=$(stat -c '%s' "$packagesFile")
+				if [[ $len = $l ]]; then
+					((intro&&ask)) && { confirmY 'Lengths match; OK to use?' || dl=1; }
+				else echo "'$len' '$l'"
+					dl=1
+				fi
+			fi
+		else dl=1
+		fi
+	fi
+	((dl)) && {
+		download < <(wget -O "$tmpFile" "$PORTAGE_BINHOST/$f" 2>&1 || rm "$tmpFile" 2>/dev/null)
+		[[ -f "$tmpFile" ]] && mv "$tmpFile" "$packagesFile" || abort "Unable to download $PORTAGE_BINHOST/$f"
+		[[ $lm ]] && echo "$lm" > "$dir/"Timestamp
+	}
+	checkedPkgFile=1
+}
+
+doFetch() {
+	spun=0
+	if ((binHost)); then
+		checkPkgFile "$@"
+#		ts=$(sed -n '/TIMESTAMP: / { s///p;q;}' "$packagesFile")
+		msg "$PF2 Downloading ${GR}binaries$NO.."
+		for i in "${list[@]}"; do
+			[[ -f "$PKGDIR/$i.tbz2" ]] && continue
+			getPkgNameVer "$i"
+			[[ -f "$PKGDIR/All/$pName.tbz2" ]] && continue
+			backUp
+			msg "$HI$pCat$NO -- $GN$pN$NO:"
+			download < <(qmerge -F "$i" 2>&1 || echo "!!! Unable to download $i")
+		done
+	else
+		msg "$PF2 Downloading ${GN}sources$NO.."
+		sum=0
+		for i in "${list[@]}"; do
+			if ((verbose>1)); then
+				emerge -fq "=$i" || abort 'Unable to fetch'
+			else
+				sz=$(awk -F $'\t' '{ if ($2=="'"$i"'") {print $5; exit;}}' "$emergeFile")
+				tmp=${sz/ [kK][bB]}
+				tmp=${tmp//,}
+				((tmp)) && {
+					backUp
+					msg "$GN$i$NO:"
+					((tmp>1024)) && echo $((tmp/1024))MB || echo ${tmp}KB
+					download < <(emerge -fq "=$i" 2>&1)
+					((sum+=tmp))
+					sed -i "\|$i| s/$sz/0 kb/" "$emergeFile"
+					sed -i "\|$i| s/$sz/0 kb/" "$usrFile"
+				}
+			fi
+		done
+		if ((sum)); then
+			backUp
+			if ((sum>1024)); then sum=$((sum/1024))MB
+			else sum=${sum}KB
+			fi
+			msg "$PF2 Fetched $sum sources, $tot packages to install.."
+		else msg $ALT' Nothing to download'
+		fi
+		unset sum
+		((fetchOnly)) && exit 0
+	fi
+	return 0
+}
+
+ensureCheckedBinHost=0
+# returns true if package already on system
+# returns false if package installed successfully
+# aborts script if unable to install package required for command
+#  - NB even if user opts out
+ensure() {
+	(($#<3||$#>4)) && abort TRACE 'Usage: ensure cmd cat/pkg "(to do|for) what purpose" [stage=Setup]'
+	type -P "$1" >/dev/null && return 0
+	[[ function = $(type -t msg 2>/dev/null) ]] || { macro; setOutputFiles; }
+	((ensureCheckedBinHost)) || {
+		checkBinHost
+		ensureCheckedBinHost=1
+	}
+	if ((ask)); then
+		confirmYes "Install $HI$2$NO? ${BU}Required$NO $3" "Need to install $1" || abort "$1 needed $3"
+	else
+		msg "Installing $HI$2$NO -- ${BU}Required$NO $3"
+	fi
+	local usrFile="$dir/"Setup-colour emergeFile="$dir/"Setup-list target=$2 how="${4:-Setup}" binOpt param install=1
+	((resume)) && [[ -f "$emergeFile" ]] || {
+		while ! resolve "$how"; do :; done
+	}
+	getList "$how"
+	((binHost)) && {
+		((fetch||server&&hasQ)) && doFetch "$how"
+		((binOnly)) && binOpt=K || binOpt=k
+	}
+	installList "$how" || abort "Emerge of $2 failed."
+	hash -r
+	return 1
+}
+
+# Find out if a specific option is set before running getopts
+# BASH 3.0/1-3.2 regex compatibility -> use vars for regexes
+checkOpt() {
+	local r
+	r='[[:space:]]-[^[:space:]/]*'"$1"
+	shift
+	[[ " $*" =~ $r ]] && return 0
+	return 1
+}
+
+# might be set by config or at command-line
+checkBinHost() {
+	((binOnly)) && binHost=1
+	((binHost)) && {
+		[[ $PORTAGE_BINHOST && $PKGDIR ]] || abort 'PORTAGE_BINHOST and PKGDIR must be set in make.conf to use binHost'
+		((binOnly)) && binOpt=K || binOpt=k
+	}
+}
+
+
+EOL=$'\n'
+TAB=$'\t'
+######################
+## Start of program ##
+######################
+prog="${0##*/}"
+if checkOpt T "$@"; then
+	useTerminal=1
+	let colour=interactive=errToTerm=1
+	inCron=0
+	checkOpt x "$@" && server=1
+else
+	checkOpt c "$@" || ((!interactive)) && colour=0 || colour=1
+	checkOpt x "$@" && { server=1; colour=0; } || server=0
+	useTerminal=0
+fi
+setColours
+checkOpt [?h] "$@" && helpMsg "$@"
+((EUID)) && die 'You need to be root to run this script'
+checkOpt r "$@" && resume=1 || resume=0
+# Don't have a cow about us quoting this; can /you/ *guarantee* the filename?
+tmpDir=~/."$prog"
+# we have to do this as subshells have same name and we want to signal running (sorry greycat ;-)
+pidFile="$tmpDir"/PID
+[[ $TERM = *screen* ]] && screen=1 || screen=0
+# check Lock -- http://wooledge.org/mywiki/BashFAQ/045
+mkdir "$tmpDir" 2>/dev/null || {
+	crashed=1
+	if [[ -f $pidFile ]]; then
+		read PID < "$pidFile"
+		if ((PID)); then
+			if for i in $(pgrep "$prog")
+			do
+				[[ $i = $PID ]] && break
+			done; then
+			# another update is running; if we're automated just bail
+				((server)) && die 'Already running'
+				if [[ $1 = '--stop' ]] || confirmNo 'Update is already in progress - do you want me to tell it to stop after the next package -- this is the same as '"'$prog --stop'"
+				then kill -USR1 "$PID" && echo 'Signal sent'
+				fi
+				exit 0
+			fi
+			[[ $1 = '--stop' ]] && { rm -fR "$tmpDir"; echo 'Already finished (unclean shutdown)'; exit 0; }
+			# crashed; user knows and is resuming?
+			((resume)) || {
+				# no, but if it's automated we're just going to resume
+				((server)) || confirmYes "Unclean shutdown -- about to resume, unless you tell me not to, in which case I'll start again
+with the update you requested: $prog $*" && resume=1
+			}
+		fi
+		# not running so get rid of lock dir
+		rm -fR "$tmpDir"
+		mkdir "$tmpDir" 2>/dev/null || die 'Unable to lock'
+		unset PID
+	fi
+}
+trap 'reset' EXIT
+trap 'ctrlC' INT
+trap 'error' USR2
+trap 'exit 4' QUIT USR1 TERM
+[[ $1 = '--stop' ]] && { echo 'Was not running.'; exit 0; }
+echo $$ > "$pidFile"
+childFile="$tmpDir"/child
+
+if [[ $UPDATE_CONFIG ]]; then
+	[[ -f $UPDATE_CONFIG ]] && configFile="$UPDATE_CONFIG" || {
+		echo '!! Unable to read '"$UPDATE_CONFIG' ;using $configFile"
+		((server)) && exit 1
+		confirmYes 'Use default config file' || exit 2
+	}
+fi
+
+# Options which can be set in config
+let intro=novice=1
+#server=0
+# showVersion in standard package list (resume only atm)
+let logging=fetch=showVer=0
+# Binary package options (g and G imply k/K)
+binOpt=
+# kernel and linux-headers never rebuilt - unless in cmd-line
+kernel=sys-kernel/gentoo-sources
+# these will be searched for, in the order given here
+configUpdater=(etc-proposals cfg-update dispatch-conf etc-update)
+# where to store emergeList, target and status
+dir=~/emerge
+# packages you never want installed by this script (skip list)
+# - override by specifying the pkg on the command line
+noCompile=()
+# these will be up/downgraded
+noRebuild=()
+# toolchain ones will not downgrade (without -X)
+noDowngrade=()
+# packages to rebuild on kernel upgrade: -Y
+kdep=()
+#  - external modules are handled by -W (module-rebuild)
+# tmpfs size in MB: -m to enable
+size=256
+TAB_WIDTH=8
+# packages you like to know about
+watchList=(sys-apps/bash)
+# for alt installs
+maskFile=/etc/portage/package.mask
+worldFile=/var/lib/portage/world
+warnFile=/etc/warning
+[[ -d $maskFile ]] && maskFile+="/$prog"
+# in case this is install
+[[ $HOME = / ]] && dir=/root/emerge
+if [[ -f $configFile ]]; then
+	source "$configFile" || {
+		echo '!! Errors processing config file' >&2
+		exit 3
+	}
+else
+	echo "** Welcome to 'update' from #friendly-coders@irc.freenode.org
+		We're still here for you (TM) ;p"
+	{
+	echo "# Version:$Version"
+	echo '# Config file for update -- from #friendly-coders@irc.freenode.org
+# Please do not amend or delete the Version line and leave it at the top of the file.'
+	sed -n '/^# Usage: /,/^# Kudos /p;/^# Kudos/q' "$0"
+	echo '# Certain settings are hard-coded so that we can be sure that the script will not hose our system
+#  - to this end three array variables below are stacked with settings in the script
+# These are: noCompile, noRebuild, and noDowngrade'
+	sed -n '/Gentoo hints/,/Luv to gentoo/p; /Luv to gentoo/q' "$0"
+	} > "$configFile"
+	source "$configFile" || {
+		echo '!! Errors with default config file!' >&2
+		exit 3
+	}
+fi
+errFile="$tmpDir"/errList
+resFile="$tmpDir"/result
+tmpFile="$tmpDir"/tmp
+
+# Get portage config
+config='PORTDIR PORTDIR_OVERLAY EMERGE_DEFAULT_OPTS FEATURES PORTAGE_ELOG_SYSTEM PORT_LOGDIR PORTAGE_TMPDIR PORTAGE_BINHOST PKGDIR ACCEPT_KEYWORDS CFLAGS CXXFLAGS LDFLAGS NOCOLOR I_KNOW_WHAT_I_AM_DOING'
+for i in $config
+do read -r "$i"
+#	echo "$i='${!i}'"
+done < <(portageq envvar $config)
+#exit
+unset config
+
+if checkOpt G "$@"; then binOnly=1
+elif checkOpt g "$@"; then binHost=1
+fi
+packagesFile="$PORTAGE_TMPDIR/"portage/Packages
+
+backupMask="$dir"/backupMask
+if [[ -d $dir ]]; then
+	[[ -f $backupMask ]] && {
+		cp "$backupMask" "$maskFile" && {
+			echo "Restored $maskFile from $backupMask."
+			rm -f "$backupMask"
+		} || abort "Unable to restore $maskFile from $backupMask."
+	}
+else
+	[[ -e $dir ]] && abort "$dir already exists and is not a directory"
+	echo "We need to make $dir as it does not exist"
+	confirmYes 'Make directory for emerge list and status files' || exit 2
+	mkdir -p "$dir" || abort "Unable to make $dir"
+fi
+if (($#==0)) || checkOpt a "$@"; then
+	ask=1
+else ask=0
+fi
+ensure ed sys-apps/ed 'to edit files portably (only 70KB!;)'
+ensure curl net-misc/curl 'to download files'
+ensure qmerge portage-utils 'to deal with portage more efficiently, and dl binary pkgs'
+hasQ=1
+dlBinPkg() { dlQ "$@"; }
+ensure revdep-rebuild app-portage/gentoolkit 'to maintain the system properly'
+unset ensureCheckedBinHost
+
+mainEmergeFile="$dir/"emergeList
+warnColour="$dir/"WARN-colourOutput
+warnList="$dir/"WARN-emergeList
+taskList="$dir/"WARN-tasks
+preRevdep="$dir/"WARN-preRevdep
+configNeededFile="$dir/"etcUpdated
+revLibs="$dir/"revdepLibs
+
+checkPkgs() {
+	checked=()
+	for i
+	do
+		if [[ $i = */* ]]; then
+			cat=${i%/*}; pkg=${i#*/}
+			[[ $i = $cat/$pkg ]] && checked+=($i)
+		fi || echo "$i does not appear to be a valid package"
+	done
+}
+# allow users to use make.conf style vars as well as arrays
+((${#noCompile[@]}>1)) && checkPkgs "${noCompile[@]}" || checkPkgs $noCompile
+nc+=("${checked[@]}")
+((${#noDowngrade[@]}>1)) && checkPkgs "${noDowngrade[@]}" || checkPkgs $noDowngrade
+nd+=("${checked[@]}")
+((${#noRebuild[@]}>1)) && checkPkgs "${noRebuild[@]}" || checkPkgs $noRebuild
+# hard coded
+nr=("$kernel" sys-kernel/linux-headers "${nr[@]}" "${checked[@]}")
+((${#watchList[@]}>1)) && checkPkgs "${watchList[@]}" || checkPkgs $watchList
+wl=("${checked[@]}")
+setOutputFiles
+
+[[ -f $configNeededFile ]] && {
+	read configUpdatesPending < "$configNeededFile"
+	echo "!! You have $configUpdatesPending config file updates pending!" >&2
+	rm $configNeededFile # only warn once (until a package is emerged)
+} || configUpdatesPending=0
+
+# User options which can be set via portage config
+[[ $I_KNOW_WHAT_I_AM_DOING = [Yy1]* ]] && { novice=0; rice=1; }
+unset I_KNOW_WHAT_I_AM_DOING
+if [[ $NOCOLOR = true || $NOCOLOR = yes ]] && ((colour));
+then resetColours
+	colour=0
+fi
+defaultVerb=
+[[ $EMERGE_DEFAULT_OPTS = *--quiet* ]] && {
+	export EMERGE_DEFAULT_OPTS=${EMERGE_DEFAULT_OPTS/--quiet}
+	quiet=1
+	defaultVerb=q
+}
+[[ $EMERGE_DEFAULT_OPTS = *--verbose* ]] && {
+	export EMERGE_DEFAULT_OPTS=${EMERGE_DEFAULT_OPTS/--verbose}
+	verbose=1
+	defaultVerb=v
+}
+((quiet&&verbose)) && abort 'Both quiet and verbose set in EMERGE_DEFAULT_OPTS.'
+# Experimental
+#if [[ $ROOT && $ROOT != / ]]; then
+#	[[ -d $ROOT/root ]] echo "Cannot find dir $CH_ROOT/root"
+#fi
+
+[[ $FEATURES = *notitles* ]] || export FEATURES=notitles # stackable
+[[ $PORTAGE_ELOG_SYSTEM = *echo* ]] && export PORTAGE_ELOG_SYSTEM="${PORTAGE_ELOG_SYSTEM/echo}"
+
+# Updater
+etcUpdater=
+for c in "${configUpdater[@]}"; do
+	if i=$(type -P "$c"); then
+		etcUpdater=$i
+		break
+	fi
+done
+[[ $etcUpdater ]] || abort 'Unable to find etc-update tool in :'"${configUpdater[*]}"
+type -P eix >/dev/null && hasEIX=1 || hasEIX=0
+type -P autounmask >/dev/null && hasAU=1 || hasAU=0
+
+# User options which have to be set in command line
+let ask=resume=pretend=quiet=verbose=install=syncFirst=doRevdep=doGLSA=doDepclean=doKdeps=doKmods=0
+# will we be doing an emerge on this run?
+let doEmerge=1
+# Tree options to emerge
+param=
+# Failed pkgs
+failList=()
+# Reasons for failure (cmd to check log file)
+fR=()
+# Targets for install
+t=()
+# Packages failed in prior run (resume)
+pf=0
+# packages with binaries missing (when using -G)
+missingBins=()
+IFS="$EOL"
+WARN_FULL=($(sed '/^[[:space:]]*#/d' "$warnFile"))
+unset IFS
+WARN=("${WARN_FULL[@]%%$'\t'*}")
+if (($#==0)) || [[ $# = 1 && $1 = -s ]]; then
+	ask=1
+	[[ $1 = -s ]] && syncFirst=1
+	target='world'
+	param='-uDN'
+	doRevdep=1
+#	doDepclean=1
+#	doGLSA=1
+	macro
+	msg "$PF2 Emerging $HI-uDN world$NO then running ${HI}revdep-rebuild$NO."
+	helpM "You will be asked for confirmation; ${BU}CTRL-C$NO to abort at any time"
+elif [[ $# = 1 && $1 = -* && $1 != *[^sqvpaFSCRMT-]* ]]; then
+	[[ $1 = *M* && $1 = *[SCR]* ]] && helpM 'M covers all maintenance options' warn
+	checkFlags "$1"
+	target='world'
+	param='-uDN'
+	if [[ $1 = *[SCRM]* ]]; then
+		doEmerge=0
+		target=[None]
+	fi
+	((pretend)) || {
+		if ((doEmerge)); then
+			m="$PF2 Emerging $HI-uDN world$NO"
+			needMaint && m+=', then running: '
+		else
+			m="$PF2 Maintenance mode: "
+		fi
+		((doGLSA)) && m+="${GN}glsa-check$NO "
+		((doDepclean)) && m+="${MA}depclean$NO "
+		((doRevdep)) && m+="${HI}revdep-rebuild$NO"
+		m+=.
+	}
+	msg "$m"
+	helpM "You will be asked for confirmation; ${MA}CTRL-C$NO to abort at any time"
+	ask=1
+else
+	checkFlags "$@"
+	num=$?
+	shift $num
+	# testing - always pretend
+	#pretend=1
+	if (($#==0)); then
+		if ((resume)); then
+			((intro&&!server)) && abrt="There does not appear to be anything to resume
+- try running $prog again with your original options and/or target." \
+				|| abrt='Nothing to resume'
+			[[ -f $statusFile && -f $targetFile ]] || abort "$abrt" 0
+			[[ $status ]] || read -r status < "$statusFile"
+			[[ $status ]] || abort "Unable to read from $statusFile"
+			tmp=(); while read l; do tmp+=("$l"); done <"$targetFile"
+			((${#tmp[@]}==8)) || abort "Incorrect format: $targetFile"
+			# j=0; for i in "${tmp[@]}"; do echo $((j++))" - $i"; done; exit
+#			[[ $status = Starting ]] && abort "$abrt"
+			target=${tmp[0]}
+			[[ ${tmp[1]} = install ]] && install=1
+			[[ ${tmp[2]} = revdep ]] && doRevdep=1
+			[[ ${tmp[3]} = depclean ]] && doDepclean=1
+			[[ ${tmp[4]} = glsa ]] && doGLSA=1
+			param="${tmp[5]}"
+			binOpt="${tmp[6]}"
+			[[ ${tmp[7]} = binHost ]] && { binHost=1; }
+			unset tmp
+			[[ $status = Completed ]] && ! needMaint && {
+				rm -f "$statusFile" "$targetFile"
+				abort 'Nothing to resume' 0
+			}
+			[[ $status = *': '* ]] && {
+				currentStage=${status%: *}
+				[[ $currentStage ]] || abort 'No stage in resume'
+				msg "$PF2 $currentStage"
+			}
+			IF=$'\n'
+			[[ -f $failFile ]] && failList=($(<"$failFile"))
+			[[ -f $reasonsFile ]] && fR=($(<"$reasonsFile"))
+			unset IFS
+			if [[ $target = '[None]' ]]; then
+				doEmerge=0
+			else
+				[[ -f $emergeFile ]] || abort "$abrt"
+				[[ $status = Aborted ]] && {
+					text='No packages compiled successfully; Y to restart build of emerge '
+					[[ $param || $binOpt ]] && text+="-$param$binOpt $target" || text+=$target
+					if needMaint; then
+						text+=', N to continue with maintenance'
+						((intro)) && text+=', CTRL-C to abort'
+					else text+=', N to exit'
+					fi
+					# server will automatically restart previous TODO is this OK?
+					if confirmY "$text" 'Previous run was aborted'; then
+						setStatus Resolved
+					else
+						[[ $text = *exit ]] && exit 0
+						doEmerge=0
+					fi
+				}
+				for i in $target
+				do
+					[[ $i = world || $i = system ]] && continue
+					# TODO review this (and target array handling)
+					[[ $i = =* ]] && i=${i#=} # || [[ $i = */* ]] || i="/$i"
+					t+=("$i")
+				done
+				if [[ $status = 'ABI '* ]]; then
+					verb "$PF2 Resuming ABI fix, then all packages listed in $emergeFile"
+					doWarn resume
+					resume=0
+				else
+					verb "$PF2 Resume: This will attempt to emerge all packages listed in $emergeFile"
+					[[ $status != Resolved ]] && msg "Resume: $status"
+				fi
+			fi
+#			stoppedAt=$status
+			unset abrt
+		elif ((doKdeps||doKmods)); then
+			if ((doKdeps)); then
+				t=("${kdep[@]}")
+			fi
+			if ((doKmods)); then
+				if ! ensure module-rebuild sys-kernel/module-rebuild 'rebuild kernel modules' Kmods; then
+					module-rebuild populate || abort 'module-rebuild populate failed'
+				fi
+				while read l
+				do [[ $l = '** '* ]] || t+=("$l")
+				done< <(module-rebuild -XC list)
+			fi
+			((${#t[@]})) || abort 'Nothing to build.'
+			target="${t[@]}"
+			msg "Kernel: $target"
+		else
+			target=world
+		fi
+	elif ((resume)); then
+		((crashed)) || abort "Cannot resume and specify additional targets. Just run
+	$prog -r with a[qv]c or x as desired eg:
+	$prog -ar"
+		helpM "Targets specified will not be emerged: $*" warn
+	elif ((doKmods||doKdeps||doKernel)); then
+		abort 'Kernel maintenance -- cannot specify additional targets.'
+	elif [[ $status ]]; then
+		abort "--status can only be used with resume, called with: $*"
+	elif ((doRevdep)); then
+		revdep "$@"
+		exit
+	else
+		# Fill in targets array t - overrides nc, also used for install
+		for i; do
+			# check atom passed
+			[[ $i = 'world' || $i = 'system' ]] && continue
+			[[ $i = =* ]] && i=${i#=} #|| [[ $i = */* ]] || i="/$i"
+			t+=("$i")
+		done
+		# ((${#t[@]})) && verb "Targets: ${t[*]}"
+		target="$*"
+	fi
+fi
+[[ ${#t[@]} = 0 && $install = 1 ]] && abort 'Cannot install with no targets.'
+
+# testing - check cmd parsing
+#echoTarget; msg "emerge $param$binOpt $target"; exit
+
+#######################
+## Action starts here #
+#######################
+((server||!interactive)) && showVer=1
+# Let's keep things sweet with the devs ;)
+[[ $IS_IT_COS_I_IZ_L33T ]] && {
+	verb "Yes, ${HI}rudeBoy™$NO, it is $OR;P$NO -- try ${BR}rice=1$NO"
+	rice=1
+}
+((rice)) || {
+	[[ $CFLAGS = *-O[3-9]\ * ]] && ricer "Don't set -O above 2 in CFLAGS. ${BR}Seriously$NO. -O3 is for beta optimisations which usually lead to worse code. (If they were proven, they'd be in -O2 ;)"
+	[[ $CFLAGS = *-ffast-math* ]] && ricer "-ffast-math will ${HI}NEVER$NO be supported!"
+	[[ $CXXFLAGS = *-fvisibility=hidden* ]] && ricer '-fvisibility=hidden breaks packages and should not be set globally'
+	L=${LDFLAGS/-Wl,-O1}; L=${L/-Wl, -O1}; L=${L/--as-needed};
+	L=${L/-Wl,-z}; L=${L/-Wl,-now}; L=${L// }
+	[[ $L ]] && warn "LDFLAGS apart from '-Wl,O1', '-Wl,-z', '-Wl,-now' and '--as-needed' are not supported, you have: ${BR}LDFLAGS=\"$LDFLAGS\"$NO"
+	[[ $LDFLAGS = *--as-needed* ]] && helpM ' Support for --as-needed is at maintainer discretion, beware. [Turn this warning off by setting intro=0 in config.]' warn
+}
+# Info for new users
+((novice)) && {
+	[[ $PORTDIR_OVERLAY ]] || noob 'You can set PORTDIR_OVERLAY to have a local overlay, usually /usr/local/portage, for any modifications you need to make to specific ebuild versions. Portage will use the ones in the overlay, or later versions from the tree'
+	[[ $FEATURES = *metadata-transfer* ]] && noob 'You can speed up portage sync -- please read http://forums.gentoo.org/viewtopic-t-529919.html#3891968'
+	[[ $ACCEPT_KEYWORDS = *~* ]] && noob 'It is dangerous to run unstable across the board; use /etc/portage/package.keywords for individual packages instead. autounmask can help' warn
+}
+unset ACCEPT_KEYWORDS CFLAGS CXXFLAGS LDFLAGS
+checkBinHost
+((resume)) || {
+	[[ $outputRun ]] && rm "$dir/$outputRun"* 2> /dev/null
+	setStatus Starting
+	saveTarget
+}
+((syncFirst)) && doSync
+((binHost)) && msg "$PF2 Using Binhost: $PORTAGE_BINHOST"
+
+if ((doEmerge)); then
+	if ((resume)); then
+		verb '** These are the packages in the emerge list:'
+	else
+		resolveUnmask
+		[[ -f $failFile ]] && { verb "$TIP Removing $failFile"; rm -f "$failFile"; }
+		[[ -f $reasonsFile ]] && rm -f "$reasonsFile"
+	fi
+	if ! checkList; then
+		resolve
+		while ! checkList retry; do resolve; done
+	fi
+	((fetchOnly)) || {
+		((install && ${#t[@]})) && msg "$PF2 Installing to world
+		Targets: ${t[*]#/}"
+		checkToolchain
+	}
+elif ((resume)); then
+	case "$status" in
+	*Installing|*Resolved)
+		if getList resume; then
+			if [[ $status = *Installing ]]; then
+				msg "$PFX Continuing with $currentStage"
+			else
+				msg "$PFX Starting $currentStage"
+			fi
+			displayList
+			msg "$PFX $tot in total"
+			confirmY || usrQuit
+			if installList "$currentStage"; then
+				completeStage
+			else
+				[[ $currentStage = Revdep ]] && doRevdep=0
+				finish err
+			fi
+		else completeStage
+		fi
+	;;
+	*Completed|Starting) :
+	;;
+	*) abort "$LINENO: Unknown state $status";;
+	esac
+	finish resume
+else
+#	echoTarget
+	finish
+fi
+
+((pretend)) && {
+	helpM "The list of packages to be emerged is saved in $emergeFile"
+	helpV "You can install them with $prog -r; savqfFSCRMxl can also be used with resume. $prog -h for more info"
+	exit
+}
+
+if ((ask)); then
+	if ((fetchOnly)); then
+		confirmY 'Fetch files only'
+	else
+		confirmN
+	fi || usrQuit
+elif ((!fetchOnly&&resume)); then
+	confirmY || usrQuit
+fi
+
+# IFS="$EOL"; echo "${list[*]}"; exit
+((fetch)) && doFetch
+# initialise
+# p = package index
+p=0
+# n = num successfully compiled
+n=0
+added=0
+if ((resume)); then
+	pf=${#failList[@]}
+	if ((pf>=tot)); then { pf=0; failList=(); fR=(); }
+	elif ((pf));then
+		msg "These pkgs failed already: ${failList[*]}"
+		let p=n=pf
+	fi
+fi
+while ! checkWarn; do
+	resolve retry
+	getList
+done
+doToolchain
+doWarn
+if installList; then
+	target=[None]
+	saveTarget # so resume won't try to restart
+	msg $PF2' All packages compiled successfully'
+	rm -f "$targetFile"
+	((round++)) && msg "$round passes were required."
+else
+	setStatus Aborted
+	msg $ERR' No packages compiled successfully on this run, aborting.'
+	finish err
+fi
+finish
+
+# Woah -- we were only gonna learn bash?
+# Meh, that's what you get for asking a coder to write a script ;p

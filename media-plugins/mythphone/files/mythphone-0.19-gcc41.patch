@@ -1,0 +1,22 @@
+--- mythplugins-0.19/mythphone/mythphone/sipfsm.orig.h	2006-05-06 15:00:23.000000000 +0100
++++ mythplugins-0.19/mythphone/mythphone/sipfsm.h	2006-05-06 15:00:58.000000000 +0100
+@@ -618,7 +618,7 @@
+     SipWatcher *CreateWatcherFsm(QString Url);
+     SipIM *CreateIMFsm(QString Url="", QString callIdStr="");
+     void StopWatchers();
+-    void SipFsm::KickWatcher(SipUrl *Url);
++    void KickWatcher(SipUrl *Url);
+     void SendIM(QString destUrl, QString CallId, QString imMsg);
+     int numCalls();
+     int getPrimaryCall() { return primaryCall; };
+--- mythplugins-0.19/mythphone/mythphone/vxml.orig.h	2006-05-06 15:01:16.000000000 +0100
++++ mythplugins-0.19/mythphone/mythphone/vxml.h	2006-05-06 15:01:33.000000000 +0100
+@@ -10,7 +10,7 @@
+ {
+   public:
+     vxmlVariable(QString N, QString V);             
+-    vxmlVariable::vxmlVariable(QString N, short *wav, int S);
++    vxmlVariable(QString N, short *wav, int S);
+     virtual ~vxmlVariable() {}; 
+     bool isType(QString t) { return (t == Type); };
+     QString getName() { return Name; };

@@ -1,0 +1,22 @@
+--- mythplugins-0.19/mythvideo/mythvideo/videoselected.h.orig	2006-05-06 10:42:17.000000000 +0100
++++ mythplugins-0.19/mythvideo/mythvideo/videoselected.h	2006-05-06 10:42:32.000000000 +0100
+@@ -35,7 +35,7 @@
+     VideoSelected(VideoList *lvideolist,
+                  MythMainWindow *parent, const char *name = 0, int index = 0);
+     ~VideoSelected();
+-    void VideoSelected::processEvents() { qApp->processEvents(); }
++    void processEvents() { qApp->processEvents(); }
+     
+ 
+   protected slots:
+--- mythplugins-0.19/mythvideo/mythvideo/videomanager.h.orig	2006-05-06 10:38:53.000000000 +0100
++++ mythplugins-0.19/mythvideo/mythvideo/videomanager.h	2006-05-06 10:39:23.000000000 +0100
+@@ -30,7 +30,7 @@
+   public:
+     VideoManager(MythMainWindow *parent, const char *name = 0);
+     ~VideoManager(void);
+-    void VideoManager::processEvents() { qApp->processEvents(); }
++    void processEvents() { qApp->processEvents(); }
+     
+   public slots:
+     void slotManualIMDB();

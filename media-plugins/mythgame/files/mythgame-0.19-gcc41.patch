@@ -1,0 +1,11 @@
+--- mythplugins-0.19/mythgame/mythgame/gamehandler.h.orig	2006-05-06 10:33:44.000000000 +0100
++++ mythplugins-0.19/mythgame/mythgame/gamehandler.h	2006-05-06 10:33:59.000000000 +0100
+@@ -106,7 +106,7 @@
+ 
+   protected:
+     static GameHandler* GetHandler(RomInfo *rominfo);
+-    static GameHandler* GameHandler::GetHandlerByName(QString systemname);
++    static GameHandler* GetHandlerByName(QString systemname);
+ 
+     bool rebuild;
+     int spandisks;

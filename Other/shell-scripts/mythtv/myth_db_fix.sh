@@ -4,14 +4,13 @@
 
 MEDIA=""
 HOSTNAME=`uname -n`
-DBSERVER='jmd1'
-DBUSER='mythtv'
+DBSERVER="jmd1"
+DBUSER="mythtv"
 
 function update_filesize {
    FILESIZE=`du -b "${MEDIA}" | cut -f 1`
    if [ "${FILESIZE}" -gt 1000000 ]; then
       echo "update recorded set filesize=${FILESIZE} where basename='${BASENAME}.mpg';" | mysql -h ${DBSERVER} -u ${DBUSER} mythconverg
-      mythcommflag -f "${MEDIA}" --clearcutlist
    fi
 }
 

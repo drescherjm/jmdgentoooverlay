@@ -2,7 +2,8 @@
 
 mythver=0.21_p
 #overlay_root=/usr/local/portage/gentoo-overlay
-overlay_root=/usr/local/JMDGentooOverlay/gentoo-overlay
+#overlay_root=/usr/local/JMDGentooOverlay/gentoo-overlay
+overlay_root=/usr/local/layman/jmd-gentoo
 
 PREFIX=myth_upgrd
 #package_versions=$(mktemp ${PREFIX}.XXXXXX)
@@ -50,7 +51,7 @@ then
 elif [ "$1" -gt 15000 ]
 then
   svn_rvn=$1
-  equery list myth -p -o | grep ${mythver} | grep -v pre | sort | uniq > ${package_versions}
+  equery list myth -p | grep ${mythver} | grep -v pre | sort | uniq > ${package_versions}
   get_package_list
   execute_main_loop
 else

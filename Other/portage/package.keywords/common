@@ -1,6 +1,5 @@
 =app-admin/eselect-compiler-2.0.0*
 =app-admin/eselect-news-2008*
-=app-admin/webmin-1.390
 =app-admin/webmin-1.4*
 =app-backup/bacula-2.4*
 =app-emulation/vmware-modules-1.0.0*
@@ -8,11 +7,11 @@
 =app-emulation/vmware-server-console-1.0.0.2*
 =app-emulation/vmware-server-console-1.0.1.29996
 =app-misc/baobab-2.4*
+=app-portage/glcu-0.9.7*
 =app-portage/gentoolkit-0.2.4*
 =app-portage/portato-0.8*
 =app-shells/bash-3.2*
 =app-shells/bash-completion-20050721
-=app-text/poppler-bindings-0.5.1
 =app-text/poppler-bindings-0.6.3
 =app-text/xpdf-3.01-r8
 =dev-cpp/cairomm-1.2*
@@ -25,7 +24,6 @@
 =dev-util/confcache-0.4*
 =dev-util/portatosourceview-2.16*
 =dev-util/rapidsvn-0.9*
-=mail-mta/postfix-2.2.10-r1
 =mail-mta/postfix-2.3*
 =media-gfx/gqview-2.1*
 =net-analyzer/nagios-nrpe-2*

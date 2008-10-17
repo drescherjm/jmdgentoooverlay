@@ -7,8 +7,8 @@
 =app-emulation/vmware-server-console-1.0.0.2*
 =app-emulation/vmware-server-console-1.0.1.29996
 =app-misc/baobab-2.4*
-=app-portage/glcu-0.9.7*
 =app-portage/gentoolkit-0.2.4*
+=app-portage/glcu-0.9.7*
 =app-portage/portato-0.8*
 =app-shells/bash-3.2*
 =app-shells/bash-completion-20050721

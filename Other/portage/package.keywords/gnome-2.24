@@ -39,6 +39,7 @@
 =dev-python/totem-python-2.24*
 =dev-util/intltool-0.40*
 =gnome-base/eel-2.24*
+=gnome-base/gail-1000*
 =gnome-base/gconf-2.24*
 =gnome-base/gdm-2.24*
 =gnome-base/gnome-2.24*

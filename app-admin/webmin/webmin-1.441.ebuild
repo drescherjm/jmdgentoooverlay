@@ -35,9 +35,9 @@ src_unpack() {
 	# in webmin-minimal apache2 are not present
 	if ! use minimal ; then
 		# Bug #50810, #51943
-		if use apache2; then
-			epatch "${FILESDIR}"/${PN}-1.140-apache2.patch
-		fi
+#		if use apache2; then
+#			epatch "${FILESDIR}"/${PN}-1.140-apache2.patch
+#		fi
 
 		# Correct ldapness
 #		epatch "${FILESDIR}"/${PN}-1.270-ldap-useradmin.patch

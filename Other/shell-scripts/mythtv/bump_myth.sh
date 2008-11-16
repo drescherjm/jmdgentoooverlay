@@ -4,7 +4,7 @@
 #BEGIN Settings 
 
 mythver=0.21_p
-overlay_root=/usr/local/layman/jmd-gentoo
+overlay_root=/usr/local/portage/layman/jmd-gentoo
 portage_root=/usr/portage
 
 #END Settings
@@ -22,9 +22,14 @@ function update_repository {
 
    if [ -d $1/../.svn ]; then
       echo Updating repository for $1
-      svn st $1 | grep ? | awk ' { print $2 }' | xargs -n1 -i svn add {}
-      
+      svn st $1 | grep ? | awk ' { print $2 }' | xargs -n1 -i svn add {}      
    fi 
+
+   if [ -d $1/../.git ]; then
+      echo Updating repository for $1
+      git-add $1
+   fi 
+
 }
 
 function unmask_package {
@@ -50,9 +55,11 @@ if [ -f "${portage_root}/$1/${best_version}.ebuild" ];
 then 
     cp ${portage_root}/$1/${best_version}.ebuild  ${folder}/${new_version}.ebuild
 else
+    echo ${portage_root}/$1/${best_version}.ebuild " not found"
     cp ${folder}/${best_version}.ebuild ${folder}/${new_version}.ebuild
 fi
 
+    echo "Updating digest for "  ${folder}/${new_version}.ebuild 
     ebuild ${folder}/${new_version}.ebuild digest
 
     update_repository ${folder}
@@ -73,7 +80,7 @@ then
 elif [ "$1" -gt 15000 ]
 then
   svn_rvn=$1
-  equery list myth -p | grep ${mythver} | grep -v pre | sort | uniq > ${package_versions}
+  equery list myth -I -p | grep ${mythver} | grep -v pre | sort | uniq > ${package_versions}
   get_package_list
   execute_main_loop
 else

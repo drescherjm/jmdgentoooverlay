@@ -65,7 +65,7 @@
 =x11-libs/libXv-1.0*
 =x11-libs/libdrm-2.3*
 =x11-libs/libxkbfile-1.0.5
-=x11-libs/pixman-0.12
+=x11-libs/pixman-0.12*
 =x11-libs/qt-3.3.6*
 =x11-libs/qt-4.4*
 =x11-libs/qt-core-4.4*

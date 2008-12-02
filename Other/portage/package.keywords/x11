@@ -87,3 +87,4 @@
 x11-base/xorg-x11
 x11-libs/cairo
 x11-libs/pango
+=x11-libs/xtrans-1.2*

@@ -1,3 +1,4 @@
+#sys-devel/libtool
 =app-admin/eselect-news-2008*
 =app-admin/webmin-1.4*
 =app-backup/bacula-2.4*
@@ -51,6 +52,7 @@
 =sys-kernel/vserver-sources-2.2*
 =sys-kernel/vserver-sources-2.2.0*
 =sys-libs/readline-5.2*
+=www-client/mozilla-firefox-bin-3*
 app-admin/eselect
 app-admin/eselect-opengl
 app-antivirus/f-prot
@@ -103,6 +105,7 @@ dev-python/python-ldap
 dev-python/urlgrabber
 dev-tex/hevea
 dev-util/codeblocks
+dev-util/easygit
 dev-util/esvn
 dev-util/gcvs
 dev-util/glademm
@@ -142,7 +145,6 @@ sys-cluster/pvm
 sys-devel/dev86
 sys-devel/gcc-config
 sys-devel/gdb
-#sys-devel/libtool
 sys-fs/udev
 sys-kernel/genkernel
 sys-kernel/gentoo-sources
@@ -150,3 +152,4 @@ sys-libs/db
 sys-libs/libstdc++-v3
 sys-power/apcupsd
 www-client/mozilla-firefox
+=dev-util/git-1.6*

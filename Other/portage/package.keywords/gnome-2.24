@@ -126,3 +126,8 @@
 =x11-themes/gnome-themes-2.24*
 =x11-themes/gtk-engines-2.16*
 =x11-wm/metacity-2.24*
+=gnome-base/gdm-2.24*
+=net-analyzer/gnome-netstatus-2.12*
+=media-libs/gst-plugins-good-0.10*
+=media-libs/gst-plugins-bad-0.10*
+=gnome-extra/fast-user-switch-applet-2.24*

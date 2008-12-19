@@ -2,7 +2,7 @@ inherit eutils toolchain-funcs linux-mod
 
 MY_PV=${PN}-ver${PV}
 
-DESCRIPTION="kernel drivers for atl1e NIC"
+DESCRIPTION="kernel driver for Attansic Technology Corp. device 1026 NIC"
 HOMEPAGE=""
 SRC_URI="${MY_PV}.tar.bz2"
 
@@ -15,19 +15,21 @@ RESTRICT="fetch"
 DEPEND=""
 RDEPEND=""
 
-S=${WORKDIR}/ixp400_xscale_sw
+S=${WORKDIR}/${MY_PV}
 
 src_unpack() {
 	unpack ${A}
 }
 
 src_compile() {
-	cd ${MY_PV}/src
-	make install
+#	cd ${MY_PV}/src
+	cd src
+#	make install
+	make
 }
 
 src_install() {
-	MODULE_NAMES="atl1e(kernel/drivers/net:${S})"
+	MODULE_NAMES="atl1e(kernel/drivers/net:${S}/src)"
 	linux-mod_src_install
 }
 

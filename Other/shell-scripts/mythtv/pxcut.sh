@@ -3,21 +3,25 @@
 # License: GNU GPL v2
 
 MEDIA=""
+DBSERVER="jmd0"
+DBUSER="mythtv"
+DBPASSWD="mythtv"
+DB="mythconverg"
 
 function update_filesize {
    FILESIZE=`du -b "${MEDIA}" | cut -f 1`
    if [ "${FILESIZE}" -gt 1000000 ]; then
-      echo "update recorded set filesize=${FILESIZE} where basename='${BASENAME}.mpg';" | mysql -h jmd1 -u mythtv mythconverg
+      echo "update recorded set filesize=${FILESIZE} where basename='${BASENAME}.mpg';" | mysql -h ${DBSERVER} -u ${DBUSER} -P ${DBPASSWD} ${DB}
       mythcommflag -f "${MEDIA}" --clearcutlist
    fi
 }
 
 function update_database {
    update_filesize
-   echo "DELETE FROM recordedmarkup WHERE chanid = $CHAN AND starttime = $START;" | mysql -h jmd1 -u mythtv mythconverg
-   echo "update recorded set hostname='jmd1' where basename='${BASENAME}.mpg';" | mysql -h jmd1 -u mythtv mythconverg
+   echo "DELETE FROM recordedmarkup WHERE chanid = $CHAN AND starttime = $START;" | mysql -h ${DBSERVER} -u ${DBUSER} -P ${DBPASSWD} ${DB}
+   echo "update recorded set hostname='jmd1' where basename='${BASENAME}.mpg';" | mysql -h ${DBSERVER} -u ${DBUSER} -P ${DBPASSWD} ${DB}
    mythcommflag -f "${MEDIA}" --rebuild
-   echo "update recorded set commflagged=0 where basename='${BASENAME}.mpg';" | mysql -h jmd1 -u mythtv mythconverg
+   echo "update recorded set commflagged=0 where basename='${BASENAME}.mpg';" | mysql -h ${DBSERVER} -u ${DBUSER} -P ${DBPASSWD} ${DB}
 }
 
 function cutlist_x {
@@ -117,7 +121,7 @@ function perform_cut {
 }
 
 function generate_cutlist {
-echo "SELECT mark FROM recordedmarkup WHERE chanid = $CHAN AND starttime = $START AND (type = 0 OR type = 1) ORDER BY mark;" | mysql -h jmd1 -u mythtv mythconverg -B --skip-column-names | xargs -n2 > "${EDL}"
+echo "SELECT mark FROM recordedmarkup WHERE chanid = $CHAN AND starttime = $START AND (type = 0 OR type = 1) ORDER BY mark;" | mysql -h ${DBSERVER} -u ${DBUSER} -P ${DBPASSWD} ${DB} -B --skip-column-names | xargs -n2 > "${EDL}"
 
 VAL=`wc  "$EDL" | awk '{ print $1 }'`
 

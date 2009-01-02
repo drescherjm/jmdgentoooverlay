@@ -24,6 +24,7 @@ src_unpack() {
 src_compile() {
 #	cd ${MY_PV}/src
 	cd src
+        sed -i s/CFLAGS/EXTRA_CFLAGS/g Makefile
 #	make install
 	make
 }

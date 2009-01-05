@@ -35,7 +35,6 @@ RDEPEND="!app-emulation/virtualbox-ose
 		x11-libs/libXi
 		x11-libs/libXrandr
 		x11-libs/libXinerama
-		virtual/xft
 		x11-libs/libXft
 		media-libs/freetype
 		media-libs/fontconfig

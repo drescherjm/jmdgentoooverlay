@@ -12,7 +12,6 @@ KEYWORDS="~amd64 ~ppc ~x86"
 RDEPEND=">=dev-lang/python-2.3.5
 		dev-python/mysql-python
 		dev-python/imaging
-		<media-video/mjpegtools-1.8.99999
 		>=media-video/mjpegtools-1.6.2[png]
 		>=media-video/dvdauthor-0.6.11
 		>=media-video/ffmpeg-0.4.9

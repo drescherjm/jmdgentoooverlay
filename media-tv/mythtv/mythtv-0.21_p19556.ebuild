@@ -86,10 +86,10 @@ src_unpack() {
 		-i "${S}"/bindings/perl/perl.pro
 
 	# fix mythflix naming collision
-	epatch "${FILESDIR}"/${PN}-0.21-mythflix-naming-collision.patch
+	# epatch "${FILESDIR}"/${PN}-0.21-mythflix-naming-collision.patch
 
 	# fix for bttv cards
-	epatch "${FILESDIR}"/${PN}-0.21-bttv.patch
+	# epatch "${FILESDIR}"/${PN}-0.21-bttv.patch
 }
 
 src_compile() {

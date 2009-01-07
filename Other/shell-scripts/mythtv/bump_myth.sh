@@ -4,8 +4,8 @@
 #BEGIN Settings 
 
 mythver=0.21_p
-overlay_root=/usr/local/portage/layman/jmd-gentoo
-portage_root=/usr/portage
+overlay_root=/etc/portage/layman/jmd-gentoo
+portage_root=/auto/portage
 
 #END Settings
 

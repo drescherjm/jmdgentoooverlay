@@ -19,7 +19,7 @@ RDEPEND="sys-libs/zlib
 		media-libs/tiff"
 DEPEND="${RDEPEND}
 		>=dev-util/cmake-2.4
-wrap-itk? 	(dev-lang/CableSwig)"
+wrap-itk? 	( dev-lang/CableSwig )"
 
 MY_PN=InsightToolkit
 S="${WORKDIR}/${MY_PN}-${PV}"

@@ -86,7 +86,8 @@ src_unpack() {
 		-i "${S}"/bindings/perl/perl.pro
 
 	# fix mythflix naming collision
-	epatch "${FILESDIR}"/${PN}-0.21-mythflix-naming-collision.patch
+	# epatch "${FILESDIR}"/${PN}-0.21-mythflix-naming-collision.patch
+	# JMD: Removed this patch does not apply cleanly with current svn. 
 
 	# fix for bttv cards
 	epatch "${FILESDIR}"/${PN}-0.21-bttv.patch

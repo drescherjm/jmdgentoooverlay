@@ -59,8 +59,9 @@ src_install() {
 
 	cd "${S}"
 
-	make DESTDIR=${D} install || die "make install failed"
+	emake DESTDIR=${D} install || die "make install failed"
 
+	dobin /usr/lib/CableSwig/bin/*
 }
 
 

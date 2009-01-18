@@ -130,6 +130,7 @@ src_compile() {
 		$(use_with ncurses curses) \
 		$(use_with opengl) \
 		$(use_with X x) \
+		$(use_with esd) \
 		|| die "configure failed"
 
 	emake -j1 depend || die "depend"

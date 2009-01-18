@@ -11,14 +11,15 @@ SRC_URI="mirror://sourceforge/itk/InsightToolkit-${PV}.tar.gz"
 LICENSE="BSD"
 SLOT="0"
 KEYWORDS="~amd64"
-IUSE="doc examples shared patented test"
+IUSE="doc examples shared patented test review wrap-itk"
 
 RDEPEND="sys-libs/zlib
 		media-libs/jpeg
 		media-libs/libpng
 		media-libs/tiff"
 DEPEND="${RDEPEND}
-		>=dev-util/cmake-2.4"
+		>=dev-util/cmake-2.4
+wrap-itk? 	=dev-lang/CableSwig"
 
 MY_PN=InsightToolkit
 S="${WORKDIR}/${MY_PN}-${PV}"
@@ -58,6 +59,19 @@ src_compile() {
 	else
 		CMAKE_VARIABLES="${CMAKE_VARIABLES} -DBUILD_TESTING:BOOL=OFF"
 	fi
+
+	if use review; then
+		CMAKE_VARIABLES="${CMAKE_VARIABLES} -DITK_USE_REVIEW:BOOL=ON"
+	else
+		CMAKE_VARIABLES="${CMAKE_VARIABLES} -DITK_USE_REVIEW:BOOL=OFF"
+	fi
+
+	if use wrap-itk; then
+		CMAKE_VARIABLES="${CMAKE_VARIABLES} -DUSE_WRAP_ITK:BOOL=ON"
+	else
+		CMAKE_VARIABLES="${CMAKE_VARIABLES} -DUSE_WRAP_ITK:BOOL=OFF"
+	fi
+
 
 	# Give us an optimised release build
 	CMAKE_VARIABLES="${CMAKE_VARIABLES} -DCMAKE_BUILD_TYPE:STRING=RELWITHDEBINFO"

@@ -90,7 +90,8 @@ src_unpack() {
 	# JMD: Removed this patch does not apply cleanly with current svn. 
 
 	# fix for bttv cards
-	epatch "${FILESDIR}"/${PN}-0.21-bttv.patch
+	# epatch "${FILESDIR}"/${PN}-0.21-bttv.patch
+        # JMD: This patch does not apply either. Disabling for now since I do not have a bttv card.
 }
 
 src_compile() {

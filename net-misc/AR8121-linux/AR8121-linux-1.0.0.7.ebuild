@@ -18,7 +18,12 @@ RDEPEND=""
 S=${WORKDIR}/${MY_PV}
 
 src_unpack() {
-	unpack ${A}
+	if ( kernel_is ge 2 6 27 ); then
+	   die "This driver is already in 2.6.27 and greater"
+	fi
+ 	
+        unpack ${A}
+	
 }
 
 src_compile() {

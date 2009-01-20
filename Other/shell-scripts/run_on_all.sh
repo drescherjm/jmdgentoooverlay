@@ -11,7 +11,7 @@ read -p "Input password:" A;
 stty echo;
 echo;
 
-for HOST in  datastore0 datastore1 datastore2 fileserver dev6 sysserv0
+for HOST in  datastore0 datastore1 datastore2 datastore3 fileserver dev6 sysserv0
 do
 
 echo "Connecting to $HOST"

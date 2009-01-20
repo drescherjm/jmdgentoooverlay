@@ -1,7 +1,7 @@
 Index: libs/libmythtv/NuppelVideoRecorder.cpp
 ===================================================================
---- libs/libmythtv/NuppelVideoRecorder.cpp	(revision 18814)
-+++ libs/libmythtv/NuppelVideoRecorder.cpp	(working copy)
+--- a/mythtv/libs/libmythtv/NuppelVideoRecorder.cpp	(revision 18814)
++++ b/mythtv/libs/libmythtv/NuppelVideoRecorder.cpp	(working copy)
 @@ -981,7 +981,7 @@
              correct_bttv = true;
  

@@ -21,6 +21,7 @@
 =dev-util/boost-build-1.34*
 =dev-util/cmake-2.6.0*
 =dev-util/confcache-0.4*
+=dev-util/git-1.6*
 =dev-util/portatosourceview-2.16*
 =dev-util/rapidsvn-0.9*
 =mail-mta/postfix-2.3*
@@ -31,26 +32,24 @@
 =net-fs/samba-3.0.30*
 =net-libs/liblockfile-1.06-r1
 =net-nds/openldap-2.3.41
-=net-print/cups-1.2.7*
-=net-www/netscape-flash-9*
-=sys-apps/baselayout-1.12*
-=sys-apps/coreutils-6.7*
+=net-print/cups-1.3*
+=net-www/netscape-flash-10*
+=sys-apps/baselayout-2*
+=sys-apps/coreutils-6.12*
 =sys-apps/module-init-tools-3.2*
 =sys-apps/net-tools-1.60*
-=sys-apps/portage-2.1.2*
-=sys-apps/portage-2.1.3*
-=sys-apps/portage-2.1.5*
+=sys-apps/openrc-0.4*
 =sys-apps/portage-2.2*
 =sys-auth/pambase-2008*
 =sys-block/partimage-0.6.4-r4 ~*
 =sys-devel/binutils-2.17
 =sys-devel/gcc-4.2*
-=sys-devel/icecream-0.9.1-r2*
+=sys-devel/icecream-0.9.2*
 =sys-fs/cryptsetup-1.0.6*
 =sys-kernel/openvz-sources-028.010
 =sys-kernel/vserver-sources-2.2*
-=sys-kernel/vserver-sources-2.2.0*
 =sys-libs/readline-5.2*
+=www-client/mozilla-firefox-bin-3*
 app-admin/eselect
 app-admin/eselect-opengl
 app-antivirus/f-prot
@@ -103,6 +102,7 @@ dev-python/python-ldap
 dev-python/urlgrabber
 dev-tex/hevea
 dev-util/codeblocks
+dev-util/easygit
 dev-util/esvn
 dev-util/gcvs
 dev-util/glademm
@@ -142,7 +142,6 @@ sys-cluster/pvm
 sys-devel/dev86
 sys-devel/gcc-config
 sys-devel/gdb
-#sys-devel/libtool
 sys-fs/udev
 sys-kernel/genkernel
 sys-kernel/gentoo-sources
@@ -150,3 +149,4 @@ sys-libs/db
 sys-libs/libstdc++-v3
 sys-power/apcupsd
 www-client/mozilla-firefox
+sys-apps/memtest86+

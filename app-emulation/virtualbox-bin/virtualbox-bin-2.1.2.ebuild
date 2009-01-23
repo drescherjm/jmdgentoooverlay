@@ -17,7 +17,11 @@ SRC_URI="amd64? ( ${MY_P}_amd64.run )
 
 LICENSE="PUEL"
 SLOT="0"
-KEYWORDS="~amd64 ~x86"
+#KEYWORDS="~amd64 ~x86"
+
+#hardmasking because it does not run for me
+KEYWORDS=""
+
 IUSE="+additions +chm headless sdk vboxwebsrv"
 RESTRICT="fetch"
 

@@ -88,8 +88,8 @@ src_unpack() {
 
 	sed -i '/^UPDATE_DESKTOP_DATABASE/s:=.*:=true:' tools/Makefile.in || die
 	sed -i '/^MimeType/d' tools/wine.desktop || die #117785
-        use wine-iocp-off || epatch "${FILESDIR}"/wine-1.1.2-noiocp.patch
-        use wine-iocp-fix-race || epatch "${FILESDIR}"/wine-iocp-fix-race.patch
+        use wine-iocp-off && epatch "${FILESDIR}"/wine-1.1.2-noiocp.patch
+        use wine-iocp-fix-race && epatch "${FILESDIR}"/wine-iocp-fix-race.patch
 }
 
 config_cache() {

@@ -1,0 +1,194 @@
+diff --git a/dlls/ntdll/file.c b/dlls/ntdll/file.c
+index cbb0eac..e388edd 100644
+--- a/dlls/ntdll/file.c
++++ b/dlls/ntdll/file.c
+@@ -571,6 +571,7 @@ NTSTATUS WINAPI NtReadFile(HANDLE hFile, HANDLE hEvent,
+     if (!virtual_check_buffer_for_write( buffer, length ))
+     {
+         status = STATUS_ACCESS_VIOLATION;
++        cvalue = 0;
+         goto done;
+     }
+ 
+@@ -634,7 +635,10 @@ NTSTATUS WINAPI NtReadFile(HANDLE hFile, HANDLE hEvent,
+             BOOL avail_mode;
+ 
+             if ((status = get_io_avail_mode( hFile, type, &avail_mode )))
+-                goto err;
++            {
++                cvalue = 0;
++                goto done;
++            }
+             if (total && avail_mode)
+             {
+                 status = STATUS_SUCCESS;
+@@ -644,7 +648,8 @@ NTSTATUS WINAPI NtReadFile(HANDLE hFile, HANDLE hEvent,
+             if (!(fileio = RtlAllocateHeap(GetProcessHeap(), 0, sizeof(*fileio))))
+             {
+                 status = STATUS_NO_MEMORY;
+-                goto err;
++                cvalue = 0;
++                goto done;
+             }
+             fileio->io.handle  = hFile;
+             fileio->io.apc     = apc;
+@@ -669,7 +674,8 @@ NTSTATUS WINAPI NtReadFile(HANDLE hFile, HANDLE hEvent,
+             SERVER_END_REQ;
+ 
+             if (status != STATUS_PENDING) RtlFreeHeap( GetProcessHeap(), 0, fileio );
+-            goto err;
++            cvalue = 0;
++            goto done;
+         }
+         else  /* synchronous read, wait for the fd to become ready */
+         {
+@@ -680,7 +686,10 @@ NTSTATUS WINAPI NtReadFile(HANDLE hFile, HANDLE hEvent,
+             {
+                 timeout_init_done = 1;
+                 if ((status = get_io_timeouts( hFile, type, length, TRUE, &timeouts )))
+-                    goto err;
++                {
++                    cvalue = 0;
++                    goto done;
++                }
+                 if (hEvent) NtResetEvent( hEvent, NULL );
+             }
+             timeout = get_next_io_timeout( &timeouts, total );
+@@ -706,9 +715,6 @@ NTSTATUS WINAPI NtReadFile(HANDLE hFile, HANDLE hEvent,
+     }
+ 
+ done:
+-    if (cvalue) NTDLL_AddCompletion( hFile, cvalue, status, total );
+-
+-err:
+     if (needs_close) close( unix_handle );
+     if (status == STATUS_SUCCESS)
+     {
+@@ -724,6 +730,9 @@ err:
+         TRACE("= 0x%08x\n", status);
+         if (status != STATUS_PENDING && hEvent) NtResetEvent( hEvent, NULL );
+     }
++
++    if (cvalue) NTDLL_AddCompletion( hFile, cvalue, status, total );
++
+     return status;
+ }
+ 
+@@ -759,6 +768,7 @@ NTSTATUS WINAPI NtReadFileScatter( HANDLE file, HANDLE event, PIO_APC_ROUTINE ap
+         !(options & FILE_NO_INTERMEDIATE_BUFFERING))
+     {
+         status = STATUS_INVALID_PARAMETER;
++        cvalue = 0;
+         goto error;
+     }
+ 
+@@ -790,8 +800,6 @@ NTSTATUS WINAPI NtReadFileScatter( HANDLE file, HANDLE event, PIO_APC_ROUTINE ap
+         }
+     }
+ 
+-    if (cvalue) NTDLL_AddCompletion( file, cvalue, status, total );
+-
+  error:
+     if (needs_close) close( unix_handle );
+     if (status == STATUS_SUCCESS)
+@@ -808,6 +816,7 @@ NTSTATUS WINAPI NtReadFileScatter( HANDLE file, HANDLE event, PIO_APC_ROUTINE ap
+         TRACE("= 0x%08x\n", status);
+         if (status != STATUS_PENDING && event) NtResetEvent( event, NULL );
+     }
++    if (cvalue) NTDLL_AddCompletion( file, cvalue, status, total );
+     return status;
+ }
+ 
+@@ -910,6 +919,7 @@ NTSTATUS WINAPI NtWriteFile(HANDLE hFile, HANDLE hEvent,
+     if (!virtual_check_buffer_for_read( buffer, length ))
+     {
+         status = STATUS_INVALID_USER_BUFFER;
++        cvalue = 0;
+         goto done;
+     }
+ 
+@@ -971,7 +981,8 @@ NTSTATUS WINAPI NtWriteFile(HANDLE hFile, HANDLE hEvent,
+             if (!(fileio = RtlAllocateHeap(GetProcessHeap(), 0, sizeof(*fileio))))
+             {
+                 status = STATUS_NO_MEMORY;
+-                goto err;
++                cvalue = 0;
++                goto done;
+             }
+             fileio->io.handle  = hFile;
+             fileio->io.apc     = apc;
+@@ -995,7 +1006,8 @@ NTSTATUS WINAPI NtWriteFile(HANDLE hFile, HANDLE hEvent,
+             SERVER_END_REQ;
+ 
+             if (status != STATUS_PENDING) RtlFreeHeap( GetProcessHeap(), 0, fileio );
+-            goto err;
++            cvalue = 0;
++            goto done;
+         }
+         else  /* synchronous write, wait for the fd to become ready */
+         {
+@@ -1006,7 +1018,10 @@ NTSTATUS WINAPI NtWriteFile(HANDLE hFile, HANDLE hEvent,
+             {
+                 timeout_init_done = 1;
+                 if ((status = get_io_timeouts( hFile, type, length, FALSE, &timeouts )))
+-                    goto err;
++                {
++                    cvalue = 0;
++                    goto done;
++                }
+                 if (hEvent) NtResetEvent( hEvent, NULL );
+             }
+             timeout = get_next_io_timeout( &timeouts, total );
+@@ -1030,9 +1045,6 @@ NTSTATUS WINAPI NtWriteFile(HANDLE hFile, HANDLE hEvent,
+     }
+ 
+ done:
+-    if (cvalue) NTDLL_AddCompletion( hFile, cvalue, status, total );
+-
+-err:
+     if (needs_close) close( unix_handle );
+     if (status == STATUS_SUCCESS)
+     {
+@@ -1048,6 +1060,7 @@ err:
+         TRACE("= 0x%08x\n", status);
+         if (status != STATUS_PENDING && hEvent) NtResetEvent( hEvent, NULL );
+     }
++    if (cvalue) NTDLL_AddCompletion( hFile, cvalue, status, total );
+     return status;
+ }
+ 
+@@ -1083,6 +1096,7 @@ NTSTATUS WINAPI NtWriteFileGather( HANDLE file, HANDLE event, PIO_APC_ROUTINE ap
+         !(options & FILE_NO_INTERMEDIATE_BUFFERING))
+     {
+         status = STATUS_INVALID_PARAMETER;
++        cvalue = 0;
+         goto error;
+     }
+ 
+@@ -1100,6 +1114,7 @@ NTSTATUS WINAPI NtWriteFileGather( HANDLE file, HANDLE event, PIO_APC_ROUTINE ap
+             if (errno == EFAULT)
+             {
+                 status = STATUS_INVALID_USER_BUFFER;
++                cvalue = 0;
+                 goto error;
+             }
+             status = FILE_GetNtStatus();
+@@ -1119,8 +1134,6 @@ NTSTATUS WINAPI NtWriteFileGather( HANDLE file, HANDLE event, PIO_APC_ROUTINE ap
+         }
+     }
+ 
+-    if (cvalue) NTDLL_AddCompletion( file, cvalue, status, total );
+-
+  error:
+     if (needs_close) close( unix_handle );
+     if (status == STATUS_SUCCESS)
+@@ -1137,6 +1150,9 @@ NTSTATUS WINAPI NtWriteFileGather( HANDLE file, HANDLE event, PIO_APC_ROUTINE ap
+         TRACE("= 0x%08x\n", status);
+         if (status != STATUS_PENDING && event) NtResetEvent( event, NULL );
+     }
++
++    if (cvalue) NTDLL_AddCompletion( file, cvalue, status, total );
++
+     return status;
+ }
+ 

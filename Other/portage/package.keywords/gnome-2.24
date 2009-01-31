@@ -130,5 +130,5 @@
 =gnome-base/gdm-2.24*
 =net-analyzer/gnome-netstatus-2.12*
 =media-libs/gst-plugins-good-0.10*
-=media-libs/gst-plugins-bad-0.10*
+=media-libs/gst-plugins-bad-0.10.9
 =gnome-extra/fast-user-switch-applet-2.24*

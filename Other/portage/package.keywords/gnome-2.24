@@ -94,11 +94,14 @@
 =gnome-extra/zenity-2.24*
 =mail-client/evolution-2.24*
 =media-gfx/eog-2.24*
+=media-libs/gst-plugins-bad-0.10.9
+=media-libs/gst-plugins-good-0.10*
 =media-libs/libcanberra-0.10*
 =media-libs/swfdec-0.8*
 =media-plugins/gst-plugins-gio-0.10*
 =media-sound/sound-juicer-2.24*
 =media-video/totem-2.24*
+=net-analyzer/gnome-netstatus-2.12*
 =net-analyzer/gnome-nettool-2.22*
 =net-im/empathy-2.24*
 =net-im/telepathy-mission-control-4*
@@ -126,9 +129,3 @@
 =x11-themes/gnome-themes-2.24*
 =x11-themes/gtk-engines-2.16*
 =x11-wm/metacity-2.24*
-=gnome-base/gail-1000*
-=gnome-base/gdm-2.24*
-=net-analyzer/gnome-netstatus-2.12*
-=media-libs/gst-plugins-good-0.10*
-=media-libs/gst-plugins-bad-0.10.9
-=gnome-extra/fast-user-switch-applet-2.24*

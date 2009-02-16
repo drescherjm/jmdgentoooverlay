@@ -1,22 +1,22 @@
 # Copyright 1999-2009 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
-# $Header: /var/cvsroot/gentoo-x86/app-emulation/wine/wine-1.1.13.ebuild,v 1.1 2009/01/16 20:05:32 vapier Exp $
+# $Header: /var/cvsroot/gentoo-x86/app-emulation/wine/wine-1.1.15.ebuild,v 1.1 2009/02/13 18:47:57 vapier Exp $
 
-EAPI="1"
-
-inherit eutils flag-o-matic multilib
+EAPI="2"
 
 if [[ ${PV} == "9999" ]] ; then
 	EGIT_REPO_URI="git://source.winehq.org/git/wine.git"
 	inherit git
 	SRC_URI=""
+	KEYWORDS=""
 else
 	MY_P="${PN}-${PV/_/-}"
 	SRC_URI="mirror://sourceforge/${PN}/${MY_P}.tar.bz2"
+	KEYWORDS="-* ~amd64 ~x86 ~x86-fbsd"
 	S=${WORKDIR}/${MY_P}
 fi
 
-GV="0.9.0"
+GV="0.9.1"
 DESCRIPTION="free implementation of Windows(tm) on Unix"
 HOMEPAGE="http://www.winehq.org/"
 SRC_URI="${SRC_URI}
@@ -24,8 +24,7 @@ SRC_URI="${SRC_URI}
 
 LICENSE="LGPL-2.1"
 SLOT="0"
-KEYWORDS="-* ~amd64 ~x86 ~x86-fbsd"
-IUSE="alsa cups dbus esd +gecko gnutls hal jack jpeg lcms ldap nas ncurses +opengl oss samba scanner xml +X"
+IUSE="alsa cups dbus esd +gecko gnutls hal jack jpeg lcms ldap nas ncurses +opengl oss png samba scanner ssl win64 +X xcomposite xinerama xml wine-iocp-off wine-iocp-fix-race"
 RESTRICT="test" #72375
 
 RDEPEND=">=media-libs/freetype-2.0.0
@@ -43,7 +42,7 @@ RDEPEND=">=media-libs/freetype-2.0.0
 		x11-libs/libXxf86vm
 		x11-apps/xmessage
 	)
-	alsa? ( media-libs/alsa-lib )
+	alsa? ( media-libs/alsa-lib[midi] )
 	esd? ( media-sound/esound )
 	nas? ( media-libs/nas )
 	cups? ( net-print/cups )
@@ -54,11 +53,15 @@ RDEPEND=">=media-libs/freetype-2.0.0
 	samba? ( >=net-fs/samba-3.0.25 )
 	xml? ( dev-libs/libxml2 dev-libs/libxslt )
 	scanner? ( media-gfx/sane-backends )
+	ssl? ( dev-libs/openssl )
+	png? ( media-libs/libpng )
+	win64? ( >=sys-devel/gcc-4.4_alpha )
 	amd64? (
 		X? (
 			>=app-emulation/emul-linux-x86-xlibs-2.1
 			>=app-emulation/emul-linux-x86-soundlibs-2.1
 		)
+		app-emulation/emul-linux-x86-baselibs
 		>=sys-kernel/linux-headers-2.6
 	)"
 DEPEND="${RDEPEND}
@@ -70,70 +73,58 @@ DEPEND="${RDEPEND}
 	sys-devel/bison
 	sys-devel/flex"
 
-pkg_setup() {
-	use alsa || return 0
-	if ! built_with_use --missing true media-libs/alsa-lib midi ; then
-		eerror "You must build media-libs/alsa-lib with USE=midi"
-		die "please re-emerge media-libs/alsa-lib with USE=midi"
-	fi
-}
-
 src_unpack() {
 	if [[ ${PV} == "9999" ]] ; then
 		git_src_unpack
 	else
 		unpack ${MY_P}.tar.bz2
 	fi
-	cd "${S}"
+	use wine-iocp-off && epatch "${FILESDIR}"/wine-1.1.2-noiocp.patch         
+	use wine-iocp-fix-race && epatch "${FILESDIR}"/wine-iocp-fix-race.patch
 
+}
+
+src_prepare() {
 	sed -i '/^UPDATE_DESKTOP_DATABASE/s:=.*:=true:' tools/Makefile.in || die
 	sed -i '/^MimeType/d' tools/wine.desktop || die #117785
-        epatch "${FILESDIR}"/wine-1.1.2-noiocp.patch
+	
 }
 
-config_cache() {
-	local h ans="no"
-	use $1 && ans="yes"
-	shift
-	for h in "$@" ; do
-		[[ ${h} == *.h ]] \
-			&& h=header_${h} \
-			|| h=lib_${h}
-		export ac_cv_${h//[:\/.]/_}=${ans}
-	done
-}
-
-src_compile() {
+src_configure() {
 	export LDCONFIG=/bin/true
-	use esd     || export ac_cv_path_ESDCONFIG=""
-	use scanner || export ac_cv_path_sane_devel="no"
-	config_cache jack jack/jack.h
-	config_cache cups cups/cups.h
-	config_cache alsa alsa/asoundlib.h sys/asoundlib.h asound:snd_pcm_open
-	config_cache nas audio/audiolib.h audio/soundlib.h
-	config_cache xml libxml/parser.h libxslt/pattern.h libxslt/transform.h
-	config_cache ldap ldap.h lber.h
-	config_cache dbus dbus/dbus.h
-	config_cache hal hal/libhal.h
-	config_cache jpeg jpeglib.h
-	config_cache oss sys/soundcard.h machine/soundcard.h soundcard.h
-	config_cache lcms lcms.h
 
-	strip-flags
-
-	use amd64 && multilib_toolchain_setup x86
-
-	#	$(use_enable amd64 win64)
+	# XXX: should check out these flags too:
+	#	audioio capi fontconfig freetype gphoto
 	econf \
 		--sysconfdir=/etc/wine \
+		$(use_with alsa) \
+		$(use_with cups) \
+		$(use_with esd) \
 		$(use_with gnutls) \
+		$(! use dbus && echo --without-hal || use_with hal) \
+		$(use_with jack) \
+		$(use_with jpeg) \
+		$(use_with lcms cms) \
+		$(use_with ldap) \
+		$(use_with nas) \
 		$(use_with ncurses curses) \
 		$(use_with opengl) \
+		$(use_with oss) \
+		$(use_with png) \
+		$(use_with scanner sane) \
+		$(use_with ssl openssl) \
+		$(use_enable win64) \
 		$(use_with X x) \
-		$(use_with esd) \
+		$(use_with xcomposite) \
+		$(use_with xinerama) \
+		$(use_with xml) \
+		$(use_with xml xslt) \
 		|| die "configure failed"
 
 	emake -j1 depend || die "depend"
+}
+
+src_compile() {
 	emake all || die "all"
 }
 
@@ -144,9 +135,4 @@ src_install() {
 		insinto /usr/share/wine/gecko
 		doins "${DISTDIR}"/wine_gecko-${GV}.cab || die
 	fi
-}
-
-pkg_postinst() {
-	elog "~/.wine/config is now deprecated.  For configuration either use"
-	elog "winecfg or regedit HKCU\\Software\\Wine"
 }

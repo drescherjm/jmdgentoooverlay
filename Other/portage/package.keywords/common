@@ -44,7 +44,7 @@
 =sys-block/partimage-0.6.4-r4 ~*
 =sys-devel/binutils-2.17
 =sys-devel/gcc-4.2*
-=sys-devel/icecream-0.9.2*
+=sys-devel/icecream-0.9.3*
 =sys-fs/cryptsetup-1.0.6*
 =sys-kernel/openvz-sources-028.010
 =sys-kernel/vserver-sources-2.2*

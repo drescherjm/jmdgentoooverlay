@@ -50,6 +50,8 @@ src_unpack() {
 	unpack ${A}
 	cd "${S}/source"
 
+	epatch ${FILESDIR}/samba-3.3.2-readonly-map.patch
+
 	# Ok, agreed, this is ugly. But it avoids a patch we
 	# need for every samba version and we don't need autotools
 	sed -i \

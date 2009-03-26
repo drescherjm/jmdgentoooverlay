@@ -80,7 +80,7 @@ then
 elif [ "$1" -gt 15000 ]
 then
   svn_rvn=$1
-  equery list myth -I -p | grep ${mythver} | grep -v pre | sort | uniq > ${package_versions}
+  equery list myth -p | grep ${mythver} | grep -v pre | sort | uniq > ${package_versions}
   get_package_list
   execute_main_loop
 else

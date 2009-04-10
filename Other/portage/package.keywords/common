@@ -10,8 +10,8 @@
 =app-portage/glcu-0.9.7*
 =app-portage/portato-0.8*
 =app-shells/bash-3.2*
-=app-shells/bash-completion-20050721
-=app-text/poppler-bindings-0.6.3
+=app-shells/bash-completion-20081219*
+=app-text/poppler-0.10.5*
 =app-text/xpdf-3.01-r8
 =dev-cpp/cairomm-1.2*
 =dev-db/hk_classes-0.8.2*
@@ -50,6 +50,7 @@
 =virtual/poppler-0.10.5*
 =virtual/poppler-glib-0.10.5*
 =www-client/mozilla-firefox-bin-3*
+=www-plugins/adobe-flash-10*
 app-admin/eselect
 app-admin/eselect-opengl
 app-antivirus/f-prot
@@ -80,7 +81,6 @@ app-portage/conf-update
 app-portage/kuroo
 app-portage/udept
 app-shells/bash-completion
-app-text/poppler-0.10.5*
 dev-cpp/gconfmm
 dev-cpp/libglademm
 dev-db/libpq
@@ -150,4 +150,3 @@ sys-libs/db
 sys-libs/libstdc++-v3
 sys-power/apcupsd
 www-client/mozilla-firefox
-www-plugins/adobe-flash-10*

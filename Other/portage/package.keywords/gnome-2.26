@@ -144,8 +144,6 @@
 =app-cdr/brasero-2.26*
 =dev-libs/libburn-0.6*
 =x11-libs/libxklavier-3*
-#=app-text/poppler-0.10.4*
-#=app-text/poppler-bindings-0.10.4*
 =media-libs/gst-plugins-bad-0.10.11*
 =virtual/poppler-glib-0.10.5*
 =virtual/poppler-0.10.5*

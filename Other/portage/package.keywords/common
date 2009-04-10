@@ -150,3 +150,4 @@ sys-libs/libstdc++-v3
 sys-power/apcupsd
 www-client/mozilla-firefox
 sys-apps/memtest86+
+=sys-kernel/vserver-sources-2.3.0.35*

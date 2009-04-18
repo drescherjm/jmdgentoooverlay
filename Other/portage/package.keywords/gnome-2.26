@@ -148,3 +148,4 @@
 =virtual/poppler-glib-0.10.5*
 =virtual/poppler-0.10.5*
 =sys-devel/libtool-2.2*
+=dev-libs/nspr-4.7*

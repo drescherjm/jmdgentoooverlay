@@ -1,0 +1,4 @@
+kde-base/libknotificationitem:4.3
+kde-base/policykit-kde:4.3
+=sys-auth/policykit-qt-9999
+=sys-auth/policykit-qt-9999 **

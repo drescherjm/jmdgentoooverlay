@@ -149,3 +149,6 @@
 =virtual/poppler-0.10.5*
 =sys-devel/libtool-2.2*
 =dev-libs/nspr-4.7*
+=gnome-base/libgnomeprintui-2.2*
+=x11-libs/vte-0.20*
+=gnome-base/gnome-session-2.26*

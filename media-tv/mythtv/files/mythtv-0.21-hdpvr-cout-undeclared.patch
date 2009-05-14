@@ -1,0 +1,17 @@
+diff -urNp libs_orig/libmythtv/mpeg/h264utils.cpp libs/libmythtv/mpeg/h264utils.cpp
+--- libs_orig/libmythtv/mpeg/h264utils.cpp	2009-01-16 14:39:52.000000000 -0700
++++ libs/libmythtv/mpeg/h264utils.cpp	2009-01-16 14:44:41.000000000 -0700
+@@ -215,13 +215,6 @@ void KeyframeSequencer::decode_Header(Ge
+     bool field_pic_flag;
+     bool bottom_field_flag;
+ 
+-    if (log2_max_frame_num < 1)
+-    {
+-        VERBOSE(VB_IMPORTANT, "KeyframeSequencer::decode_Header: "
+-                "SPS has not been parsed!");
+-        return;
+-    }
+-
+     new_VLC_NAL = false;
+ 
+     prev_frame_num = frame_num;

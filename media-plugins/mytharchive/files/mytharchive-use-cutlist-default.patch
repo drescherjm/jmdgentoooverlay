@@ -1,0 +1,11 @@
+--- mytharchive/mytharchive/mythburnwizard.cpp	2009-05-16 13:05:02.288480371 -0400
++++ mytharchive/mytharchive/mythburnwizard.cpp	2009-05-16 13:14:13.448418810 -0400
+@@ -1123,7 +1123,7 @@
+                 item->startTime = QString::fromUtf8(query.value(7).toString());
+                 item->filename = filename;
+                 item->hasCutlist = hasCutList(type, filename);
+-                item->useCutlist = false;
++                item->useCutlist = item->hasCutlist;
+                 item->editedDetails = false;
+                 item->duration = 0;
+                 item->cutDuration = 0;

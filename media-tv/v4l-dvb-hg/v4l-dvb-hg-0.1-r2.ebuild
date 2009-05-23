@@ -1,10 +1,10 @@
-# Copyright 1999-2009 Gentoo Foundation
+# Copyright 1999-2008 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
-# $Header: $
+# $Header: /var/cvsroot/gentoo-x86/media-tv/v4l-dvb-hg/v4l-dvb-hg-0.1-r2.ebuild,v 1.15 2008/05/21 13:30:44 zzam Exp $
 
 : ${EHG_REPO_URI:=${V4L_DVB_HG_REPO_URI:-http://linuxtv.org/hg/v4l-dvb}}
 
-inherit linux-mod eutils toolchain-funcs mercurial savedconfig
+inherit linux-mod eutils toolchain-funcs mercurial
 
 DESCRIPTION="live development version of v4l&dvb-driver for Kernel 2.6"
 SRC_URI=""
@@ -45,10 +45,6 @@ src_unpack() {
 	cd "${S}"
 	#epatch ${FILESDIR}/${PN}-fix-makefile-recursion.diff
 
-	einfo "Removing modules-install"
-	sed -i ${S}/Makefile \
-	-e "s/install:: media-install firmware_install/install:: media-install/"
-
 	# apply local patches
 	if test -n "${DVB_LOCAL_PATCHES}";
 	then
@@ -69,9 +65,8 @@ src_unpack() {
 		einfo "No additional local patches to use"
 	fi
 
-	cd "${S}"
 	export ARCH=$(tc-arch-kernel)
-	make allmodconfig  ${BUILD_PARAMS}
+	make allmodconfig ${BUILD_PARAMS}
 	export ARCH=$(tc-arch)
 
 	echo
@@ -97,11 +92,6 @@ src_unpack() {
 		-i *.h
 }
 
-src_compile() {
-	cd "${S}"
-	emake
-}
-
 src_install() {
 	# install the modules
 	local DEST="${D}/lib/modules/${KV_FULL}/v4l-dvb"
@@ -111,9 +101,6 @@ src_install() {
 		KDIRA="${DEST}" \
 	|| die "make install failed"
 
-	cd "${S}"/firmware
-	make install FW_DIR=${D}/lib/firmware || die "install firmware failed"
-
 	cd "${S}"/..
 	dodoc linux/Documentation/dvb/*.txt
 	dosbin linux/Documentation/dvb/get_dvb_firmware
@@ -121,9 +108,6 @@ src_install() {
 	insinto /usr/include/v4l-dvb-hg/linux/dvb
 	cd "${WORKDIR}/header"
 	doins *.h
-
-	cd "${S}"
-	save_config .config
 }
 
 pkg_postinst() {

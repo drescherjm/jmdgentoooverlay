@@ -4,6 +4,8 @@
 
 : ${EHG_REPO_URI:=${V4L_DVB_HG_REPO_URI:-http://linuxtv.org/hg/v4l-dvb}}
 
+EAPI="2"
+
 inherit linux-mod eutils toolchain-funcs mercurial savedconfig
 
 DESCRIPTION="live development version of v4l&dvb-driver for Kernel 2.6"
@@ -38,16 +40,11 @@ pkg_setup()
 	fi
 }
 
-src_unpack() {
-	# download and copy files
-	mercurial_src_unpack
-
-	cd "${S}"
-	#epatch ${FILESDIR}/${PN}-fix-makefile-recursion.diff
+src_prepare() {
 
 	einfo "Removing modules-install"
-	sed -i ${S}/Makefile \
-	-e "s/install:: media-install firmware_install/install:: media-install/"
+        sed -i ${S}/Makefile \
+        -e "s/install:: media-install firmware_install/install:: media-install/"
 
 	# apply local patches
 	if test -n "${DVB_LOCAL_PATCHES}";
@@ -69,9 +66,8 @@ src_unpack() {
 		einfo "No additional local patches to use"
 	fi
 
-	cd "${S}"
 	export ARCH=$(tc-arch-kernel)
-	make allmodconfig  ${BUILD_PARAMS}
+	make allmodconfig ${BUILD_PARAMS}
 	export ARCH=$(tc-arch)
 
 	echo
@@ -95,11 +91,9 @@ src_unpack() {
 	sed -e '/compiler/d' \
 		-e 's/__user//' \
 		-i *.h
-}
 
-src_compile() {
 	cd "${S}"
-	emake
+	restore_config .config
 }
 
 src_install() {
@@ -110,9 +104,6 @@ src_install() {
 		KDIR26="${DEST}" \
 		KDIRA="${DEST}" \
 	|| die "make install failed"
-
-	cd "${S}"/firmware
-	make install FW_DIR=${D}/lib/firmware || die "install firmware failed"
 
 	cd "${S}"/..
 	dodoc linux/Documentation/dvb/*.txt

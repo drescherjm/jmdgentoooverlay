@@ -39,10 +39,12 @@
 =sys-apps/net-tools-1.60*
 =sys-apps/openrc-0.4*
 =sys-apps/portage-2.2*
+=sys-apps/unscd-0.37*
 =sys-auth/pambase-2008*
 =sys-block/partimage-0.6.4-r4 ~*
 =sys-devel/binutils-2.17
 =sys-devel/gcc-4.3*
+=sys-devel/icecream-0.9*
 =sys-devel/icecream-0.9.3*
 =sys-fs/cryptsetup-1.0.6*
 =sys-kernel/vserver-sources-2.3.0.35*
@@ -150,5 +152,3 @@ sys-libs/db
 sys-libs/libstdc++-v3
 sys-power/apcupsd
 www-client/mozilla-firefox
-=sys-devel/icecream-0.9*
-sys-apps/unscd-0.37*

@@ -150,3 +150,4 @@ sys-libs/db
 sys-libs/libstdc++-v3
 sys-power/apcupsd
 www-client/mozilla-firefox
+=sys-devel/icecream-0.9*

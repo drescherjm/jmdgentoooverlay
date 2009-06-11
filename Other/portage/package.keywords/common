@@ -151,3 +151,4 @@ sys-libs/libstdc++-v3
 sys-power/apcupsd
 www-client/mozilla-firefox
 =sys-devel/icecream-0.9*
+sys-apps/unscd-0.37*

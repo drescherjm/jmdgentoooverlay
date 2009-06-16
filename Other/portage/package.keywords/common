@@ -152,3 +152,4 @@ sys-libs/db
 sys-libs/libstdc++-v3
 sys-power/apcupsd
 www-client/mozilla-firefox
+=app-shells/gentoo-bashcomp-20090613*

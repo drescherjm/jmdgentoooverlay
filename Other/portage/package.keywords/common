@@ -156,5 +156,6 @@ sys-kernel/genkernel
 sys-kernel/gentoo-sources
 sys-libs/db
 sys-libs/libstdc++-v3
+sys-libs/timezone-data
 sys-power/apcupsd
 www-client/mozilla-firefox

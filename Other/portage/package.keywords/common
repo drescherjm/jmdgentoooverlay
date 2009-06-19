@@ -51,6 +51,7 @@
 =sys-devel/gcc-4.3*
 =sys-devel/icecream-0.9*
 =sys-devel/icecream-0.9.3*
+=sys-devel/libtool-2.2*
 =sys-fs/cryptsetup-1.0.6*
 =sys-kernel/vserver-sources-2.3.0.35*
 =sys-libs/readline-5.2*

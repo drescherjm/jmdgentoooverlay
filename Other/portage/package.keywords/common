@@ -42,6 +42,7 @@
 =sys-apps/portage-2.2*
 =sys-apps/unscd-0.37*
 =sys-auth/pambase-2008*
+=sys-auth/pambase-20090515
 =sys-block/partimage-0.6.4-r4 ~*
 =sys-devel/binutils-2.17
 =sys-devel/gcc-4.3*

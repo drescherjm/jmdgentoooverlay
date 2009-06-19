@@ -79,6 +79,7 @@
 =gnome-base/libgnome-2.26*
 =gnome-base/libgnomecanvas-2.26*
 =gnome-base/libgnomekbd-2.26*
+=gnome-base/libgnomeprintui-2.18*
 =gnome-base/libgnomeprintui-2.2*
 =gnome-base/libgtop-2.26*
 =gnome-base/librsvg-2.26*
@@ -156,4 +157,3 @@
 =x11-themes/gtk-engines-murrine-0.90*
 =x11-themes/murrine-themes-0.90*
 =x11-wm/metacity-2.26*
-=gnome-base/libgnomeprintui-2.18*

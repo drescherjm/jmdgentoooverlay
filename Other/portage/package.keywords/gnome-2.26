@@ -72,6 +72,8 @@
 =gnome-base/gnome-session-2.26*
 =gnome-base/gnome-settings-daemon-2.25.92*
 =gnome-base/gnome-settings-daemon-2.26*
+=gnome-base/gnome-vfs-2.24*
+=gnome-base/gnome-vfs-2.26*
 =gnome-base/gvfs-1.2*
 =gnome-base/libglade-2.6*
 =gnome-base/libgnome-2.26*

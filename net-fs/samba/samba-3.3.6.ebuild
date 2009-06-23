@@ -1,6 +1,6 @@
 # Copyright 1999-2008 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
-# $Header: /var/cvsroot/gentoo-x86/net-fs/samba/samba-3.2.4.ebuild,v 1.1 2008/10/09 15:32:53 dev-zero Exp $
+# $Header: /var/cvsroot/gentoo-x86/net-fs/samba/samba-3.2.0_rc2.ebuild,v 1.1 2008/06/12 12:10:25 dev-zero Exp $
 
 inherit eutils pam multilib versionator confutils
 
@@ -12,7 +12,8 @@ SRC_URI="mirror://samba/${MY_P}.tar.gz"
 LICENSE="GPL-3"
 SLOT="0"
 KEYWORDS="~amd64 ~x86"
-IUSE="acl ads async automount caps cifs_spnego cluster cups doc examples ipv6 kernel_linux kerberos ldap fam
+IUSE_LINGUAS="linguas_ja linguas_pl"
+IUSE="${IUSE_LINGUAS} acl ads async automount caps cups doc examples ipv6 kernel_linux ldap fam
 	pam quotas readline selinux swat syslog winbind"
 
 RDEPEND="dev-libs/popt
@@ -21,7 +22,7 @@ RDEPEND="dev-libs/popt
 	acl? ( kernel_linux? ( sys-apps/acl ) )
 	cups? ( net-print/cups )
 	ipv6? ( sys-apps/xinetd )
-	kerberos? ( virtual/krb5 sys-fs/e2fsprogs )
+	ads? ( virtual/krb5 sys-fs/e2fsprogs )
 	ldap? ( net-nds/openldap )
 	pam? ( virtual/pam )
 	readline? ( sys-libs/readline )
@@ -29,14 +30,11 @@ RDEPEND="dev-libs/popt
 	swat? ( sys-apps/xinetd )
 	syslog? ( virtual/logger )
 	fam? ( virtual/fam )
-	caps? ( sys-libs/libcap )
-	cifs_spnego? ( sys-apps/keyutils )
-	cluster? ( dev-db/ctdb )"
-DEPEND="${RDEPEND}
-	!net-fs/mount-cifs"
+	caps? ( sys-libs/libcap )"
+DEPEND="${RDEPEND}"
 
 S="${WORKDIR}/${MY_P}"
-CONFDIR="${FILESDIR}/config-3.2"
+CONFDIR="${FILESDIR}/config-3.3"
 PRIVATE_DST=/var/lib/samba/private
 
 # Tests are currently broken due to hardcoded paths (due to --with-fhs)
@@ -45,20 +43,23 @@ PRIVATE_DST=/var/lib/samba/private
 RESTRICT="test"
 
 pkg_setup() {
-	confutils_use_depend_all cifs_spnego ads
-	confutils_use_depend_all ads ldap kerberos
+	confutils_use_depend_all ads ldap
 }
 
 src_unpack() {
 	unpack ${A}
 	cd "${S}/source"
 
-	# Ok, agreed, this is ugly. But it avoids a patch we would
+	#epatch ${FILESDIR}/samba-3.3.2-readonly-map.patch
+
+	# Ok, agreed, this is ugly. But it avoids a patch we
 	# need for every samba version and we don't need autotools
 	sed -i \
 		-e 's|"lib32" ||' \
 		-e 's|if test -d "$i/$l" ;|if test -d "$i/$l" -o -L "$i/$l";|' \
 		configure || die "sed failed"
+
+	rm "${S}/docs/manpages"/{mount,umount}.cifs.8
 
 	sed -i \
 		-e 's|tdbsam|tdbsam:${PRIVATEDIR}/passdb.tdb|' \
@@ -69,19 +70,30 @@ src_compile() {
 	cd "${S}/source"
 
 	local myconf
+	local mylangs
 	local mymod_shared
 
-	if use ldap && use winbind; then
-		mymod_shared="--with-shared-modules=idmap_rid"
-		mymod_shared="${mymod_shared},idmap_ad"
-	fi
+	mylangs="--with-manpages-langs=en"
+	use linguas_ja && mylangs="${mylangs},ja"
+	use linguas_pl && mylangs="${mylangs},pl"
 
-	use kernel_linux && myconf="${myconf} $(use_with cifs_spnego cifsupcall) --with-cifsmount"
+	use winbind && mymod_shared="--with-shared-modules=idmap_rid"
+	if use ldap ; then
+		myconf="${myconf} $(use_with ads)"
+		use winbind && mymod_shared="${mymod_shared},idmap_ad"
+	fi
 
 	[[ ${CHOST} == *-*bsd* ]] && myconf="${myconf} --disable-pie"
 	use hppa && myconf="${myconf} --disable-pie"
 
 	use caps && export ac_cv_header_sys_capability_h=yes || export ac_cv_header_sys_capability_h=no
+
+	# Otherwise we get the whole swat stuff installed
+	if ! use swat ; then
+		sed -i \
+			-e 's/^\(install:.*\)installswat \(.*\)/\1\2/' \
+			Makefile.in || die "sed failed"
+	fi
 
 	econf \
 		--with-fhs \
@@ -90,35 +102,30 @@ src_compile() {
 		--with-configdir=/etc/samba \
 		--with-libdir=/usr/$(get_libdir)/samba \
 		--with-pammodulesdir=$(getpam_mod_dir) \
-		--with-swatdir=/usr/share/${PN}/swat \
+		--with-swatdir=/usr/share/doc/${PF}/swat \
 		--with-piddir=/var/run/samba \
 		--with-lockdir=/var/cache/samba \
 		--with-logfilebase=/var/log/samba \
 		--with-privatedir=${PRIVATE_DST} \
-		--with-ctdb=/usr \
 		--with-libsmbclient \
 		--without-spinlocks \
 		--enable-socket-wrapper \
 		--enable-nss-wrapper \
-		--without-included-popt \
-		--without-included-iniparser \
+		--with-cifsmount=no \
 		$(use_with acl acl-support) \
-		$(use_with ads) \
 		$(use_with async aio-support) \
 		$(use_with automount) \
 		$(use_enable cups) \
 		$(use_enable fam) \
-		$(use_with kerberos krb5) \
+		$(use_with ads krb5) \
 		$(use_with ads dnsupdate) \
 		$(use_with ldap) \
 		$(use_with pam) $(use_with pam pam_smbpass) \
 		$(use_with quotas) $(use_with quotas sys-quotas) \
 		$(use_with readline) \
-		$(use_enable swat) \
 		$(use_with syslog) \
 		$(use_with winbind) \
-		$(use_with cluster cluster-support) \
-		${myconf} ${mymod_shared} || die "econf failed"
+		${myconf} ${mylangs} ${mymod_shared} || die "econf failed"
 
 	emake proto || die "emake proto failed"
 	emake everything || die "emake everything failed"
@@ -135,17 +142,17 @@ src_install() {
 
 	emake DESTDIR="${D}" install-everything || die "emake install-everything failed"
 
-	local libs="libnetapi.so.0 libsmbclient.so.0 libsmbsharemodes.so.0 libtalloc.so.1 libtdb.so.1 libwbclient.so.0"
-	for lib in ${libs} ; do
-		dosym samba/${lib} /usr/$(get_libdir)/${lib}
-		dosym samba/${lib} /usr/$(get_libdir)/${lib%.?}
-	done
-
 	# Extra rpctorture progs
 	local extra_bins="rpctorture"
 	for i in ${extra_bins} ; do
 		[[ -x "${S}/bin/${i}" ]] && dobin "${S}/bin/${i}"
 	done
+
+	# remove .old stuff from /usr/bin:
+	rm -f "${D}"/usr/bin/*.old
+
+	# Removing executable bits from header-files
+	fperms 644 /usr/include/libsmbclient.h
 
 	# Nsswitch extensions. Make link for wins and winbind resolvers
 	if use winbind ; then
@@ -153,19 +160,6 @@ src_install() {
 		dosym libnss_wins.so /usr/$(get_libdir)/libnss_wins.so.2
 		dolib.so nsswitch/libnss_winbind.so
 		dosym libnss_winbind.so /usr/$(get_libdir)/libnss_winbind.so.2
-	fi
-
-	if use kernel_linux ; then
-		dosym ../usr/sbin/mount.cifs /usr/bin/mount.cifs
-		dosym ../usr/sbin/umount.cifs /usr/bin/umount.cifs
-		# Warning: this can byte you if /usr is
-		# on a separate volume and you have to mount
-		# a smb volume before the local mount
-		dosym ../usr/sbin/mount.cifs /sbin/mount.cifs
-		dosym ../usr/sbin/umount.cifs /sbin/umount.cifs
-		#
-		fperms 4755 /usr/sbin/mount.cifs
-		fperms 4755 /usr/sbin/umount.cifs
 	fi
 
 	# make the smb backend symlink for cups printing support (bug #133133)
@@ -179,7 +173,7 @@ src_install() {
 	# General config files
 	insinto /etc/samba
 	doins "${CONFDIR}"/{smbusers,lmhosts}
-	doins "${CONFDIR}/smb.conf.example"
+	newins "${CONFDIR}/smb.conf.example-samba3" smb.conf.example
 
 	newpamd "${CONFDIR}/samba.pam" samba
 	use winbind && dopamd "${CONFDIR}/system-auth-winbind"
@@ -187,6 +181,7 @@ src_install() {
 		insinto /etc/xinetd.d
 		newins "${CONFDIR}/swat.xinetd" swat
 	else
+		rm -f "${D}/usr/sbin/swat"
 		rm -f "${D}/usr/share/man/man8/swat.8"
 	fi
 
@@ -233,12 +228,6 @@ src_install() {
 			rm -rf "${D}/usr/share/doc/${PF}/swat/help"/{guide,howto,devel}
 			rm -rf "${D}/usr/share/doc/${PF}/swat/using_samba"
 		fi
-	else
-		cd "${S}/docs"
-		insinto /usr/share/doc/${PF}
-		doins *.pdf
-		doins -r registry
-		dohtml -r htmldocs/*
 	fi
 
 }
@@ -274,9 +263,8 @@ pkg_postinst() {
 	elog "  /etc/init.d/samba. Calling /etc/init.d/samba directly will start"
 	elog "  the daemons configured in /etc/conf.d/samba"
 
-	elog "The mount/umount.cifs helper applications are included per my own" 
-	elog "personal preference. Suggest a 'minimal' use flag to install only the"
-	elog "helper apps. I think it's easier to keep everything in sync this way"
+	elog "The mount/umount.cifs helper applications are not included anymore."
+	elog "Please install net-fs/mount-cifs instead."
 
 	ewarn "If you're upgrading from 3.0.24 or earlier, please make sure to"
 	ewarn "restart your clients to clear any cached information about the server."

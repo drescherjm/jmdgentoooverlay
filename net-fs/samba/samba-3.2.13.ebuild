@@ -155,6 +155,15 @@ src_install() {
 		dosym libnss_winbind.so /usr/$(get_libdir)/libnss_winbind.so.2
 	fi
 
+        # bug #46389: samba doesn't create symlink anymore
+        # beaviour seems to be changed in 3.0.6, see bug #61046
+        dosym samba/libsmbclient.so /usr/$(get_libdir)/libsmbclient.so
+        dosym samba/libsmbclient.so.0 /usr/$(get_libdir)/libsmbclient.so.0
+        dosym samba/libtalloc.so /usr/$(get_libdir)/libtalloc.so
+        dosym samba/libtalloc.so.1 /usr/$(get_libdir)/libtalloc.so.1
+        dosym samba/libtdb.so /usr/$(get_libdir)/libtdb.so
+        dosym samba/libtdb.so.1 /usr/$(get_libdir)/libtdb.so.1
+
 	if use kernel_linux ; then
 		dosym ../usr/sbin/mount.cifs /usr/bin/mount.cifs
 		dosym ../usr/sbin/umount.cifs /usr/bin/umount.cifs

@@ -1,0 +1,96 @@
+--- Config.kmk.orig	2008-09-03 01:49:46.000000000 +0200
++++ Config.kmk	2008-09-03 01:53:48.000000000 +0200
+@@ -134,26 +134,26 @@
+ 
+ # This indicates that additions (of some kind or another) is being _built_.
+ # VBOX_WITHOUT_ADDITIONS overrides it.
+-if1of ($(KBUILD_TARGET),l4 linux os2 solaris win)
+- VBOX_WITH_ADDITIONS = 1
+-else ifdef VBOX_WITH_WIN32_ADDITIONS # for ssh cross builds -remove later!
+- VBOX_WITH_ADDITIONS = 1
+-else ifdef VBOX_WITH_LINUX_ADDITIONS # for ssh cross builds - remove later!
+- VBOX_WITH_ADDITIONS = 1
+-endif
++#if1of ($(KBUILD_TARGET),l4 linux os2 solaris win)
++# VBOX_WITH_ADDITIONS = 1
++#else ifdef VBOX_WITH_WIN32_ADDITIONS # for ssh cross builds -remove later!
++# VBOX_WITH_ADDITIONS = 1
++#else ifdef VBOX_WITH_LINUX_ADDITIONS # for ssh cross builds - remove later!
++# VBOX_WITH_ADDITIONS = 1
++#endif
+ # Build the optional ring-0 part of the additions for syntax checking.
+ # (Ignored ifndef VBOX_WITH_ADDITIONS. Hack for 32/64 linux issues.)
+-VBOX_WITH_ADDITION_DRIVERS = 1
++#VBOX_WITH_ADDITION_DRIVERS = 1
+ # Build win32 additions (cross building them on linux and l4 using wine).
+-if1of ($(KBUILD_TARGET),l4 linux win)
+- VBOX_WITH_WIN32_ADDITIONS = 1
+-endif
++#if1of ($(KBUILD_TARGET),l4 linux win)
++# VBOX_WITH_WIN32_ADDITIONS = 1
++#endif
+ # Build linux additions.
+ # Note! VBOX_WITH_LINUX_ADDITIONS will be removed later and only
+ # VBOX_WITH_WIN32_ADDITIONS will be kept around for cross building.
+-if1of ($(KBUILD_TARGET),l4 linux)
+- VBOX_WITH_LINUX_ADDITIONS = 1
+-endif
++#if1of ($(KBUILD_TARGET),l4 linux)
++# VBOX_WITH_LINUX_ADDITIONS = 1
++#endif
+ # Build X11 additions. Can be disabled separately.
+ ifndef VBOX_WITH_X11_ADDITIONS
+  ifdef VBOX_WITH_LINUX_ADDITIONS
+@@ -196,7 +196,7 @@
+ # Activate this to force the VM to pre-allocate the guest RAM before startup
+ VBOX_WITH_PREALLOC_RAM_BY_DEFAULT =
+ # The kernel driver/module and related runtime libraries.
+-VBOX_WITH_VBOXDRV = 1
++#VBOX_WITH_VBOXDRV = 1
+ # build with secure label support
+ ifeq ($(filter win.amd64,$(KBUILD_TARGET).$(KBUILD_TARGET_ARCH)),) # too much work with freetype and all that.
+ VBOX_WITH_SECURELABEL = 1
+@@ -209,7 +209,7 @@
+ # The SDL based GUI.
+ VBOX_WITH_VBOXSDL = 1
+ # The basic frontend (w/o Main).
+-VBOX_WITH_VBOXBFE = 1
++#VBOX_WITH_VBOXBFE = 1
+ # The Qt GUI.
+ VBOX_WITH_QTGUI = 1
+ # The Qt 4 GUI (experimental).
+@@ -245,9 +245,9 @@
+ # Enable the kchmviewer
+ VBOX_WITH_KCHMVIEWER = 1
+ # Build the testsuite.
+-VBOX_WITH_TESTSUITE = 1
++#VBOX_WITH_TESTSUITE = 1
+ # Build the testcases.
+-VBOX_WITH_TESTCASES = 1
++#VBOX_WITH_TESTCASES = 1
+ # Set this to not use COM or XPCOM in places where it can be avoided.
+ #VBOX_WITHOUT_COM = 1
+ # Set this to skip installing the redistributable compiler runtime.
+--- configure.orig	2008-09-03 01:49:51.000000000 +0200
++++ configure	2008-09-03 01:54:33.000000000 +0200
+@@ -1790,14 +1790,14 @@
+ # some things are not available in for OSE
+ if [ $OSE -ge 1 ]; then
+   cnf_append "VBOX_OSE" "1"
+-  cnf_append "VBOX_WITH_TESTSUITE" ""
++#  cnf_append "VBOX_WITH_TESTSUITE" ""
+   cnf_append "VBOX_WITH_WIN32_ADDITIONS" ""
+ 
+-  if [ "$OS" = "linux" ]; then
+-    cnf_append "VBOX_WITH_LINUX_ADDITIONS" "1"
+-  else
+-    cnf_append "VBOX_WITH_LINUX_ADDITIONS" ""
+-  fi
++#  if [ "$OS" = "linux" ]; then
++#    cnf_append "VBOX_WITH_LINUX_ADDITIONS" "1"
++#  else
++#    cnf_append "VBOX_WITH_LINUX_ADDITIONS" ""
++#  fi
+   echo >> $CNF
+ fi
+ 

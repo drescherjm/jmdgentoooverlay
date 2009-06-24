@@ -29,6 +29,7 @@
 =media-gfx/gqview-2.1*
 =net-analyzer/nagios-nrpe-2*
 =net-dns/dnrd-2.20*
+=net-fs/autofs-5.0.4*
 =net-fs/nfs-utils-1.1*
 =net-fs/samba-3.0.34*
 =net-libs/liblockfile-1.06-r1

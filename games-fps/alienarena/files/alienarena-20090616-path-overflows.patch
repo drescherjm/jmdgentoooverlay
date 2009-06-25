@@ -1,0 +1,51 @@
+--- source/game/acesrc/acebot_nodes.c
++++ source/game/acesrc/acebot_nodes.c
+@@ -719,7 +719,7 @@
+ void ACEND_SaveNodes()
+ {
+ 	FILE *pOut;
+-	char filename[60];
++	char filename[MAX_OSPATH];
+ 	int i,j;
+ 	int version = 1;
+ 	
+@@ -760,7 +760,7 @@
+ {
+ 	FILE *pIn;
+ 	int i,j;
+-	char filename[60];
++	char filename[MAX_OSPATH];
+ 	int version;
+ 
+ 	strcpy(filename,BOTDIR"/botinfo/nav/");
+--- source/game/acesrc/acebot_spawn.c
++++ source/game/acesrc/acebot_spawn.c
+@@ -119,7 +119,7 @@
+ 	int i, j, count, spawnkicknum;
+ 	char *info;
+ 	char *skin;
+-	char bot_filename[128];
++	char bot_filename[MAX_OSPATH];
+ 	int found;
+ 	int real_players, total_players;
+ 	edict_t *cl_ent;
+@@ -226,7 +226,7 @@
+ {
+     FILE *pIn;
+ 	int count;
+-	char bot_filename[128];
++	char bot_filename[MAX_OSPATH];
+ 
+ 	//bots and configurations are loaded level specific
+ 	if (((int)(dmflags->value) & DF_SKINTEAMS) || ctf->value || tca->value || cp->value)
+--- source/ref_gl/r_model.c
++++ source/ref_gl/r_model.c
+@@ -1689,7 +1689,7 @@
+ 
+ void R_BeginRegistration (char *model)
+ {
+-	char	fullname[MAX_QPATH];
++	char	fullname[MAX_OSPATH];
+  	char    *path;
+ 	cvar_t	*flushmap;
+ 	FILE	*file;

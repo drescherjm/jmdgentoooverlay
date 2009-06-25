@@ -25,6 +25,7 @@
 =mail-mta/postfix-2.3*
 =media-gfx/gqview-2.1*
 =net-analyzer/nagios-nrpe-2*
+=net-analyzer/nagios-plugins-1.4.13*
 =net-dns/dnrd-2.20*
 =net-fs/autofs-5.0.4*
 =net-fs/nfs-utils-1.1*

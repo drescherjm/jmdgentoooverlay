@@ -2,9 +2,6 @@
 =app-admin/webmin-1.4*
 =app-backup/bacula-2.4*
 =app-emulation/vmware-modules-1.0.0*
-=app-emulation/vmware-server-1.0.0.2*
-=app-emulation/vmware-server-console-1.0.0.2*
-=app-emulation/vmware-server-console-1.0.1.29996
 =app-misc/baobab-2.4*
 =app-portage/gentoolkit-0.2.4*
 =app-portage/glcu-0.9.7*
@@ -19,7 +16,7 @@
 =dev-libs/poppler-0.10.7*
 =dev-python/lxml-1.3*
 =dev-python/setuptools-0.6*
-=dev-util/boost-build-1.34*
+=dev-util/boost-build-1.38*
 =dev-util/cmake-2.6*
 =dev-util/confcache-0.4*
 =dev-util/git-1.6*
@@ -31,7 +28,7 @@
 =net-dns/dnrd-2.20*
 =net-fs/autofs-5.0.4*
 =net-fs/nfs-utils-1.1*
-=net-fs/samba-3.0.34*
+=net-fs/samba-3.0.35*
 =net-libs/liblockfile-1.06-r1
 =net-nds/openldap-2.3.43*
 =net-nds/rpcbind-0.2*
@@ -43,21 +40,19 @@
 =sys-apps/net-tools-1.60*
 =sys-apps/openrc-0.4*
 =sys-apps/portage-2.2*
-=sys-apps/unscd-0.37*
+=sys-apps/unscd-0.39*
 =sys-auth/consolekit-0.3*
-=sys-auth/pambase-2008*
-=sys-auth/pambase-20090515
+=sys-auth/pambase-2009*
 =sys-block/partimage-0.6.4-r4 ~*
 =sys-devel/binutils-2.17
-=sys-devel/gcc-4.3*
+=sys-devel/gcc-4.3.2*
 =sys-devel/icecream-0.9*
-=sys-devel/icecream-0.9.3*
 =sys-devel/libtool-2.2*
 =sys-fs/cryptsetup-1.0.6*
 =sys-kernel/vserver-sources-2.3.0.35*
 =sys-libs/readline-5.2*
-=virtual/poppler-0.10.5*
-=virtual/poppler-glib-0.10.5*
+=virtual/poppler-0.10.7*
+=virtual/poppler-glib-0.10.7*
 =www-client/mozilla-firefox-bin-3*
 =www-plugins/adobe-flash-10*
 app-admin/eselect

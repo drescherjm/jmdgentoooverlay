@@ -1,6 +1,7 @@
 =app-admin/eselect-news-2008*
 =app-admin/webmin-1.4*
 =app-backup/bacula-2.4*
+=app-crypt/truecrypt-6.2*
 =app-emulation/vmware-modules-1.0.0*
 =app-misc/baobab-2.4*
 =app-portage/gentoolkit-0.2.4*
@@ -27,9 +28,11 @@
 =net-analyzer/nagios-nrpe-2*
 =net-analyzer/nagios-plugins-1.4.13*
 =net-dns/dnrd-2.20*
+=net-firewall/fwbuilder-3.0*
 =net-fs/autofs-5.0.4*
 =net-fs/nfs-utils-1.1*
 =net-fs/samba-3.0.35*
+=net-libs/libfwbuilder-3.0*
 =net-libs/liblockfile-1.06-r1
 =net-nds/openldap-2.3.43*
 =net-nds/rpcbind-0.2*
@@ -50,6 +53,9 @@
 =sys-devel/icecream-0.9*
 =sys-devel/libtool-2.2*
 =sys-fs/cryptsetup-1.0.6*
+=sys-fs/e2fsprogs-1.41.6*
+=sys-fs/xfsdump-3.0*
+=sys-fs/xfsprogs-3.0*
 =sys-kernel/vserver-sources-2.3.0.35*
 =sys-libs/readline-5.2*
 =virtual/poppler-0.10.7*

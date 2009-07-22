@@ -162,3 +162,4 @@ sys-libs/libstdc++-v3
 sys-libs/timezone-data
 sys-power/apcupsd
 www-client/mozilla-firefox
+=x11-proto/dri2proto-2.1*

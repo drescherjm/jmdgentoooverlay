@@ -4,6 +4,7 @@
 
 ESVN_PROJECT="mythplugins"
 
+EAPI='1'
 inherit mythtv webapp depend.php subversion
 
 DESCRIPTION="PHP scripts intended to manage MythTV from a web browser."

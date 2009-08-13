@@ -4,6 +4,8 @@
 
 EAPI="2"
 
+inherit multilib eutils
+
 if [[ ${PV} == "9999" ]] ; then
 	EGIT_REPO_URI="git://source.winehq.org/git/wine.git"
 	inherit git
@@ -29,6 +31,8 @@ RESTRICT="test" #72375
 
 RDEPEND=">=media-libs/freetype-2.0.0
 	media-fonts/corefonts
+	dev-lang/perl
+	dev-perl/XML-Simple
 	ncurses? ( >=sys-libs/ncurses-5.2 )
 	jack? ( media-sound/jack-audio-connection-kit )
 	dbus? ( sys-apps/dbus )
@@ -42,7 +46,7 @@ RDEPEND=">=media-libs/freetype-2.0.0
 		x11-libs/libXxf86vm
 		x11-apps/xmessage
 	)
-	alsa? ( media-libs/alsa-lib[midi] )
+	alsa? ( media-libs/alsa-lib )
 	esd? ( media-sound/esound )
 	nas? ( media-libs/nas )
 	cups? ( net-print/cups )
@@ -55,15 +59,15 @@ RDEPEND=">=media-libs/freetype-2.0.0
 	scanner? ( media-gfx/sane-backends )
 	ssl? ( dev-libs/openssl )
 	png? ( media-libs/libpng )
-	win64? ( >=sys-devel/gcc-4.4_alpha )
-	amd64? (
+	win64? ( >=sys-devel/gcc-4.4.0 )
+	!win64? ( amd64? (
 		X? (
 			>=app-emulation/emul-linux-x86-xlibs-2.1
 			>=app-emulation/emul-linux-x86-soundlibs-2.1
 		)
 		app-emulation/emul-linux-x86-baselibs
 		>=sys-kernel/linux-headers-2.6
-	)"
+	) )"
 DEPEND="${RDEPEND}
 	X? (
 		x11-proto/inputproto
@@ -85,6 +89,7 @@ src_unpack() {
 }
 
 src_prepare() {
+	epatch "${FILESDIR}"/${PN}-1.1.15-winegcc.patch #260726
 	sed -i '/^UPDATE_DESKTOP_DATABASE/s:=.*:=true:' tools/Makefile.in || die
 	sed -i '/^MimeType/d' tools/wine.desktop || die #117785
 	
@@ -92,6 +97,9 @@ src_prepare() {
 
 src_configure() {
 	export LDCONFIG=/bin/true
+	
+	use amd64 && ! use win64 && multilib_toolchain_setup x86
+
 
 	# XXX: should check out these flags too:
 	#	audioio capi fontconfig freetype gphoto

@@ -134,7 +134,7 @@
 =net-voip/telepathy-farsight-0.0.4*
 =sys-apps/devicekit-003*
 =sys-apps/devicekit-power-006*
-=sys-auth/policykit-0*
+<sys-auth/policykit-0.92
 =sys-devel/libtool-2.2*
 =virtual/poppler-0.10.7*
 =virtual/poppler-glib-0.10.7*
@@ -159,3 +159,5 @@
 =x11-wm/metacity-2.26*
 =gnome-base/libgnomeprint-2.18*
 =net-im/empathy-2.26*
+=dev-libs/glib-2.21*
+=net-libs/libsoup-2.27*

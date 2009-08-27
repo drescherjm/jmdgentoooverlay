@@ -156,12 +156,12 @@ src_unpack() {
 
 src_compile() {
 
-	if [ "`gcc-major-version`" -gt "4" -o 
-          "`gcc-major-version`" -eq "4" -a "`gcc-minor-version`" -gt "2" ]; then
+	#if [ "`gcc-major-version`" -gt "4" -o 
+        #  "`gcc-major-version`" -eq "4" -a "`gcc-minor-version`" -gt "2" ]; then
 	
          CFLAGS="-D_FORTIFY_SOURCE=0 ${CFLAGS}"
 
-        fi
+        #fi
 
 	if useq doc && has_version dev-tex/latex2html && ! built_with_use dev-tex/latex2html png; then
 		eerror "${PN} needs the PNG support of latex2html"

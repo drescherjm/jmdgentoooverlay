@@ -26,7 +26,7 @@ SRC_URI="${SRC_URI}
 
 LICENSE="LGPL-2.1"
 SLOT="0"
-IUSE="alsa cups dbus esd +gecko gnutls hal jack jpeg lcms ldap nas ncurses +opengl oss png samba scanner ssl win64 +X xcomposite xinerama xml wine-iocp-off wine-iocp-fix-race"
+IUSE="alsa cups dbus esd +gecko gnutls hal jack jpeg lcms ldap nas ncurses +opengl oss png samba scanner ssl win64 +X xcomposite xinerama xml wine-iocp-fix-race"
 RESTRICT="test" #72375
 
 RDEPEND=">=media-libs/freetype-2.0.0
@@ -88,7 +88,11 @@ src_unpack() {
 
 src_prepare() {
 	epatch "${FILESDIR}"/${PN}-1.1.15-winegcc.patch #260726
-	use wine-iocp-off && epatch "${FILESDIR}"/wine-1.1.2-noiocp.patch         
+
+# The following line allows a user to patch wine with patches in /etc/portage/patches/app-emulation/wine
+	epatch_user 
+	
+#	use wine-iocp-off && epatch "${FILESDIR}"/wine-1.1.2-noiocp.patch         
 	use wine-iocp-fix-race && epatch "${FILESDIR}"/wine-iocp-fix-race.patch
 
 	sed -i '/^UPDATE_DESKTOP_DATABASE/s:=.*:=true:' tools/Makefile.in || die

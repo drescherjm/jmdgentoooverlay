@@ -113,7 +113,7 @@
 =media-gfx/eog-2.26*
 =media-libs/gmyth-0.7*
 =media-libs/gmyth-upnp-0.7*
-=media-libs/gst-plugins-bad-0.10.11*
+=media-libs/gst-plugins-bad-0.10.14*
 =media-libs/gst-plugins-good-0.10*
 =media-sound/pulseaudio-0.9*
 =media-sound/sound-juicer-2.26*

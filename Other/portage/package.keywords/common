@@ -163,3 +163,4 @@ sys-libs/timezone-data
 sys-power/apcupsd
 www-client/mozilla-firefox
 =x11-proto/dri2proto-2.1*
+=media-libs/gst-plugins-bad-0.10.13*

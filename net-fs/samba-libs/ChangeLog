@@ -1,0 +1,31 @@
+# ChangeLog for net-fs/samba-libs
+# Copyright 1999-2009 Gentoo Foundation; Distributed under the GPL v2
+# $Header: /var/cvsroot/gentoo-x86/net-fs/samba-libs/ChangeLog,v 1.6 2009/09/30 20:09:26 jer Exp $
+
+  30 Sep 2009; Jeroen Roovers <jer@gentoo.org> samba-libs-3.3.7.ebuild:
+  Marked ~hppa (bug #285952).
+
+  26 Sep 2009; Brent Baude <ranger@gentoo.org> samba-libs-3.3.7.ebuild:
+  Marking samba-libs-3.3.7 ~ppc64 for bug 285952
+
+  07 Sep 2009; Víctor Ostorga <vostorga@gentoo.org>
+  samba-libs-3.3.7.ebuild:
+  Adding dev-libs/dmalloc as DEPEND when debug USE flag is set, bug #283592
+  Patch thanks to Viktor S <bugzilla@marinmo.org> and Rafał Mużyło <galtgendo@o2.pl>
+
+  01 Sep 2009; Patrick Lauer <patrick@gentoo.org> -samba-libs-3.3.6.ebuild:
+  Remove old
+
+*samba-libs-3.3.7 (17 Aug 2009)
+
+  17 Aug 2009; Patrick Lauer <patrick@gentoo.org> +samba-libs-3.3.7.ebuild:
+  Bump to 3.3.7
+
+*samba-libs-3.3.6 (26 Jun 2009)
+
+  26 Jun 2009; Patrick Lauer <patrick@gentoo.org>
+  +files/3.3/nsswitch.conf-winbind, +files/3.3/nsswitch.conf-wins,
+  +files/3.3/samba.pam, +files/3.3/system-auth-winbind.pam,
+  +samba-libs-3.3.6.ebuild, +metadata.xml:
+  Initial commit. New split samba ebuilds by dev-zero.
+

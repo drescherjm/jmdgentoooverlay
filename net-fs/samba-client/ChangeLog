@@ -1,0 +1,37 @@
+# ChangeLog for net-fs/samba-client
+# Copyright 1999-2009 Gentoo Foundation; Distributed under the GPL v2
+# $Header: /var/cvsroot/gentoo-x86/net-fs/samba-client/ChangeLog,v 1.7 2009/09/30 19:52:09 jer Exp $
+
+  30 Sep 2009; Jeroen Roovers <jer@gentoo.org> samba-client-3.3.7.ebuild:
+  Marked ~hppa (bug #285952).
+
+  26 Sep 2009; Brent Baude <ranger@gentoo.org> samba-client-3.3.7.ebuild:
+  Marking samba-client-3.3.7 ~ppc64 for bug 285952
+
+  15 Sep 2009; Víctor Ostorga <vostorga@gentoo.org> samba-client-3.3.7.ebuild:
+  Fixing missing dohtml and doman. Patch thanks to Jonathan Callen
+  <abcd@gentoo.org> bug 283454
+
+  07 Sep 2009; Víctor Ostorga <vostorga@gentoo.org>
+  samba-client-3.3.7.ebuild:
+  Adding dev-libs/dmalloc as DEPEND when debug USE flag is set #283592 .
+  Patch thanks to Viktor S <bugzilla@marinmo.org> and Rafał Mużyło
+  <galtgendo@o2.pl>
+
+  01 Sep 2009; Patrick Lauer <patrick@gentoo.org>
+  -samba-client-3.3.6.ebuild:
+  Remove old
+
+*samba-client-3.3.7 (17 Aug 2009)
+
+  17 Aug 2009; Patrick Lauer <patrick@gentoo.org>
+  +samba-client-3.3.7.ebuild:
+  Bump to 3.3.7
+
+*samba-client-3.3.6 (26 Jun 2009)
+
+  26 Jun 2009; Patrick Lauer <patrick@gentoo.org>
+  +files/3.3.3-fix-as-needed.patch, +files/3.3.4-missing_includes.patch,
+  +samba-client-3.3.6.ebuild, +metadata.xml:
+  Initial commit. New split samba ebuilds by dev-zero.
+

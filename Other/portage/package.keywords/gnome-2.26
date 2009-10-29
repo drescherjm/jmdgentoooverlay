@@ -1,3 +1,4 @@
+<sys-auth/policykit-0.92
 =app-accessibility/accerciser-1.6*
 =app-accessibility/dasher-4.10*
 =app-accessibility/gok-2.26*
@@ -23,6 +24,7 @@
 =dev-libs/atk-1.26*
 =dev-libs/gdl-2.26*
 =dev-libs/glib-2.20*
+=dev-libs/glib-2.21*
 =dev-libs/libburn-0.6*
 =dev-libs/libgweather-2.26*
 =dev-libs/libical-0.43*
@@ -79,6 +81,7 @@
 =gnome-base/libgnome-2.26*
 =gnome-base/libgnomecanvas-2.26*
 =gnome-base/libgnomekbd-2.26*
+=gnome-base/libgnomeprint-2.18*
 =gnome-base/libgnomeprintui-2.18*
 =gnome-base/libgnomeprintui-2.2*
 =gnome-base/libgtop-2.26*
@@ -121,11 +124,13 @@
 =media-video/totem-2.26*
 =net-analyzer/gnome-netstatus-2.26*
 =net-analyzer/gnome-nettool-2.26*
+=net-im/empathy-2.26*
 =net-im/empathy-2.26.0*
 =net-libs/gtk-vnc-0.3.8*
 =net-libs/libnice-0.0.5*
 =net-libs/libproxy-0.2.3*
 =net-libs/libsoup-2.26*
+=net-libs/libsoup-2.27*
 =net-libs/webkit-gtk-1.1*
 =net-libs/webkit-gtk-1.1.3*
 =net-misc/vinagre-2.26*
@@ -134,7 +139,6 @@
 =net-voip/telepathy-farsight-0.0.4*
 =sys-apps/devicekit-003*
 =sys-apps/devicekit-power-006*
-<sys-auth/policykit-0.92
 =sys-devel/libtool-2.2*
 =virtual/poppler-0.10.7*
 =virtual/poppler-glib-0.10.7*
@@ -157,7 +161,3 @@
 =x11-themes/gtk-engines-murrine-0.90*
 =x11-themes/murrine-themes-0.90*
 =x11-wm/metacity-2.26*
-=gnome-base/libgnomeprint-2.18*
-=net-im/empathy-2.26*
-=dev-libs/glib-2.21*
-=net-libs/libsoup-2.27*

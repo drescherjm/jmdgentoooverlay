@@ -130,3 +130,9 @@
 =dev-libs/poppler-qt4-0.12*
 =app-text/poppler-utils-0.12*
 =dev-libs/poppler-glib-0.12*
+=media-plugins/gst-plugins-vorbis-0.10.24*
+=media-plugins/gst-plugins-xvideo-0.10.24*
+=media-plugins/gst-plugins-ogg-0.10.24*
+=dev-tex/luatex-0.43*
+=virtual/poppler-0.12.1
+=virtual/poppler-utils-0.12.1*

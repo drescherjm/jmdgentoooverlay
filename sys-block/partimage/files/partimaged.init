@@ -1,7 +1,7 @@
 #!/sbin/runscript
 # Copyright 2005 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License, v2 or later
-# $Header: /var/cvsroot/gentoo-x86/sys-block/partimage/files/partimaged.init,v 1.1 2005/03/06 17:58:39 ciaranm Exp $
+# $Header: /var/cvsroot/gentoo-x86/sys-block/partimage/files/partimaged.init,v 1.2 2008/01/15 12:12:05 xmerlin Exp $
 
 PARTIMAGED="/usr/sbin/partimaged"
 
@@ -18,7 +18,7 @@ depend() {
 start() {
 	ebegin "Starting partimaged"
 	start-stop-daemon --start --quiet --exec ${PARTIMAGED} \
-	-- ${PARTIMAGED_OPTS} --daemon &> /dev/null
+	-- ${PARTIMAGED_OPTS} --daemon > /dev/null 2>&1
 	eend $? || failed_startup
 }
 

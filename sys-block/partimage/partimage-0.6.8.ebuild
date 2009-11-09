@@ -1,35 +1,33 @@
-# Copyright 1999-2007 Gentoo Foundation
+# Copyright 1999-2009 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
-# $Header: $
+# $Header: /var/cvsroot/gentoo-x86/sys-block/partimage/partimage-0.6.7.ebuild,v 1.8 2009/09/23 22:29:59 mr_bones_ Exp $
 
-inherit eutils flag-o-matic pam
+WANT_AUTOMAKE="1.10"
 
-DESCRIPTION="Console-based application to efficiently save raw partition data to an image file. Optional encryption/compression support."
+inherit eutils flag-o-matic pam autotools
+
+DESCRIPTION="Console-based application to efficiently save raw partition data to an image file."
 HOMEPAGE="http://www.partimage.org/"
 SRC_URI="mirror://sourceforge/partimage/${P}.tar.bz2"
 LICENSE="GPL-2"
 SLOT="0"
-KEYWORDS="~x86 ~ppc ~sparc ~amd64"
-IUSE="ssl nologin nls pam static unicode"
+KEYWORDS="amd64 ppc ~sparc x86"
+IUSE="ssl nologin nls pam static"
 
-DEPEND="virtual/libc
-	>=sys-libs/zlib-1.1.4
+DEPEND=">=sys-libs/zlib-1.1.4
 	>=dev-libs/newt-0.51.6
 	app-arch/bzip2
-	sys-devel/automake
-	=sys-libs/slang-1*
+	>=sys-libs/slang-1.4
 	nls? ( sys-devel/gettext )
-	ssl? ( >=dev-libs/openssl-0.9.6g )
-	sys-devel/autoconf"
+	ssl? ( >=dev-libs/openssl-0.9.6g )"
 
-RDEPEND="!static? ( virtual/libc
+RDEPEND="!static? (
 		>=sys-libs/zlib-1.1.4
 		>=dev-libs/lzo-1.08
 		>=dev-libs/newt-0.51.6
 		app-arch/bzip2
-		>=sys-libs/slang-1.4.5-r2
-		nls? ( sys-devel/gettext )
-		ssl? ( >=dev-libs/openssl-0.9.6g )
+		>=sys-libs/slang-1.4
+		nls? ( sys-devel/gettext )		ssl? ( >=dev-libs/openssl-0.9.6g )
 		pam? ( virtual/pam )
 	)"
 
@@ -49,16 +47,15 @@ pkg_setup() {
 
 src_unpack() {
 	unpack ${A}
-	cd ${S}
+	cd "${S}"
 
-	# we can do better security ourselves
-	epatch ${FILESDIR}/partimage-0.6.5-chown.patch || die
-	epatch ${FILESDIR}/partimage-0.6.4-not_install_info.patch || die
-	epatch ${FILESDIR}/partimage-0.6.4-datadir-path.patch || die
-
-	if use unicode; then
-		cp ${FILESDIR}/de.po ${S}/po/de.po
-	fi
+	#epatch "${FILESDIR}"/${PN}-0.6.4-save_file_and_rest_file_actions.patch || die
+	#epatch "${FILESDIR}"/${PN}-0.6.6-not_install_info.patch || die
+	epatch "${FILESDIR}"/${PN}-0.6.7-chown.patch || die
+	epatch "${FILESDIR}"/${PN}-0.6.6-disable_header_check.patch || die
+	epatch "${FILESDIR}"/${PN}-0.6.7-datadir-path.patch || die
+	#epatch "${FILESDIR}"/${PN}-0.6.7-gcc43.patch
+	#epatch "${FILESDIR}"/${PN}-0.6.7+glibc-2.10.patch
 }
 
 src_compile() {
@@ -82,29 +79,28 @@ src_compile() {
 		|| die "econf failed"
 
 	emake || die "make failed"
-	if use pam
-	then
-		make pamfile || die  "couldn't create pam file"
-	fi
 }
 
 src_install() {
-	emake DESTDIR=${D} \
+	emake DESTDIR="${D}" \
 		MKINSTALLDIRS=/usr/share/automake-1.10/mkinstalldirs install || die
 
 	keepdir /var/log/partimage
 
-	insinto /etc/partimaged; doins ${FILESDIR}/servercert.cnf || die
+	insinto /etc/partimaged; doins "${FILESDIR}"/servercert.cnf || die
 
 	# init.d / conf.d
-	exeinto /etc/init.d ; newexe ${FILESDIR}/${PN}d.init ${PN}d || die
-	insinto /etc/conf.d ; newins ${FILESDIR}/${PN}d.conf ${PN}d || die
+	newinitd "${FILESDIR}"/${PN}d.init ${PN}d || die
+	newconfd "${FILESDIR}"/${PN}d.conf ${PN}d || die
 
-	doman doc/en/man/partimage.1 doc/en/man/partimaged.8 doc/en/man/partimagedusers.5 || die
-	dodoc AUTHORS BUGS COPYING ChangeLog INSTALL README* TODO partimage.lsm
+	doman "${FILESDIR}"/{partimage.1,partimaged.8,partimagedusers.5} || die
+	dodoc AUTHORS BUGS ChangeLog INSTALL README* TODO partimage.lsm || die
 
 	# pam
-	newpamd partimaged.pam partimaged
+	if use pam
+	then
+		newpamd "${FILESDIR}"/partimaged.pam partimaged || die
+	fi
 }
 
 # vars for SSL stuff
@@ -166,4 +162,5 @@ pkg_postinst() {
 		partimagesslperms
 		return 0
 	fi
+	chown partimag:0 /etc/partimaged/partimagedusers || die
 }

@@ -154,7 +154,6 @@ sys-cluster/pvm
 sys-devel/dev86
 sys-devel/gcc-config
 sys-devel/gdb
-sys-fs/udev
 sys-kernel/genkernel
 sys-kernel/gentoo-sources
 sys-libs/db

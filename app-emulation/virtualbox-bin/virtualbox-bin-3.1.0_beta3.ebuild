@@ -17,7 +17,10 @@ SRC_URI="amd64? ( http://download.virtualbox.org/virtualbox/${PV/beta/BETA}/${MY
 
 LICENSE="PUEL"
 SLOT="0"
-KEYWORDS="~amd64 x86"
+#KEYWORDS="~amd64 x86"
+
+KEYWORDS="" #Hardmasking
+
 IUSE="+additions +chm headless python sdk"
 RESTRICT="mirror"
 PROPERTIES="interactive"

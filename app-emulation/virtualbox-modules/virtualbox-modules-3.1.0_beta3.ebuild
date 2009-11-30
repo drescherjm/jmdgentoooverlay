@@ -17,7 +17,8 @@ SRC_URI="http://cloud.github.com/downloads/drescherjm/jmdgentoooverlay/${MY_P}.t
 
 LICENSE="GPL-2"
 SLOT="0"
-KEYWORDS="~amd64 ~x86"
+#KEYWORDS="~amd64 ~x86"
+KEYWORDS="" #hardmasking
 IUSE=""
 
 RDEPEND="!=app-emulation/virtualbox-ose-9999"

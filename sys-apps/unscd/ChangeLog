@@ -1,0 +1,33 @@
+# ChangeLog for sys-apps/unscd
+# Copyright 1999-2009 Gentoo Foundation; Distributed under the GPL v2
+# $Header: /var/cvsroot/gentoo-x86/sys-apps/unscd/ChangeLog,v 1.7 2009/06/14 01:18:17 vapier Exp $
+
+  14 Jun 2009; Mike Frysinger <vapier@gentoo.org> files/unscd.initd:
+  Fix typo pointed out by Duncan Smith #273781.
+
+*unscd-0.39 (07 Jun 2009)
+
+  07 Jun 2009; Mike Frysinger <vapier@gentoo.org> +unscd-0.39.ebuild,
+  +files/unscd.initd:
+  Version bump #273079 by Raúl Porcel and add init.d script #266891 by
+  Heath Caldwell.
+
+  14 Apr 2009; Raúl Porcel <armin76@gentoo.org> unscd-0.35.ebuild:
+  x86 stable wrt #265571
+
+  10 Apr 2009; Mike Frysinger <vapier@gentoo.org> unscd-0.35.ebuild:
+  Make sure correct version is reported #265571 by Jeremy Olexa.
+
+  10 Apr 2009; Jeremy Olexa <darkside@gentoo.org> unscd-0.35.ebuild:
+  amd64 stable, bug 265571
+
+*unscd-0.37 (09 Apr 2009)
+
+  09 Apr 2009; Mike Frysinger <vapier@gentoo.org> +unscd-0.37.ebuild:
+  Version bump.
+
+*unscd-0.35 (22 Nov 2008)
+
+  22 Nov 2008; Mike Frysinger <vapier@gentoo.org> +metadata.xml,
+  +unscd-0.35.ebuild:
+  Initial ebuild by me.

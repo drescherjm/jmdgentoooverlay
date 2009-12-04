@@ -1,0 +1,22 @@
+>=dev-lang/python-2.5 >=dev-python/gnome-python-2.18 >=dev-python/pygtk-2.10 >=media-gfx/pyexiv2-0.1.1 dev-python/notify-python dev-python/dbus-python >=app-admin/eselect-python-20090804 >=app-shells/bash-3.2 virtual/python
+>=dev-lang/python-2.5 >=dev-python/gnome-python-2.18 >=dev-python/pygtk-2.10 >=media-gfx/pyexiv2-0.1.1 dev-python/notify-python dev-python/dbus-python virtual/python
+0
+http://launchpad.net/rapid/0.1.0/0.0.10/+download/rapid-photo-downloader-0.0.10.tar.gz
+
+http://damonlynch.net/rapid/
+GPL-2
+Import your images efficiently and reliably
+~amd64 ~x86
+distutils eutils multilib portability python toolchain-funcs
+
+
+
+
+
+
+compile install postinst postrm unpack
+
+
+
+
+

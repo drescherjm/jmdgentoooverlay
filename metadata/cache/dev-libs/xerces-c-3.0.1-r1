@@ -1,0 +1,22 @@
+icu? ( dev-libs/icu ) curl? ( net-misc/curl ) libwww? ( net-libs/libwww ) virtual/libiconv doc? ( app-doc/doxygen )
+icu? ( dev-libs/icu ) curl? ( net-misc/curl ) libwww? ( net-libs/libwww ) virtual/libiconv
+0
+mirror://apache/xerces/c/3/sources/xerces-c-3.0.1.tar.gz
+
+http://xerces.apache.org/xerces-c/
+Apache-2.0
+A validating XML parser written in a portable subset of C++.
+~alpha ~amd64 ~hppa ~ppc ~ppc64 ~sparc ~x86 ~x86-fbsd
+eutils multilib portability toolchain-funcs
+curl debug doc iconv icu libwww threads elibc_Darwin elibc_FreeBSD
+
+
+
+2
+
+compile configure install prepare setup
+
+
+
+
+

@@ -1,0 +1,22 @@
+<x11-base/xorg-server-1.6.99 multilib? ( app-emulation/emul-linux-x86-xlibs ) kernel_FreeBSD? ( !media-video/nvidia-freebsd ) !app-emulation/emul-linux-x86-nvidia !x11-drivers/nvidia-legacy-drivers kernel_linux? ( virtual/linux-sources ) app-admin/eselect-opengl kernel_linux? ( virtual/linux-sources ) kernel_linux? ( virtual/modutils ) sys-apps/sed kernel_linux? ( virtual/linux-sources ) sys-apps/pciutils
+<x11-base/xorg-server-1.6.99 multilib? ( app-emulation/emul-linux-x86-xlibs ) kernel_FreeBSD? ( !media-video/nvidia-freebsd ) !app-emulation/emul-linux-x86-nvidia !x11-drivers/nvidia-legacy-drivers kernel_linux? ( virtual/modutils ) media-libs/mesa acpi? ( sys-power/acpid ) kernel_linux? ( virtual/modutils )
+0
+x86? ( ftp://download.nvidia.com/XFree86/Linux-x86/190.36/NVIDIA-Linux-x86-190.36-pkg0.run ) amd64? ( ftp://download.nvidia.com/XFree86/Linux-x86_64/190.36/NVIDIA-Linux-x86_64-190.36-pkg2.run ) x86-fbsd? ( ftp://download.nvidia.com/freebsd/190.36/NVIDIA-FreeBSD-x86-190.36.tar.gz )
+strip
+http://www.nvidia.com/
+NVIDIA
+NVIDIA X11 driver and GLX libraries
+-* ~amd64 ~x86 ~x86-fbsd
+eutils flag-o-matic linux-info linux-mod multilib nvidia-driver portability toolchain-funcs versionator
+acpi custom-cflags gtk multilib kernel_linux kernel_linux
+
+gtk? ( media-video/nvidia-settings )
+
+
+
+compile install postinst postrm preinst setup unpack
+
+
+
+
+

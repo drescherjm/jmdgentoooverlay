@@ -1,0 +1,22 @@
+
+|| ( sys-boot/grub sys-boot/grub-static ) >=sys-kernel/xen-sources-2.6.16.33
+0
+http://bits.xensource.com/oss-xen/release/3.1.0/src.tgz/xen-3.1.0-src.tgz
+test
+http://www.xensource.com/xen/xen/
+GPL-2
+The Xen virtual machine monitor
+~amd64 ~x86
+eutils flag-o-matic mount-boot multilib portability toolchain-funcs
+debug custom-cflags pae
+
+~app-emulation/xen-tools-3.1.0
+
+
+
+compile install postinst preinst prerm setup unpack
+
+
+
+
+

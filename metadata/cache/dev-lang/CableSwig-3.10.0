@@ -1,0 +1,22 @@
+>=dev-util/cmake-2.4
+
+0
+mirror://sourceforge/itk/CableSwig-ITK-3.10.0.tar.gz
+
+http://www.itk.org
+BSD
+NLM Insight Segmentation and Registration Toolkit
+~x86 ~amd64
+multilib toolchain-funcs
+
+
+
+
+
+
+compile install unpack
+
+
+
+
+

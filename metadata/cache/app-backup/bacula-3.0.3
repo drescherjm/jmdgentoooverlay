@@ -1,0 +1,22 @@
+>=sys-libs/zlib-1.1.4 dev-libs/gmp !bacula-clientonly? ( postgres? ( >=virtual/postgresql-server-7.4 ) mysql? ( virtual/mysql ) sqlite? ( =dev-db/sqlite-2* ) sqlite3? ( >=dev-db/sqlite-3.0.0 ) virtual/mta ) bacula-console? ( wxwindows? ( =x11-libs/wxGTK-2.6* ) qt4? ( x11-libs/qt-svg:4 >=x11-libs/qwt-5 ) gnome? ( >=gnome-base/libgnome-2 >=gnome-base/libgnomeui-2 x11-libs/gksu ) ) ssl? ( dev-libs/openssl ) logwatch? ( sys-apps/logwatch ) tcpd? ( >=sys-apps/tcp-wrappers-7.6 ) readline? ( >=sys-libs/readline-4.1 ) python? ( dev-lang/python[threads] )
+>=sys-libs/zlib-1.1.4 dev-libs/gmp !bacula-clientonly? ( postgres? ( >=virtual/postgresql-server-7.4 ) mysql? ( virtual/mysql ) sqlite? ( =dev-db/sqlite-2* ) sqlite3? ( >=dev-db/sqlite-3.0.0 ) virtual/mta ) bacula-console? ( wxwindows? ( =x11-libs/wxGTK-2.6* ) qt4? ( x11-libs/qt-svg:4 >=x11-libs/qwt-5 ) gnome? ( >=gnome-base/libgnome-2 >=gnome-base/libgnomeui-2 x11-libs/gksu ) ) ssl? ( dev-libs/openssl ) logwatch? ( sys-apps/logwatch ) tcpd? ( >=sys-apps/tcp-wrappers-7.6 ) readline? ( >=sys-libs/readline-4.1 ) python? ( dev-lang/python[threads] ) !bacula-clientonly? ( sys-block/mtx app-arch/mt-st )
+0
+mirror://sourceforge/bacula/bacula-3.0.3.tar.gz
+
+http://www.bacula.org/
+GPL-2
+Featureful client/server network backup suite
+~amd64 ~hppa ~ppc ~sparc ~x86
+eutils multilib portability toolchain-funcs
+bacula-clientonly bacula-console bacula-nodir bacula-nosd gnome ipv6 logwatch mysql postgres python qt4 readline sqlite +sqlite3 ssl static tcpd wxwindows X
+
+
+
+2
+
+compile configure install postinst prepare setup
+
+
+
+
+

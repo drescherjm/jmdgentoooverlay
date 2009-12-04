@@ -1,0 +1,22 @@
+virtual/libc >=sys-libs/zlib-1.1.4 >=dev-libs/newt-0.51.6 app-arch/bzip2 sys-devel/automake =sys-libs/slang-1* nls? ( sys-devel/gettext ) ssl? ( >=dev-libs/openssl-0.9.6g ) sys-devel/autoconf
+!static? ( virtual/libc >=sys-libs/zlib-1.1.4 >=dev-libs/lzo-1.08 >=dev-libs/newt-0.51.6 app-arch/bzip2 >=sys-libs/slang-1.4.5-r2 nls? ( sys-devel/gettext ) ssl? ( >=dev-libs/openssl-0.9.6g ) pam? ( virtual/pam ) )
+0
+mirror://sourceforge/partimage/partimage-0.6.6.tar.bz2
+
+http://www.partimage.org/
+GPL-2
+Console-based application to efficiently save raw partition data to an image file. Optional encryption/compression support.
+~x86 ~ppc ~sparc ~amd64
+eutils flag-o-matic multilib pam portability toolchain-funcs
+ssl nologin nls pam static unicode
+
+
+
+
+
+compile config install postinst setup unpack
+
+
+
+
+

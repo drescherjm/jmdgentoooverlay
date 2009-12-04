@@ -1,0 +1,22 @@
+app-arch/rpm2targz dev-util/byacc
+app-arch/rpm2targz dev-util/byacc
+0
+http://downloads.sourceforge.net/lkcd/lkcdutils-6.2.0.tar.gz
+
+http://lkcd.sourceforge.net/ http://oss.software.ibm.com/developerworks/opensource/linux390/june2003_recommended.shtml
+GPL-2
+Linux Kernel Crash Dumps (LKCD) Utilities
+x86 amd64
+eutils multilib portability toolchain-funcs
+
+
+
+
+
+
+compile install
+
+
+
+
+

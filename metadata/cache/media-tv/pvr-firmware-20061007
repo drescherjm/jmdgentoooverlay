@@ -1,0 +1,22 @@
+
+|| ( >=sys-fs/udev-103 sys-apps/hotplug )
+0
+http://dl.ivtvdriver.org/ivtv/firmware/firmware-20061007.tar.gz
+nomirror
+http://www.ivtvdriver.org/index.php/Firmware
+Conexant-firmware
+firmware for Hauppauge PVR and Conexant based cards
+amd64 ppc x86
+eutils multilib portability toolchain-funcs
+
+
+
+
+
+
+install
+
+
+
+
+

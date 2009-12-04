@@ -1,0 +1,22 @@
+
+sys-libs/glibc x11-libs/libXrandr x11-libs/libXi x11-libs/libXmu x11-libs/libXxf86dga x11-libs/libXxf86vm dev-util/desktop-file-utils nas? ( media-libs/nas ) amd64? ( app-emulation/emul-linux-x86-xlibs )
+0
+install-crossover-pro-7.1.0.sh
+fetch strip
+http://www.codeweavers.com/products/cxoffice/
+CROSSOVER
+simplified/streamlined version of wine with commercial support
+-* amd64 x86
+eutils multilib portability toolchain-funcs
+nas
+
+
+
+
+
+install nofetch postinst unpack
+
+
+
+
+

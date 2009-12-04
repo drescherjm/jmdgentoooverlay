@@ -1,0 +1,22 @@
+sys-libs/zlib media-libs/jpeg media-libs/libpng media-libs/tiff >=dev-util/cmake-2.4
+sys-libs/zlib media-libs/jpeg media-libs/libpng media-libs/tiff
+0
+mirror://sourceforge/itk/InsightToolkit-3.14.0.tar.gz
+
+http://www.itk.org
+BSD
+NLM Insight Segmentation and Registration Toolkit
+~amd64
+multilib toolchain-funcs
+doc examples shared patented test
+
+
+
+
+
+compile install postinst unpack
+
+
+
+
+

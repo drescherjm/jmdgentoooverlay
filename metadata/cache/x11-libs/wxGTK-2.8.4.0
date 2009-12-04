@@ -1,0 +1,22 @@
+X? ( opengl? ( virtual/opengl ) >=x11-libs/gtk+-2.0 >=dev-libs/glib-2.0 media-libs/tiff x11-libs/libXinerama x11-libs/libXxf86vm gnome? ( >=gnome-base/libgnomeprintui-2.8 ) ) odbc? ( dev-db/unixODBC ) x86? ( sdl? ( >=media-libs/libsdl-1.2 ) ) amd64? ( sdl? ( >=media-libs/libsdl-1.2 ) ) ppc? ( sdl? ( >=media-libs/libsdl-1.2 ) ) dev-util/pkgconfig X? ( x11-proto/xproto x11-proto/xineramaproto x11-proto/xf86vidmodeproto )
+X? ( opengl? ( virtual/opengl ) >=x11-libs/gtk+-2.0 >=dev-libs/glib-2.0 media-libs/tiff x11-libs/libXinerama x11-libs/libXxf86vm gnome? ( >=gnome-base/libgnomeprintui-2.8 ) ) odbc? ( dev-db/unixODBC ) x86? ( sdl? ( >=media-libs/libsdl-1.2 ) ) amd64? ( sdl? ( >=media-libs/libsdl-1.2 ) ) ppc? ( sdl? ( >=media-libs/libsdl-1.2 ) )
+2.8
+mirror://sourceforge/wxpython/wxPython-src-2.8.4.0.tar.bz2 doc? ( mirror://sourceforge/wxwindows/wxWidgets-2.8.4-HTML.tar.gz )
+
+http://www.wxwidgets.org
+wxWinLL-3
+GTK+ version of wxWidgets, a cross-platform C++ GUI toolkit and wxbase non-gui library
+~alpha ~amd64 ~arm ~hppa ~ia64 ~ppc ~ppc64 ~sparc ~x86 ~x86-fbsd
+eutils flag-o-matic multilib portability toolchain-funcs versionator
+debug doc gnome joystick odbc opengl sdl stl unicode X gif
+
+
+
+
+
+compile install postinst setup unpack
+
+
+
+
+

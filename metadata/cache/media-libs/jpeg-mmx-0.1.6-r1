@@ -1,0 +1,22 @@
+dev-lang/nasm
+
+0
+mirror://sourceforge/mjpeg/jpeg-mmx-0.1.6.tar.gz
+
+http://mjpeg.sourceforge.net/
+as-is
+JPEG library with mmx enhancements
+-* x86
+eutils flag-o-matic multilib portability toolchain-funcs
+
+
+
+
+
+
+compile install unpack
+
+
+
+
+

@@ -1,0 +1,22 @@
+dev-libs/popt virtual/libiconv acl? ( virtual/acl ) cups? ( net-print/cups ) ipv6? ( sys-apps/xinetd ) ads? ( virtual/krb5 ) ldap? ( net-nds/openldap ) pam? ( virtual/pam ) python? ( dev-lang/python ) readline? ( sys-libs/readline ) selinux? ( sec-policy/selinux-samba ) swat? ( sys-apps/xinetd ) syslog? ( virtual/logger ) fam? ( virtual/fam ) caps? ( sys-libs/libcap ) =sys-devel/automake-1.10* >=sys-devel/autoconf-2.61 sys-devel/libtool >=app-admin/eselect-python-20090804 >=app-shells/bash-3.2
+dev-libs/popt virtual/libiconv acl? ( virtual/acl ) cups? ( net-print/cups ) ipv6? ( sys-apps/xinetd ) ads? ( virtual/krb5 ) ldap? ( net-nds/openldap ) pam? ( virtual/pam ) python? ( dev-lang/python ) readline? ( sys-libs/readline ) selinux? ( sec-policy/selinux-samba ) swat? ( sys-apps/xinetd ) syslog? ( virtual/logger ) fam? ( virtual/fam ) caps? ( sys-libs/libcap )
+0
+mirror://samba/samba-3.0.37.tar.gz mirror://samba/old-versions/samba-3.0.37.tar.gz oav? ( http://www.openantivirus.org/download/samba-vscan-0.3.6c-beta5.tar.gz )
+test
+http://www.samba.org/
+GPL-3 oav? ( GPL-2 LGPL-2.1 )
+A suite of SMB and CIFS client/server programs for UNIX
+alpha amd64 arm hppa ia64 ~mips ppc ppc64 s390 sh sparc x86 ~sparc-fbsd ~x86-fbsd
+autotools confutils eutils libtool multilib pam portability python toolchain-funcs versionator
+acl ads async automount caps cups debug doc examples ipv6 kernel_linux ldap fam pam python quotas readline selinux swat syslog winbind oav
+
+
+
+
+
+compile install postinst postrm preinst setup test unpack
+
+
+
+
+

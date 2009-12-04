@@ -1,0 +1,22 @@
+>=media-sound/cdparanoia-3.9.8 >=media-libs/libmad-0.15.1b >=media-libs/libvorbis-1.0 >=media-libs/libcdaudio-0.99.6 >=media-libs/flac-1.1.2 >=media-libs/taglib-1.4 aac? ( >=media-libs/faad2-2.0-r7 ) fftw? ( sci-libs/fftw ) sdl? ( >=media-libs/libsdl-1.2.5 ) cdr? ( virtual/cdrtools ) libvisual? ( =media-libs/libvisual-0.4* ) dev-util/subversion net-misc/rsync dev-util/subversion net-misc/rsync =media-tv/mythtv-0.21* >=sys-apps/sed-4 dev-util/subversion net-misc/rsync
+>=media-sound/cdparanoia-3.9.8 >=media-libs/libmad-0.15.1b >=media-libs/libvorbis-1.0 >=media-libs/libcdaudio-0.99.6 >=media-libs/flac-1.1.2 >=media-libs/taglib-1.4 aac? ( >=media-libs/faad2-2.0-r7 ) fftw? ( sci-libs/fftw ) sdl? ( >=media-libs/libsdl-1.2.5 ) cdr? ( virtual/cdrtools ) libvisual? ( =media-libs/libvisual-0.4* ) =media-tv/mythtv-0.21*
+0
+
+strip
+http://www.mythtv.org
+GPL-2
+Music player module for MythTV.
+~amd64 ~ppc ~x86
+eutils flag-o-matic multilib mythtv mythtv-plugins portability qt3 subversion toolchain-funcs versionator
+aac cdr fftw libvisual sdl debug mmx
+
+
+
+
+
+compile config install preinst setup unpack
+
+
+
+
+

@@ -1,0 +1,22 @@
+!app-emulation/virtualbox-bin ~app-emulation/virtualbox-modules-3.0.0_beta1 dev-libs/libIDL >=dev-libs/libxslt-1.1.19 !headless? ( qt4? ( || ( ( x11-libs/qt-gui x11-libs/qt-core ) =x11-libs/qt-4.3*:4 ) ) opengl? ( virtual/opengl virtual/glut ) x11-libs/libXcursor media-libs/libsdl[X,video] x11-libs/libXt ) >=dev-util/kbuild-0.1.5-r1 >=dev-lang/yasm-0.6.2 sys-devel/bin86 sys-devel/dev86 sys-power/iasl media-libs/libpng sys-libs/libcap alsa? ( >=media-libs/alsa-lib-1.0.13 ) hal? ( sys-apps/hal ) pulseaudio? ( media-sound/pulseaudio ) python? ( >=dev-lang/python-2.3 ) vboxwebsrv? ( >=net-libs/gsoap-2.7.9f ) kernel_linux? ( virtual/linux-sources )
+!app-emulation/virtualbox-bin ~app-emulation/virtualbox-modules-3.0.0_beta1 dev-libs/libIDL >=dev-libs/libxslt-1.1.19 !headless? ( qt4? ( || ( ( x11-libs/qt-gui x11-libs/qt-core ) =x11-libs/qt-4.3*:4 ) ) opengl? ( virtual/opengl virtual/glut ) x11-libs/libXcursor media-libs/libsdl[X,video] x11-libs/libXt ) additions? ( ~app-emulation/virtualbox-ose-additions-3.0.0_beta1 )
+0
+http://download.virtualbox.org/virtualbox/3.0.0_BETA1/VirtualBox-3.0.0_BETA1_OSE.tar.bz2
+
+http://www.virtualbox.org/
+GPL-2
+Software family of powerful x86 virtualization
+~amd64 ~x86
+base eutils fdo-mime flag-o-matic linux-info multilib pax-utils portability qt4 toolchain-funcs versionator
++additions alsa +hal headless pulseaudio +opengl python +qt4 sdk vboxwebsrv
+
+
+
+2
+
+compile configure install postinst postrm prepare setup unpack
+
+
+
+
+

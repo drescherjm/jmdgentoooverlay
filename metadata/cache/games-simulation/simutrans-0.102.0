@@ -1,0 +1,22 @@
+app-arch/unzip
+media-libs/libsdl amd64? ( app-emulation/emul-linux-x86-baselibs app-emulation/emul-linux-x86-xlibs app-emulation/emul-linux-x86-sdl )
+0
+mirror://sourceforge/simutrans/simulinux-102-0.zip mirror://sourceforge/simutrans/pak64-102-0.zip mirror://sourceforge/simutrans/pak64-addon-food-99-17-1.zip
+strip
+http://www.simutrans.com/
+as-is
+A free Transport Tycoon clone
+-* ~amd64 ~x86
+base eutils games multilib portability toolchain-funcs
+
+
+
+
+
+
+compile install postinst preinst setup unpack
+
+
+
+
+

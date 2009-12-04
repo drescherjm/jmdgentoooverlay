@@ -1,0 +1,22 @@
+virtual/opengl dev-libs/libxml2 media-libs/libsdl media-libs/sdl-mixer media-libs/sdl-image media-libs/sdl-ttf media-libs/sdl-gfx dev-games/physfs dev-util/pkgconfig || ( dev-util/ftjam dev-util/jam )
+virtual/opengl dev-libs/libxml2 media-libs/libsdl media-libs/sdl-mixer media-libs/sdl-image media-libs/sdl-ttf media-libs/sdl-gfx dev-games/physfs
+0
+mirror://berlios/lincity-ng/lincity-ng-1.91.beta.tar.bz2
+
+http://lincity-ng.berlios.de/
+GPL-2
+city/country simulation game for X and opengl
+~amd64 ~ppc ~sparc ~x86
+base eutils games multilib portability toolchain-funcs
+
+
+
+
+
+
+compile install postinst preinst setup unpack
+
+
+
+
+

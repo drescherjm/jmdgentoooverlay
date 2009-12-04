@@ -1,0 +1,22 @@
+!<net-fs/samba-3.3 !net-fs/mount-cifs ads? ( virtual/krb5 sys-fs/e2fsprogs net-fs/samba-libs[ads] sys-apps/keyutils ) !minimal? ( dev-libs/popt dev-libs/iniparser virtual/libiconv zeroconf? ( || ( net-dns/avahi[mdnsresponder-compat] net-misc/mDNSResponder ) ) caps? ( sys-libs/libcap ) cups? ( net-print/cups ) debug? ( dev-libs/dmalloc ) ldap? ( net-nds/openldap ) syslog? ( virtual/logger ) net-fs/samba-libs[caps?,cups?,ldap?,syslog?,winbind?] )
+!<net-fs/samba-3.3 !net-fs/mount-cifs ads? ( virtual/krb5 sys-fs/e2fsprogs net-fs/samba-libs[ads] sys-apps/keyutils ) !minimal? ( dev-libs/popt dev-libs/iniparser virtual/libiconv zeroconf? ( || ( net-dns/avahi[mdnsresponder-compat] net-misc/mDNSResponder ) ) caps? ( sys-libs/libcap ) cups? ( net-print/cups ) debug? ( dev-libs/dmalloc ) ldap? ( net-nds/openldap ) syslog? ( virtual/logger ) net-fs/samba-libs[caps?,cups?,ldap?,syslog?,winbind?] )
+0
+mirror://samba/samba-3.3.8.tar.gz
+test
+http://www.samba.org/
+GPL-3
+Libraries from Samba
+~amd64 ~hppa ~ppc64 ~x86
+confutils eutils multilib pam portability toolchain-funcs versionator
+ads aio avahi caps cluster cups debug ldap minimal syslog winbind zeroconf
+
+
+
+2
+
+compile configure install prepare setup
+
+
+
+
+

@@ -1,0 +1,22 @@
+!build? ( sys-apps/sed >=sys-devel/binutils-2.11.90.0.31 ) >=dev-util/git-1.6
+!build? ( >=sys-libs/ncurses-5.2 sys-devel/make )
+2.6.27.9999
+
+binchecks strip
+http://openvz.org/
+GPL-2
+OpenVZ 26 git
+
+eutils git kernel-2 multilib portability toolchain-funcs versionator
+symlink build
+
+!build? ( virtual/dev-manager )
+virtual/linux-sources virtual/alsa
+
+
+compile install postinst preinst setup unpack
+
+
+
+
+

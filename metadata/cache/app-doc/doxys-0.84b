@@ -1,0 +1,22 @@
+virtual/glibc sys-devel/gcc
+virtual/glibc sys-devel/gcc
+0
+http://www.doxys.org/download/doxys_084b_src.zip
+
+http://www.doxys.dk
+GPL
+DoxyS Documentation System
+~x86
+
+
+
+
+
+
+
+compile install unpack
+
+
+
+
+

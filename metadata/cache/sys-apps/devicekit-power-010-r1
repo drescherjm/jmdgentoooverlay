@@ -1,0 +1,22 @@
+>=dev-libs/glib-2.16.1 >=dev-libs/dbus-glib-0.76 >=sys-fs/udev-145 >=sys-auth/polkit-0.91 sys-apps/dbus virtual/libusb >=dev-util/intltool-0.40 dev-util/pkgconfig dev-libs/libxslt dev-util/gtk-doc-am doc? ( >=dev-util/gtk-doc-1.3 ) >=sys-apps/sed-4 =sys-devel/automake-1.10* >=sys-devel/autoconf-2.61 sys-devel/libtool kernel_linux? ( virtual/linux-sources )
+>=dev-libs/glib-2.16.1 >=dev-libs/dbus-glib-0.76 >=sys-fs/udev-145 >=sys-auth/polkit-0.91 sys-apps/dbus virtual/libusb
+0
+http://hal.freedesktop.org/releases/DeviceKit-power-010.tar.gz
+
+http://www.freedesktop.org/wiki/Software/DeviceKit
+GPL-2 LGPL-2
+D-Bus abstraction for enumerating power devices and querying history and statistics
+~amd64 ~x86
+autotools eutils fdo-mime gnome.org gnome2 gnome2-utils libtool linux-info multilib portability toolchain-funcs versionator
+debug doc debug
+
+
+
+
+
+compile install postinst postrm preinst setup unpack
+
+
+
+
+

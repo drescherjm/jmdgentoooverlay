@@ -1,0 +1,22 @@
+app-arch/unzip kernel_linux? ( virtual/linux-sources ) kernel_linux? ( virtual/modutils ) sys-apps/sed kernel_linux? ( virtual/linux-sources )
+|| ( >=sys-fs/udev-103 sys-apps/hotplug ) kernel_linux? ( virtual/modutils )
+0
+http://dl.ivtvdriver.org/ivtv/archive/1.2.x/ivtv-1.2.0.tar.gz
+
+http://www.ivtvdriver.org
+GPL-2
+ivtv driver for Hauppauge PVR PCI cards
+amd64 ppc x86
+eutils linux-info linux-mod multilib portability toolchain-funcs versionator
+fbcon perl kernel_linux
+
+=media-tv/pvr-firmware-20070217 perl? ( dev-perl/Video-Frequencies dev-perl/Video-ivtv dev-perl/Config-IniFiles virtual/perl-Getopt-Long dev-perl/perl-tk )
+
+
+
+compile install postinst postrm preinst setup
+
+
+
+
+

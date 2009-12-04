@@ -1,0 +1,22 @@
+kernel_linux? ( virtual/linux-sources ) kernel_linux? ( virtual/modutils ) sys-apps/sed kernel_linux? ( virtual/linux-sources ) dev-util/mercurial
+kernel_linux? ( virtual/modutils )
+0
+
+
+http://www.linuxtv.org
+GPL-2
+live development version of v4l&dvb-driver for Kernel 2.6
+~amd64 ~x86
+eutils linux-info linux-mod mercurial multilib portability toolchain-funcs versionator
+kernel_linux
+
+
+
+
+
+compile install postinst postrm preinst setup unpack
+
+
+
+
+

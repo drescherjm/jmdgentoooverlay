@@ -1,0 +1,22 @@
+virtual/opengl virtual/glu media-libs/libsdl media-libs/sdl-mixer media-libs/sdl-net openal? ( media-libs/openal )
+virtual/opengl virtual/glu media-libs/libsdl media-libs/sdl-mixer media-libs/sdl-net openal? ( media-libs/openal )
+0
+mirror://sourceforge/deng/deng-1.8.0.tar.gz
+
+http://www.doomsdayhq.com/
+GPL-2
+A modern gaming engine for Doom, Heretic and Hexen
+~x86
+base eutils games multilib portability toolchain-funcs
+openal
+
+
+
+
+
+compile install postinst preinst setup unpack
+
+
+
+
+

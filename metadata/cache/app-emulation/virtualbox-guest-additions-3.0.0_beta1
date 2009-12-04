@@ -1,0 +1,22 @@
+X? ( ~x11-drivers/xf86-video-virtualbox-3.0.0_beta1 ~x11-drivers/xf86-input-virtualbox-3.0.0_beta1 x11-apps/xrandr x11-apps/xrefresh x11-libs/libXmu x11-libs/libX11 x11-libs/libXt x11-libs/libXext x11-libs/libXau x11-libs/libXdmcp x11-libs/libSM x11-libs/libICE amd64? ( app-emulation/emul-linux-x86-xlibs ) ) >=dev-util/kbuild-0.1.5-r1 >=dev-lang/yasm-0.6.2 sys-devel/bin86 sys-devel/dev86 sys-power/iasl X? ( x11-proto/renderproto ) kernel_linux? ( virtual/linux-sources ) kernel_linux? ( virtual/modutils ) sys-apps/sed kernel_linux? ( virtual/linux-sources )
+X? ( ~x11-drivers/xf86-video-virtualbox-3.0.0_beta1 ~x11-drivers/xf86-input-virtualbox-3.0.0_beta1 x11-apps/xrandr x11-apps/xrefresh x11-libs/libXmu x11-libs/libX11 x11-libs/libXt x11-libs/libXext x11-libs/libXau x11-libs/libXdmcp x11-libs/libSM x11-libs/libICE amd64? ( app-emulation/emul-linux-x86-xlibs ) ) kernel_linux? ( virtual/modutils )
+0
+http://download.virtualbox.org/virtualbox/3.0.0_BETA1/VirtualBox-3.0.0_BETA1_OSE.tar.bz2
+
+http://www.virtualbox.org/
+GPL-2
+VirtualBox kernel modules and user-space tools for Linux guests
+~amd64 ~x86
+eutils linux-info linux-mod multilib portability toolchain-funcs versionator
+X kernel_linux
+
+
+
+
+
+compile install postinst postrm preinst setup unpack
+
+
+
+
+

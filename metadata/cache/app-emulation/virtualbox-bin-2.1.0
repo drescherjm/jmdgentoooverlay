@@ -1,0 +1,22 @@
+
+!app-emulation/virtualbox-ose !app-emulation/virtualbox-ose-additions ~app-emulation/virtualbox-modules-2.1.0 !headless? ( x11-libs/libXcursor media-libs/libsdl x11-libs/libXrender x11-libs/libXfixes media-libs/libmng media-libs/jpeg media-libs/libpng x11-libs/libXi x11-libs/libXrandr x11-libs/libXinerama x11-libs/libXft media-libs/freetype media-libs/fontconfig x11-libs/libXext dev-libs/glib chm? ( dev-libs/expat ) ) x11-libs/libXt dev-libs/libxml2 x11-libs/libXau x11-libs/libX11 x11-libs/libSM x11-libs/libICE x11-libs/libXdmcp sys-apps/usermode-utilities net-misc/bridge-utils x86? ( =virtual/libstdc++-3.3 )
+0
+amd64? ( VirtualBox-2.1.0-41146-Linux_amd64.run ) x86? ( VirtualBox-2.1.0-41146-Linux_x86.run ) sdk? ( VirtualBoxSDK-2.1.0-41146.zip )
+fetch
+http://www.virtualbox.org/
+PUEL
+Family of powerful x86 virtualization products for enterprise as well as home use
+~amd64 ~x86
+eutils fdo-mime multilib pax-utils portability toolchain-funcs
++additions +chm headless sdk vboxwebsrv
+
+
+
+1
+
+install nofetch postinst postrm setup unpack
+
+
+
+
+

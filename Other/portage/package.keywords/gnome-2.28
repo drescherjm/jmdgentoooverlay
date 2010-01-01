@@ -137,3 +137,4 @@
 =virtual/poppler-0.12.1
 =virtual/poppler-utils-0.12.1*
 =gnome-base/libgnome-2.28*
+=media-libs/clutter-1.0*

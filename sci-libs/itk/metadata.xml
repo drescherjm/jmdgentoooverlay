@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+<herd>itk</herd>
+<use>
+        <flag name="shared">Build shared libraries</flag>
+        <flag name="patented">Compile patented algorithms</flag>
+        <flag name="numpy">Include support for dev-python/numpy in the old python bindings</flag>
+        <flag name="oldpython">Build the old ITK python bindings</flag>
+        <flag name="python">Build the WrapITK python bindings</flag>
+</use>
+</pkgmetadata>
+

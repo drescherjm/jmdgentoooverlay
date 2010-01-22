@@ -60,6 +60,8 @@ src_prepare() {
 		epatch "${FILESDIR}"/9999-extra/*
 	fi
 
+	epatch_user
+
 	eautoreconf
 }
 

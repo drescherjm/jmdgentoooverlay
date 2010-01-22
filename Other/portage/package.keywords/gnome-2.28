@@ -138,3 +138,8 @@
 =virtual/poppler-utils-0.12.1*
 =gnome-base/libgnome-2.28*
 =media-libs/clutter-1.0*
+=media-plugins/gst-plugins-alsa-0.10*
+=media-plugins/gst-plugins-x-0.10*
+=media-plugins/gst-plugins-gio-0.10*
+=media-plugins/gst-plugins-pango-0.10*
+=dev-tex/luatex-0.50*

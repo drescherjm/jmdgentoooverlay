@@ -5,7 +5,7 @@
 EAPI="2"
 inherit eutils
 
-IUSE="bacula-clientonly bacula-console bacula-nodir bacula-nosd gnome ipv6 logwatch mysql postgres python qt4 readline sqlite +sqlite3 ssl static tcpd wxwindows X"
+IUSE="bacula-clientonly bacula-console bacula-nodir bacula-nosd gnome ipv6 logwatch mysql postgres python qt4 readline sqlite +sqlite3 ssl static tcpd wxwindows X examples"
 # bacula-web bimagemgr brestore bweb
 KEYWORDS="~amd64 ~hppa ~ppc ~sparc ~x86"
 
@@ -340,7 +340,14 @@ src_install() {
 		rm -vf "${D}"/usr/libexec/bacula/dvd-handler
 	fi
 
+
+	if use examples ; then
+		docinto examples
+		dodoc "${S}"/examples/*
+	fi
+
 	# documentation
+	docinto .
 	for d in "${S}"/{ChangeLog,LICENSE,README,ReleaseNotes,SUPPORT,kernstodo,projects}; do
 		dodoc "${d}"
 	done

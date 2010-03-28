@@ -1,27 +1,24 @@
 # Copyright 1999-2009 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
-# $Header: /var/cvsroot/gentoo-x86/app-emulation/virtualbox-bin/virtualbox-bin-3.0.12.ebuild,v 1.2 2009/11/27 12:38:41 fauli Exp $
+# $Header: /var/cvsroot/gentoo-x86/app-emulation/virtualbox-bin/virtualbox-bin-3.1.0.ebuild,v 1.1 2009/12/02 20:36:52 patrick Exp $
 
 EAPI=2
 
 inherit eutils fdo-mime pax-utils
 
-MY_PV=${PV/beta/BETA}-55271
+MY_PV=${PV}-59338
 MY_P=VirtualBox-${MY_PV}-Linux
 
 DESCRIPTION="Family of powerful x86 virtualization products for enterprise as well as home use"
 HOMEPAGE="http://www.virtualbox.org/"
-SRC_URI="amd64? ( http://download.virtualbox.org/virtualbox/${PV/beta/BETA}/${MY_P}_amd64.run )
-	x86? ( http://download.virtualbox.org/virtualbox/${PV/beta/BETA}/${MY_P}_x86.run )
-	sdk? ( http://download.virtualbox.org/virtualbox/${PV/beta/BETA}/VirtualBoxSDK-${MY_PV}.zip )"
+SRC_URI="amd64? ( http://download.virtualbox.org/virtualbox/${PV}/${MY_P}_amd64.run )
+	x86? ( http://download.virtualbox.org/virtualbox/${PV}/${MY_P}_x86.run )
+	sdk? ( http://download.virtualbox.org/virtualbox/${PV}/VirtualBoxSDK-${MY_PV}.zip )"
 
 LICENSE="PUEL"
 SLOT="0"
-#KEYWORDS="~amd64 x86"
-
-KEYWORDS="" #Hardmasking
-
-IUSE="+additions +chm headless python sdk"
+KEYWORDS="~amd64 ~x86"
+IUSE="+additions +chm headless python sdk vboxwebsrv"
 RESTRICT="mirror"
 PROPERTIES="interactive"
 
@@ -137,6 +134,7 @@ QA_PRESTRIPPED="opt/VirtualBox/VBoxDD.so
 	opt/VirtualBox/libQtCoreVBox.so.4
 	opt/VirtualBox/libQtGuiVBox.so.4
 	opt/VirtualBox/libQtNetworkVBox.so.4
+	opt/VirtualBox/libQtOpenGLVBox.so.4
 	opt/VirtualBox/vboxwebsrv"
 
 pkg_setup() {
@@ -160,7 +158,7 @@ src_install() {
 	newins "${FILESDIR}/${PN}-config" vbox.cfg
 
 	if ! use headless ; then
-#		newicon VBox.png ${PN}.png
+		newicon VBox.png ${PN}.png
 		newmenu "${FILESDIR}"/${PN}.desktop ${PN}.desktop
 	fi
 
@@ -177,14 +175,14 @@ src_install() {
 		doins -r additions || die
 	fi
 
-	#if use vboxwebsrv; then
-	#	doins vboxwebsrv || die
-	#	fowners root:vboxusers /opt/VirtualBox/vboxwebsrv
-	#	fperms 0750 /opt/VirtualBox/vboxwebsrv
-	#	dosym /opt/VirtualBox/VBox.sh /opt/bin/vboxwebsrv
-	#	newinitd "${FILESDIR}"/vboxwebsrv-initd vboxwebsrv
-	#	newconfd "${FILESDIR}"/vboxwebsrv-confd vboxwebsrv
-	#fi
+	if use vboxwebsrv; then
+		doins vboxwebsrv || die
+		fowners root:vboxusers /opt/VirtualBox/vboxwebsrv
+		fperms 0750 /opt/VirtualBox/vboxwebsrv
+		dosym /opt/VirtualBox/VBox.sh /opt/bin/vboxwebsrv
+		newinitd "${FILESDIR}"/vboxwebsrv-initd vboxwebsrv
+		newconfd "${FILESDIR}"/vboxwebsrv-confd vboxwebsrv
+	fi
 
 	if ! use headless && use chm; then
 		doins kchmviewer VirtualBox.chm || die
@@ -243,9 +241,8 @@ src_install() {
 			pax-mark -m "${D}"/opt/VirtualBox/${each}
 		done
 
-		dosym /opt/VirtualBox/VirtualBox /opt/bin/VirtualBox
-		#dosym /opt/VirtualBox/VBox.sh /opt/bin/VirtualBox
-		#dosym /opt/VirtualBox/VBox.sh /opt/bin/VBoxSDL
+		dosym /opt/VirtualBox/VBox.sh /opt/bin/VirtualBox
+		dosym /opt/VirtualBox/VBox.sh /opt/bin/VBoxSDL
 	else
 		# Hardened build: Mark selected binaries set-user-ID-on-execution
 		fowners root:vboxusers /opt/VirtualBox/VBoxHeadless
@@ -254,12 +251,13 @@ src_install() {
 	fi
 
 	exeinto /opt/VirtualBox
-	#fowners root:vboxusers /opt/VirtualBox/VirtualBox
-	#fperms 0750 /opt/VirtualBox/VirtualBox
+	newexe "${FILESDIR}/${PN}-3-wrapper" "VBox.sh" || die
+	fowners root:vboxusers /opt/VirtualBox/VBox.sh
+	fperms 0750 /opt/VirtualBox/VBox.sh
 
-	dosym /opt/VirtualBox/VBoxManage /opt/bin/VBoxManage
-	dosym /opt/VirtualBox/VBoxVRDP /opt/bin/VBoxVRDP
-	dosym /opt/VirtualBox/VBoxHeadless /opt/bin/VBoxHeadless
+	dosym /opt/VirtualBox/VBox.sh /opt/bin/VBoxManage
+	dosym /opt/VirtualBox/VBox.sh /opt/bin/VBoxVRDP
+	dosym /opt/VirtualBox/VBox.sh /opt/bin/VBoxHeadless
 	dosym /opt/VirtualBox/VBoxTunctl /opt/bin/VBoxTunctl
 }
 

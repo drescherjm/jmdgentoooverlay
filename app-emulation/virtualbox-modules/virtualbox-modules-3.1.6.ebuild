@@ -1,6 +1,6 @@
 # Copyright 1999-2009 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
-# $Header: $
+# $Header: /var/cvsroot/gentoo-x86/app-emulation/virtualbox-modules/virtualbox-modules-3.0.8.ebuild,v 1.2 2009/10/19 01:39:10 fauli Exp $
 
 # XXX: the tarball here is just the kernel modules split out of the binary
 #      package that comes from virtualbox-bin
@@ -9,7 +9,6 @@ EAPI=2
 
 inherit eutils linux-mod
 
-#MY_PV=${PV/_beta/beta}
 MY_P=vbox-kernel-module-src-${PV}
 DESCRIPTION="Kernel Modules for Virtualbox"
 HOMEPAGE="http://www.virtualbox.org/"
@@ -17,8 +16,7 @@ SRC_URI="http://cloud.github.com/downloads/drescherjm/jmdgentoooverlay/${MY_P}.t
 
 LICENSE="GPL-2"
 SLOT="0"
-#KEYWORDS="~amd64 ~x86"
-KEYWORDS="" #hardmasking
+KEYWORDS="~amd64 x86"
 IUSE=""
 
 RDEPEND="!=app-emulation/virtualbox-ose-9999"
@@ -27,7 +25,7 @@ S=${WORKDIR}
 
 BUILD_TARGETS="all"
 BUILD_TARGET_ARCH="${ARCH}"
-MODULE_NAMES="vboxdrv(misc:${S}) vboxnetflt(misc:${S})"
+MODULE_NAMES="vboxdrv(misc:${S}) vboxnetflt(misc:${S}) vboxnetadp(misc:${S})"
 
 pkg_setup() {
 	linux-mod_pkg_setup
@@ -40,15 +38,20 @@ src_install() {
 
 	# udev rule for vboxdrv
 	dodir /etc/udev/rules.d
-	echo 'KERNEL=="vboxdrv", GROUP="vboxusers" MODE=660' >> "${D}/etc/udev/rules.d/60-virtualbox.rules"
+	echo 'KERNEL=="vboxdrv", NAME="vboxdrv", OWNER="root", GROUP="", MODE=""' \
+	> "${D}/etc/udev/rules.d/10-virtualbox.rules"
+	echo 'SUBSYSTEM=="usb_device", GROUP="", MODE=""' \
+	>> "${D}/etc/udev/rules.d/10-virtualbox.rules"
+	echo 'SUBSYSTEM=="usb", ENV{DEVTYPE}=="usb_device", GROUP="", MODE=""' \
+	>> "${D}/etc/udev/rules.d/10-virtualbox.rules"
 }
 
 pkg_postinst() {
 	linux-mod_pkg_postinst
-	elog "Starting with the 2.1 release a new kernel module was added,"
+	elog "Starting with the 3.x release new kernel modules were added,"
 	elog "be sure to load all the needed modules."
 	elog ""
-	elog "Please add \"vboxdrv\" and \"vboxnetflt\" to:"
+	elog "Please add \"vboxdrv\", \"vboxnetflt\" and \"vboxnetadp\" to:"
 	if has_version sys-apps/openrc; then
 		elog "/etc/conf.d/modules"
 	else

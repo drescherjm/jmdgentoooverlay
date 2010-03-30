@@ -17,7 +17,7 @@ LICENSE="trac"
 
 IUSE="cgi fastcgi mysql postgres sqlite subversion"
 
-KEYWORDS="~x86 ~x86-fbsd"
+KEYWORDS="~x86 ~x86-fbsd ~amd64"
 
 # doing so because tools, python packages... overlap
 SLOT="0"

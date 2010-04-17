@@ -144,3 +144,4 @@
 =media-plugins/gst-plugins-pango-0.10*
 =dev-tex/luatex-0.50*
 =net-libs/libsoup-gnome-2.29*
+=net-libs/libsoup-2.30*

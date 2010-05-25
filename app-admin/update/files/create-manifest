@@ -1,0 +1,2 @@
+#! /bin/bash
+ebuild /overlay/app-admin/update/update-2.0-r2.ebuild manifest

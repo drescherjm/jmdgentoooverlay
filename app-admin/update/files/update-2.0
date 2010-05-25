@@ -1,0 +1,256 @@
+#! /bin/bash
+
+############################################### 
+###   Update Script v2.0 by Felix Petzold   ###
+###            (for Gentoo Linux)           ###
+###                                         ###
+###   released for www.GentooForum.de       ###
+###            and www.GentooFreunde.org    ###
+###   Release Date: 23.05.2010              ###
+###############################################
+
+####################################################################
+###                                                              ###
+### SERVERS:                                                     ###
+###                                                              ###
+### See make.conf.example how to get elog-messages by email      ###
+###                                                              ###
+####################################################################
+
+source /etc/conf.d/update
+VERSION="v2.0"
+ERRORS="0"
+NOW_DATE=$(date +"%F_%R" | sed "s/://")
+
+# This function recognises options and shows help when run with -h | --help
+function parse_args() {
+
+    while true; do
+
+        case "${1}" in
+
+        -h | --help)
+            cat <<EO_HELP
+Gentoo Linux Update-Script ${VERSION} by Felix Petzold
+
+Synopsis:
+    update [OPTION] [OPTION]
+
+Options:
+
+    -h|--help               this page
+EO_HELP
+            exit 0
+            ;;
+
+#        -L) | --no_layman)
+#             USE_LAYMAN="0"
+#             shift
+#             ;;
+
+#        -c)
+#             SHOW_WELCOME_TIME="0"
+#             shift
+#             ;;
+
+        -*)
+            echo Unknown option: ${1}
+            echo "Type --help for help."
+            exit 1
+            ;;
+
+        *)
+            shift
+            if [ "$?" != 0 ]; then
+                break;
+            fi
+            ;;
+
+    esac
+    done
+}
+
+# This function updates Portage and Layman
+function update_sources() {
+	clear
+	echo "Update-Script ${VERSION} for Gentoo Linux by Felix Petzold"
+	echo "----------------------------------------------------"
+	echo "Syncing Portage, Eix & Layman."
+	eix-sync 2> /dev/null >> /dev/null
+	layman -S 2> /dev/null >> /dev/null
+	echo "Finished"
+	echo ""
+}
+
+# This function resumes emerge process if there was an error
+function resume_emerge() {
+	echo "Resuming emerge process after error ${ERRORS}"
+	emerge --resume --skipfirst 2> /dev/null >> /dev/null
+	EXIT_VALUE=$?
+	if [ "${EXIT_VALUE}" != "0" ]; then
+		ERRORS=$(( ${ERRORS} + 1 ));
+		resume_emerge
+	fi
+}
+
+#This function updates the system
+function update_system() {
+	echo "Updating System."
+	emerge -uDN world 2> /dev/null >> /dev/null
+	EXIT_VALUE=$?
+	if [ "${EXIT_VALUE}" != "0" ]; then
+		ERRORS=$(( ${ERRORS} + 1 ));
+		resume_emerge
+	fi								
+	env-update >> /dev/null
+	source /etc/profile >> /dev/null
+	echo "Finished"	
+	echo ""
+}
+
+# This function checks for broken librarys in your system
+function check_broken_librarys() {
+	echo "Running revdep-rebuild."
+	rm /var/cache/revdep-rebuild/*.rr 2> /dev/null >> /dev/null
+	revdep-rebuild 2> /dev/null >> /dev/null
+	EXIT_VALUE=$?
+	if [ "${EXIT_VALUE}" != "0" ]; then
+		ERRORS=$(( ${ERRORS} + 1 ));
+		resume_emerge
+		rm /var/cache/revdep-rebuild/*.rr 2> /dev/null >> /dev/null
+	fi
+	env-update >> /dev/null
+	source /etc/profile >> /dev/null
+	echo "Finished"
+	echo ""	
+}
+
+# This function removes old versions from your system
+function emerge_depclean() {
+	echo "Running emerge --depclean."
+	emerge --depclean 2> /dev/null >> /dev/null
+	EXIT_VALUE=$?
+	if [ "${EXIT_VALUE}" != "0" ]; then
+		ERRORS=$(( ${ERRORS} + 1 ));
+	fi
+	env-update >> /dev/null
+	source /etc/profile >> /dev/null
+	echo "Finished"
+	echo ""
+}
+
+# This function removes old versions from /usr/portage/distfiles and /usr/portage/packages
+function clean_system() {
+	echo "Running eclean packages."
+	eclean packages 2> /dev/null >> /dev/null
+	echo "Finished"
+	echo ""
+	echo "Running eclean distfiles."
+	eclean distfiles 2> /dev/null >> /dev/null
+	echo "Finished"
+	echo ""
+}
+
+# This function executes emerge @preserved-rebuild
+function preserved_rebuild() {
+	echo "Running emerge @preserved-rebuild."
+	emerge @preserved-rebuild 2> /dev/null >> /dev/null
+	if [ "${EXIT_VALUE}" != "0" ]; then
+		ERRORS=$(( ${ERRORS} + 1 ));
+		resume_emerge
+	fi
+	echo "Finished"
+	echo ""
+}
+
+# This function writes an error message to your desktop, it there was one.
+function exit_update() {
+	echo "Exiting update script"
+	if [ "${ERRORS}" != "0" ]; then
+		MESSAGE_FILE="/home/${USER_NAME}/Desktop/Update_Error_Message.txt"
+		echo "Update-Script ${VERSION} by Felix Petzold finished with ${ERRORS} Errors. Please check your elog-messages from ${NOW_DATE}" >> ${MESSAGE_FILE}
+		chown ${USER_NAME}:${USER_NAME} ${MESSAGE_FILE}
+	fi
+	Xdialog --msgbox "Update-Script ${VERSION} by Felix Petzold finished with ${ERRORS} Errors" 0 0
+}
+
+# original from http://github.com/maggu2810/gentoo-ebuild-uptate-check
+cleanup () {
+   cat ${1} | \
+   grep -v \
+   -e "^[[:space:]]*$" \
+   -e "^[[:space:]]*#" \
+   -e "^[[:space:]]*$" \
+   -e '^[[:space:]]*KEYWORDS=' \
+   -e '^[[:space:]]*HOMEPAGE=' \
+   -e '^[[:space:]]*LICENSE=' \
+   -e '^[[:space:]]*SRC_URI=' \
+   -e '^[[:space:]]*eerror' \
+   -e '^[[:space:]]*einfo' \
+   -e '^[[:space:]]*ewarn' \
+   -e '^[[:space:]]*elog'
+}
+
+# original from http://github.com/maggu2810/gentoo-ebuild-uptate-check
+function gentoo_ebuild_update_check_by_maggu2810() {
+	echo "Checking ebuild differences."
+	OPT_OVERLAYS="true"
+	PKGDB="/var/db/pkg/"
+	PORTDIR="/usr/portage"
+	OFFICIAL_TREE="gentoo"
+	I="`mktemp --tmpdir ebuild.installed.XXXXXXXXXX`"
+	A="`mktemp --tmpdir ebuild.actual.XXXXXXXXXX`"
+	PARSE_CMD="cleanup"
+	cd "${PKGDB}" || exit 1
+	find . -mindepth 3 -maxdepth 3 -type f -name '*.ebuild' | sort | while read FILE
+	do
+	[[ "${FILE}" =~ ([^/]*)/([^/]*)/([^/]*)-([^-]*-r[^.-]*).ebuild ]] ||
+	[[ "${FILE}" =~ ([^/]*)/([^/]*)/([^/]*)-([^-]*).ebuild ]]
+	CAT="${BASH_REMATCH[1]}"
+	PKGwV="${BASH_REMATCH[2]}"
+	PKG="${BASH_REMATCH[3]}"
+	VER="${BASH_REMATCH[4]}"
+	#echo -e $CAT'|\t'$PKGwV'|\t'$PKG'|\t'$VER  #<-- Testzeile
+	EBUILD_I="${PKGDB}/${FILE}"
+	REPO="$(cat ${PKGDB}/${CAT}/${PKGwV}/repository 2>/dev/null)" || REPO="${OFFICIAL_TREE}"
+	if [ "${OPT_OVERLAYS}" != "true" -a "${REPO}" != "${OFFICIAL_TREE}" ]; then
+	continue
+	fi
+	REPO_PATH="$(portageq get_repo_path / ${REPO})"
+	EBUILD_A="${REPO_PATH}/${CAT}/${PKG}/${PKG}-${VER}.ebuild"	 
+	if [ ! -e ${EBUILD_A} 2> /dev/null >> /dev/null ]; then	
+	continue
+	fi
+	PKGOUT="${CAT}/${PKG}" 2> /dev/null >> /dev/null
+	${PARSE_CMD} ${EBUILD_I} > ${I} 2> /dev/null >> /dev/null
+	${PARSE_CMD} ${EBUILD_A} > ${A} 2> /dev/null >> /dev/null
+	DIFF=$(diff -Naur ${I} ${A})	 
+	if [ ${?} -eq 1 ]; then
+	emerge --oneshot ${PKGOUT} 2> /dev/null >> /dev/null
+	fi
+	rm ${A} ${P}
+	done
+	echo "Finished."
+	echo ""
+}
+
+function lafilefixer_fixit() {
+	echo "Running lafilefixer --justfixit"
+	lafilefixer --justfixit | grep -v skipping 2> /dev/null >> /dev/null
+	echo "Finished."
+	echo ""
+}
+
+# ------------------------------------------------------------
+# executing functions that were declared above
+# ------------------------------------------------------------
+parse_args $*
+update_sources
+update_system
+emerge_depclean
+gentoo_ebuild_update_check_by_maggu2810
+lafilefixer_fixit
+preserved_rebuild
+check_broken_librarys
+clean_system
+exit_update

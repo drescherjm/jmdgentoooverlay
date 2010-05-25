@@ -1,0 +1,10 @@
+#! /bin/bash
+OVERLAY="overlay"
+CATEGORY="app-admin"
+PROG_NAME="update"
+CONF_NAME="update"
+NOW_DATE=$(date +"%F_%R" | sed "s/://")
+BACKUP_DIR="/${OVERLAY}/${CATEGORY}/${PROG_NAME}/files/backup_${NOW_DATE}/"
+mkdir -p ${BACKUP_DIR}
+cp /usr/bin/${PROG_NAME} ${BACKUP_DIR}
+cp /etc/conf.d/${CONF_NAME} "${BACKUP_DIR}${CONF_NAME}-conf"

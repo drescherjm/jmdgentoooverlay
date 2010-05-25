@@ -1,0 +1,37 @@
+###############################################################################
+###                                                                         ###
+###   Config file for Update-Script by Felix Petzold                        ###
+###   for Gentoo Linux only !!!                                             ###
+###                                                                         ###
+###############################################################################
+
+# Name of the User that get's an error message on his
+# Desktop if something failed
+USER_NAME="felix"
+
+
+###############################################################################
+###                                                                         ###
+###   Set up saving elog-messages in /etc/make.conf!                        ###
+###   Please use one of the following examples if you                       ###
+###   don't know how to set this up on your own.                            ###
+###                                                                         ###
+###   example1 (only important messages):                                   ###
+###   PORTAGE_ELOG_CLASSES="log warn error info qa"                         ###
+###   PORTAGE_ELOG_SYSTEM="echo:log,info,warn,error  save:warn,error"       ###
+###                                                                         ###
+###   example2 (+info messages)                                             ###
+###   PORTAGE_ELOG_CLASSES="log warn error info qa"                         ###
+###   PORTAGE_ELOG_SYSTEM="echo:log,info,warn,error save:info,warn,error"   ###
+###                                                                         ###
+###   Servers should get elog-messages by email. Set that up on your own!   ###
+###                                                                         ###
+###############################################################################
+###                                                                         ###
+###   Run etc-update and elogv after each update!!!                         ###
+###                                                                         ###
+###############################################################################
+###                                                                         ###
+###   Contact: mail[at]felixpetzold[dot]de                                  ###
+###                                                                         ###
+###############################################################################

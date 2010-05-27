@@ -1,0 +1,22 @@
+dev-python/setuptools >=app-admin/eselect-python-20091230 dev-lang/python >=app-admin/webapp-config-1.50.15 dev-util/subversion net-misc/rsync
+>=dev-python/genshi-0.6 dev-python/pygments app-text/pytextile app-text/silvercity dev-python/Babel >=dev-python/docutils-0.3.9 dev-python/pytz cgi? ( virtual/httpd-cgi ) fastcgi? ( virtual/httpd-fastcgi ) mysql? ( >=dev-python/mysql-python-1.2.1 >=virtual/mysql-4.1 ) postgres? ( >=dev-python/psycopg-2 ) sqlite? ( >=dev-db/sqlite-3.3.4 || ( >=dev-lang/python-2.5[sqlite] >=dev-python/pysqlite-2.3.2 ) ) subversion? ( >=dev-util/subversion-1.4.2[python] ) !www-apps/trac-webadmin >=app-admin/eselect-python-20091230 dev-lang/python >=app-admin/webapp-config-1.50.15
+0
+
+
+http://trac.edgewall.com/
+trac
+Trac is a minimalistic web-based project management, wiki and bug/issue tracking system.
+~x86 ~x86-fbsd ~amd64
+distutils eutils multilib portability python subversion toolchain-funcs webapp
+cgi fastcgi mysql postgres sqlite subversion linguas_ca_ES linguas_de linguas_en linguas_et linguas_fr linguas_it linguas_lv linguas_nl linguas_pt linguas_sl linguas_tr linguas_zh_TW linguas_cs linguas_el linguas_es_AR linguas_fa linguas_gl_ES linguas_ja linguas_pl linguas_ro linguas_sv linguas_vi linguas_cy_GB linguas_en_GB linguas_es linguas_fi linguas_hu linguas_ko linguas_nb linguas_pt_BR linguas_ru linguas_th linguas_zh vhosts
+
+
+
+2
+
+compile install postinst postrm preinst prepare prerm setup unpack
+
+
+
+
+

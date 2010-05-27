@@ -1,0 +1,22 @@
+doc? ( app-text/docbook-sgml-utils ) sys-libs/libcap >=sys-kernel/linux-headers-2.6.29 || ( =sys-devel/automake-1.11* =sys-devel/automake-1.10* ) >=sys-devel/autoconf-2.61 >=sys-devel/libtool-2.2.6b >=dev-vcs/git-1.6
+sys-libs/libcap >=sys-kernel/linux-headers-2.6.29
+0
+
+
+http://lxc.sourceforge.net/
+LGPL-3
+LinuX Containers userspace utilities
+
+autotools eutils git libtool linux-info multilib portability toolchain-funcs versionator
+doc examples extra
+
+
+
+2
+
+configure install postinst prepare setup unpack
+
+
+
+
+

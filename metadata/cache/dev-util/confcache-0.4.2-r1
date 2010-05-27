@@ -1,5 +1,5 @@
->=dev-lang/python-2.2 >=app-admin/eselect-python-20090804 >=app-shells/bash-3.2 virtual/python
->=dev-lang/python-2.2 >=sys-apps/sandbox-1.2.12 virtual/python
+>=dev-lang/python-2.2 >=app-admin/eselect-python-20091230 dev-lang/python
+>=dev-lang/python-2.2 >=sys-apps/sandbox-1.2.12 >=app-admin/eselect-python-20091230 dev-lang/python
 0
 http://dev.gentooexperimental.org/~masterdriverz/confcache-0.4.2.tar.bz2
 
@@ -7,7 +7,7 @@ http://gentooexperimental.org/~ferringb/confcache/
 GPL-2
 global autoconf cache manager
 ~alpha ~amd64 ~hppa ~ppc ~sparc ~x86
-distutils eutils multilib portability python toolchain-funcs
+distutils multilib python toolchain-funcs
 
 
 

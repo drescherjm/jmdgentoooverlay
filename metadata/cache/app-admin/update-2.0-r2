@@ -1,0 +1,22 @@
+
+x11-misc/xdialog app-portage/eix app-portage/elogv app-portage/gentoolkit app-portage/layman dev-util/lafilefixer >=sys-apps/portage-2.2_rc67
+0
+
+
+
+GPL-2
+Update Script for Gentoo Linux
+alpha amd64 arm hppa ia64 m68k mips ppc ppc64 s390 sh sparc x86
+
+daily weekly
+
+
+
+
+
+install
+
+
+
+
+

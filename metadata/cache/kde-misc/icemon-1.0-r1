@@ -1,5 +1,5 @@
-virtual/libc kde-base/kdelibs:3.5 !<=sys-devel/icecream-0.7.6 =sys-devel/automake-1.9* >=sys-devel/autoconf-2.61 sys-devel/libtool sys-devel/make dev-util/pkgconfig dev-lang/perl x11-libs/libXt x11-proto/xf86vidmodeproto xinerama? ( x11-proto/xineramaproto )
-virtual/libc kde-base/kdelibs:3.5 !<=sys-devel/icecream-0.7.6 xinerama? ( x11-libs/libXinerama )
+virtual/libc kde-base/kdelibs:3.5 !<=sys-devel/icecream-0.7.6
+virtual/libc kde-base/kdelibs:3.5 !<=sys-devel/icecream-0.7.6
 0
 http://www.cs.tcd.ie/~furlongm/gentoo/packages/icemon-kde3-1.0.tar.bz2
 
@@ -7,14 +7,14 @@ http://www.opensuse.org/icecream
 GPL-2
 Icemon is a KDE monitor program for use with Icecream compile clusters.
 ~x86 ~amd64
-autotools base eutils flag-o-matic kde kde-functions libtool multilib portability qt3 toolchain-funcs versionator
-debug elibc_FreeBSD xinerama
+kde
 
 
 
 
 
-compile install postinst postrm preinst setup unpack
+
+compile
 
 
 

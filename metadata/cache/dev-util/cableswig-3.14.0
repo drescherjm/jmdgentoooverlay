@@ -1,0 +1,22 @@
+sysgccxml? ( >=dev-cpp/gccxml-0.9 ) >=dev-util/cmake-2.6
+sysgccxml? ( >=dev-cpp/gccxml-0.9 )
+0
+mirror://sourceforge/itk/CableSwig-ITK-3.14.0.tar.gz
+
+http://www.itk.org
+BSD
+Cablseswig: A SWIG specifically generated for ITK
+~amd64
+multilib toolchain-funcs
+sysgccxml
+
+
+
+
+
+compile install unpack
+
+
+
+
+

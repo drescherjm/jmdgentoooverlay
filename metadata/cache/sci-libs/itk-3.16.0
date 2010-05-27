@@ -1,0 +1,22 @@
+sys-libs/zlib fftw? ( sci-libs/fftw ) media-libs/jpeg media-libs/libpng media-libs/tiff >=dev-util/cmake-2.6 python? ( >=dev-util/cableswig-3.14.0 >=dev-lang/python-2.5 ) numpy? ( dev-python/numpy )
+sys-libs/zlib fftw? ( sci-libs/fftw ) media-libs/jpeg media-libs/libpng media-libs/tiff
+0
+mirror://sourceforge/itk/InsightToolkit-3.16.0.tar.gz
+
+http://www.itk.org
+BSD
+NLM Insight Segmentation and Registration Toolkit
+~amd64 ~x86
+multilib toolchain-funcs
+doc examples fftw shared patented test python oldpython numpy
+
+
+
+
+
+compile install postinst unpack
+
+
+
+
+

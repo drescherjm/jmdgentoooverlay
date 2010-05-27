@@ -1,4 +1,4 @@
-=x11-libs/wxGTK-2.8* x11-libs/gtk+ !dev-util/codeblocks !dev-util/codeblocks-cvs >=sys-devel/autoconf-2.5 >=sys-devel/automake-1.7 >=sys-devel/libtool-1.4 app-arch/zip =sys-devel/automake-1.10* >=sys-devel/autoconf-2.61 sys-devel/libtool dev-util/subversion net-misc/rsync
+=x11-libs/wxGTK-2.8* x11-libs/gtk+ !dev-util/codeblocks !dev-util/codeblocks-cvs >=sys-devel/autoconf-2.5 >=sys-devel/automake-1.7 >=sys-devel/libtool-1.4 app-arch/zip || ( =sys-devel/automake-1.11* =sys-devel/automake-1.10* ) >=sys-devel/autoconf-2.61 >=sys-devel/libtool-2.2.6b dev-util/subversion net-misc/rsync
 =x11-libs/wxGTK-2.8* x11-libs/gtk+ !dev-util/codeblocks !dev-util/codeblocks-cvs
 0
 

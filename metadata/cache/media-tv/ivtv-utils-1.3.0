@@ -1,4 +1,4 @@
-app-arch/unzip !media-tv/ivtv kernel_linux? ( virtual/linux-sources ) kernel_linux? ( virtual/modutils ) sys-apps/sed kernel_linux? ( virtual/linux-sources )
+app-arch/unzip !media-tv/ivtv kernel_linux? ( virtual/modutils ) sys-apps/sed kernel_linux? ( virtual/linux-sources )
 >=sys-fs/udev-103 kernel_linux? ( virtual/modutils )
 0
 http://dl.ivtvdriver.org/ivtv/archive/1.3.x/ivtv-utils-1.3.0.tar.gz

@@ -1,4 +1,4 @@
->=dev-libs/glib-2.16.1 >=dev-libs/dbus-glib-0.76 >=sys-fs/udev-145 >=sys-auth/polkit-0.91 sys-apps/dbus virtual/libusb >=dev-util/intltool-0.40 dev-util/pkgconfig dev-libs/libxslt dev-util/gtk-doc-am doc? ( >=dev-util/gtk-doc-1.3 ) >=sys-apps/sed-4 =sys-devel/automake-1.10* >=sys-devel/autoconf-2.61 sys-devel/libtool kernel_linux? ( virtual/linux-sources )
+>=dev-libs/glib-2.16.1 >=dev-libs/dbus-glib-0.76 >=sys-fs/udev-145 >=sys-auth/polkit-0.91 sys-apps/dbus virtual/libusb >=dev-util/intltool-0.40 dev-util/pkgconfig dev-libs/libxslt dev-util/gtk-doc-am doc? ( >=dev-util/gtk-doc-1.3 ) >=sys-apps/sed-4 || ( =sys-devel/automake-1.11* =sys-devel/automake-1.10* ) >=sys-devel/autoconf-2.61 >=sys-devel/libtool-2.2.6b
 >=dev-libs/glib-2.16.1 >=dev-libs/dbus-glib-0.76 >=sys-fs/udev-145 >=sys-auth/polkit-0.91 sys-apps/dbus virtual/libusb
 0
 http://hal.freedesktop.org/releases/DeviceKit-power-010.tar.gz

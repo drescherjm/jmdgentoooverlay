@@ -2,6 +2,8 @@
 =app-admin/webmin-1.4*
 =app-backup/bacula-2.4*
 =app-crypt/truecrypt-6.2*
+=app-emulation/virtualbox-bin-3.2*
+=app-emulation/virtualbox-modules-3.2*
 =app-emulation/vmware-modules-1.0.0*
 =app-misc/baobab-2.4*
 =app-portage/gentoolkit-0.2.4*
@@ -14,6 +16,7 @@
 =dev-cpp/cairomm-1.2*
 =dev-db/hk_classes-0.8.2*
 =dev-libs/nspr-4.6*
+=dev-libs/openssl-1.0*
 =dev-libs/poppler-0.10.7*
 =dev-python/lxml-1.3*
 =dev-python/setuptools-0.6*
@@ -23,8 +26,10 @@
 =dev-util/git-1.6*
 =dev-util/portatosourceview-2.16*
 =dev-util/rapidsvn-0.9*
+=dev-vcs/git-1.6*
 =mail-mta/postfix-2.3*
 =media-gfx/gqview-2.1*
+=media-libs/gst-plugins-bad-0.10.13*
 =net-analyzer/nagios-nrpe-2*
 =net-analyzer/nagios-plugins-1.4.13*
 =net-dns/dnrd-2.20*
@@ -44,6 +49,7 @@
 =sys-apps/net-tools-1.60*
 =sys-apps/openrc-0.4*
 =sys-apps/portage-2.2*
+=sys-apps/smartmontools-5.39*
 =sys-apps/unscd-0.39*
 =sys-auth/consolekit-0.3*
 =sys-auth/pambase-2009*
@@ -56,12 +62,15 @@
 =sys-fs/e2fsprogs-1.41.6*
 =sys-fs/xfsdump-3.0*
 =sys-fs/xfsprogs-3.0*
+=sys-kernel/openvz-sources-2.6.32*
 =sys-kernel/vserver-sources-2.3.0.35*
 =sys-libs/readline-5.2*
 =virtual/poppler-0.10.7*
 =virtual/poppler-glib-0.10.7*
+=www-client/firefox-bin-3*
 =www-client/mozilla-firefox-bin-3*
 =www-plugins/adobe-flash-10*
+=x11-proto/dri2proto-2.1*
 app-admin/eselect
 app-admin/eselect-opengl
 app-antivirus/f-prot
@@ -161,5 +170,3 @@ sys-libs/libstdc++-v3
 sys-libs/timezone-data
 sys-power/apcupsd
 www-client/mozilla-firefox
-=x11-proto/dri2proto-2.1*
-=media-libs/gst-plugins-bad-0.10.13*

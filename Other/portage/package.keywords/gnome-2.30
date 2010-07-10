@@ -167,3 +167,6 @@
 =x11-themes/gnome-icon-theme-2.30*
 =x11-themes/gnome-themes-2.30*
 =x11-wm/metacity-2.30*
+=dev-libs/atk-1.30*
+=gnome-extra/gtkhtml-3.30*
+=net-libs/webkit-gtk-1.3*

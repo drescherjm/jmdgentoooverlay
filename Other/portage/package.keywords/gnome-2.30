@@ -11,6 +11,7 @@
 =app-editors/gedit-2.30*
 =app-text/evince-2.30*
 =app-text/gnome-doc-utils-0.18*
+=app-text/gnome-doc-utils-0.20*
 =app-text/poppler-utils-0.12*
 =dev-cpp/gnome-vfsmm-2.30*
 =dev-cpp/libgnomecanvasmm-2.30*
@@ -20,6 +21,7 @@
 =dev-libs/atk-1.28*
 =dev-libs/gdl-2.30*
 =dev-libs/glib-2.22*
+=dev-libs/glib-2.24*
 =dev-libs/libatasmart-0.17*
 =dev-libs/libgdata-0.5*
 =dev-libs/libgweather-2.30*
@@ -52,6 +54,7 @@
 =dev-python/libwnck-python-2.30*
 =dev-python/metacity-python-2.30*
 =dev-python/nautilus-cd-burner-python-2.30*
+=dev-python/pygtksourceview-2.10*
 =dev-python/totem-python-2.30*
 =dev-tex/luatex-0.43*
 =dev-tex/luatex-0.50*
@@ -74,6 +77,7 @@
 =gnome-base/libbonobo-2.24*
 =gnome-base/libbonoboui-2.24*
 =gnome-base/libgnome-2.30*
+=gnome-base/libgnome-keyring-2.30*
 =gnome-base/libgnomecanvas-2.30*
 =gnome-base/libgnomekbd-2.30*
 =gnome-base/libgnomeui-2.24*
@@ -134,6 +138,7 @@
 =net-libs/libsoup-gnome-2.30*
 =net-libs/opal-3.6*
 =net-libs/ptlib-2.6*
+=net-libs/telepathy-glib-0.10*
 =net-misc/vinagre-2.30*
 =net-misc/vino-2.30*
 =net-voip/ekiga-3.2*
@@ -141,6 +146,7 @@
 =sys-apps/gnome-disk-utility-2.30*
 =sys-auth/consolekit-0.4.1*
 =sys-auth/polkit-0.96*
+=sys-fs/udisks-1.0*
 =virtual/poppler-0.12*
 =virtual/poppler-glib-0.12*
 =virtual/poppler-utils-0.12*
@@ -148,8 +154,11 @@
 =www-client/epiphany-extensions-2.30*
 =x11-libs/gtk+-2.18*
 =x11-libs/gtk+-2.18* **
+=x11-libs/gtk+-2.20*
+=x11-libs/gtksourceview-2.10*
 =x11-libs/gtksourceview-2.8*
 =x11-libs/libwnck-2.30*
+=x11-libs/libxklavier-5*
 =x11-libs/pango-1.26*
 =x11-libs/pango-1.28*
 =x11-libs/vte-0.22*

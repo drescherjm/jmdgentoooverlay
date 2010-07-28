@@ -170,3 +170,10 @@
 =dev-libs/atk-1.30*
 =gnome-extra/gtkhtml-3.30*
 =net-libs/webkit-gtk-1.3*
+=dev-libs/libunique-1.1*
+=x11-libs/vte-0.24*
+=gnome-extra/gcalctool-5.30*
+=x11-themes/gtk-engines-2.20*
+=dev-libs/libIDL-0.8*
+=gnome-base/gvfs-1.6.2*
+=gnome-base/gvfs-1.6.3*

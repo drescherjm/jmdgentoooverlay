@@ -1,0 +1,70 @@
+From 504d3e82f6770e66d4c031e60b5978538ed9008b Mon Sep 17 00:00:00 2001
+From: Mike Nerone <mike@nerone.org>
+Date: Thu, 20 Aug 2009 17:27:39 -0500
+Subject: [PATCH] Add support for LDAP system-auth.
+
+---
+ Makefile       |    4 ++++
+ system-auth.in |   18 ++++++++++++++++--
+ 2 files changed, 20 insertions(+), 2 deletions(-)
+
+diff --git a/Makefile b/Makefile
+index 6a80ec5..06b1979 100644
+--- a/Makefile
++++ b/Makefile
+@@ -44,6 +44,10 @@ ifeq "$(PAM_SSH)" "yes"
+ PAMFLAGS += -DHAVE_PAM_SSH=1
+ endif
+ 
++ifeq "$(LDAP)" "yes"
++PAMFLAGS += -DHAVE_LDAP=1
++endif
++
+ ifeq "$(SHA512)" "yes"
+ PAMFLAGS += -DWANT_SHA512=1
+ endif
+diff --git a/system-auth.in b/system-auth.in
+index d8f525f..29ed818 100644
+--- a/system-auth.in
++++ b/system-auth.in
+@@ -4,8 +4,15 @@ auth		required	pam_env.so DEBUG
+ #if HAVE_PAM_SSH
+ auth		sufficient	pam_ssh.so
+ #endif
+-auth		required	pam_unix.so try_first_pass LIKEAUTH nullok DEBUG
++auth		sufficient	pam_unix.so try_first_pass LIKEAUTH nullok DEBUG
++#if HAVE_LDAP
++auth		sufficient	pam_ldap.so use_first_pass
++#endif
++auth		required	pam_deny.so
+  
++#if HAVE_LDAP
++account		sufficient	pam_ldap.so
++#endif
+ account		required	pam_unix.so DEBUG
+  
+ #if HAVE_CRACKLIB
+@@ -14,7 +21,11 @@ password	required	pam_cracklib.so difok=2 minlen=8 dcredit=2 ocredit=2 retry=3 D
+ #if HAVE_PASSWDQC
+ password	required	pam_passwdqc.so min=8,8,8,8,8 retry=3
+ #endif
+-password	required	pam_unix.so try_first_pass AUTHTOK nullok UNIX_EXTENDED_ENCRYPTION DEBUG
++password	sufficient	pam_unix.so try_first_pass AUTHTOK nullok UNIX_EXTENDED_ENCRYPTION DEBUG
++#if HAVE_LDAP
++password	sufficient	pam_ldap.so use_first_pass AUTHTOK
++#endif
++password	required	pam_deny.so
+  
+ #if HAVE_LIMITS
+ session		required	pam_limits.so DEBUG
+@@ -31,4 +42,7 @@ session		optional	pam_ssh.so
+ #if SUPPORT_UNIX_SESSION
+ session		required	pam_unix.so DEBUG
+ #endif
++#if HAVE_LDAP
++session		optional	pam_ldap.so
++#endif
+ session		optional	pam_permit.so
+-- 
+1.6.3.3
+

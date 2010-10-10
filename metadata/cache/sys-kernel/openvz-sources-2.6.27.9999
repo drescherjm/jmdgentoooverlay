@@ -14,7 +14,7 @@ symlink build deblob
 virtual/linux-sources virtual/alsa
 
 
-compile install postinst preinst setup unpack
+compile install postinst preinst setup test unpack
 
 
 

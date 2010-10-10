@@ -1,4 +1,4 @@
->=x11-libs/qt-3.3:3 =media-tv/mythtv-0.21* dev-util/subversion net-misc/rsync
+>=x11-libs/qt-3.3:3 =media-tv/mythtv-0.21* dev-vcs/subversion net-misc/rsync
 >=x11-libs/qt-3.3:3 =media-tv/mythtv-0.21*
 0
 

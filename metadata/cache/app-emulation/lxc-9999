@@ -1,4 +1,4 @@
-doc? ( app-text/docbook-sgml-utils ) sys-libs/libcap >=sys-kernel/linux-headers-2.6.29 || ( =sys-devel/automake-1.11* =sys-devel/automake-1.10* ) >=sys-devel/autoconf-2.61 >=sys-devel/libtool-2.2.6b >=dev-vcs/git-1.6
+doc? ( app-text/docbook-sgml-utils ) sys-libs/libcap >=sys-kernel/linux-headers-2.6.29 || ( =sys-devel/automake-1.11* ) >=sys-devel/autoconf-2.61 >=sys-devel/libtool-2.2.6b >=dev-vcs/git-1.6
 sys-libs/libcap >=sys-kernel/linux-headers-2.6.29
 0
 

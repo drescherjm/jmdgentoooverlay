@@ -12,7 +12,7 @@ KEYWORDS="~amd64 ~ppc ~x86"
 
 IUSE=""
 
-DEPEND=""
+DEPEND="dev-lang/php"
 RDEPEND="www-servers/apache"
 
 pkg_setup() {

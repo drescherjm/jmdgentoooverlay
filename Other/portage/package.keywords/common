@@ -1,6 +1,6 @@
-=app-admin/eselect-news-2008*
+=app-admin/eselect-news-2010*
 =app-admin/webmin-1.4*
-=app-backup/bacula-2.4*
+=app-backup/bacula-5*
 =app-crypt/truecrypt-6.2*
 =app-emulation/virtualbox-bin-3.2*
 =app-emulation/virtualbox-modules-3.2*
@@ -17,13 +17,11 @@
 =dev-db/hk_classes-0.8.2*
 =dev-libs/nspr-4.6*
 =dev-libs/openssl-1.0*
-=dev-libs/poppler-0.10.7*
 =dev-python/lxml-1.3*
 =dev-python/setuptools-0.6*
 =dev-util/boost-build-1.38*
 =dev-util/cmake-2.6*
 =dev-util/confcache-0.4*
-=dev-util/git-1.6*
 =dev-util/portatosourceview-2.16*
 =dev-util/rapidsvn-0.9*
 =dev-vcs/git-1.6*
@@ -34,9 +32,9 @@
 =net-analyzer/nagios-plugins-1.4.13*
 =net-dns/dnrd-2.20*
 =net-firewall/fwbuilder-3.0*
-=net-fs/autofs-5.0.4*
+=net-fs/autofs-5.0*
 =net-fs/nfs-utils-1.1*
-=net-fs/samba-3.0.35*
+=net-fs/samba-3.5*
 =net-libs/libfwbuilder-3.0*
 =net-libs/liblockfile-1.06-r1
 =net-nds/openldap-2.3.43*
@@ -50,8 +48,10 @@
 =sys-apps/openrc-0.4*
 =sys-apps/portage-2.2*
 =sys-apps/smartmontools-5.39*
+=sys-apps/smartmontools-5.40*
 =sys-apps/unscd-0.39*
 =sys-auth/consolekit-0.3*
+=sys-auth/consolekit-4.2*
 =sys-auth/pambase-2009*
 =sys-block/partimage-0.6.4-r4 ~*
 =sys-devel/binutils-2.17
@@ -60,6 +60,7 @@
 =sys-devel/libtool-2.2*
 =sys-fs/cryptsetup-1.0.6*
 =sys-fs/e2fsprogs-1.41.6*
+=sys-fs/udev-163*
 =sys-fs/xfsdump-3.0*
 =sys-fs/xfsprogs-3.0*
 =sys-kernel/openvz-sources-2.6.32*
@@ -67,8 +68,8 @@
 =sys-libs/readline-5.2*
 =virtual/poppler-0.10.7*
 =virtual/poppler-glib-0.10.7*
+=www-client/firefox-3.6*
 =www-client/firefox-bin-3*
-=www-client/mozilla-firefox-bin-3*
 =www-plugins/adobe-flash-10*
 =x11-proto/dri2proto-2.1*
 app-admin/eselect
@@ -143,8 +144,6 @@ net-misc/tightvnc
 net-misc/unison
 net-nds/gq
 net-nds/lat
-net-nds/luma
-net-nds/smbldap-tools
 sys-apps/busybox
 sys-apps/debianutils
 sys-apps/gparted
@@ -153,11 +152,11 @@ sys-apps/memtest86+
 sys-apps/mindi ~*
 sys-apps/mindi-kernel
 sys-apps/mktemp
-sys-apps/parted
 sys-apps/qtparted
 sys-apps/sandbox
 sys-apps/sysvinit
 sys-apps/util-linux
+sys-block/parted
 sys-boot/grub
 sys-cluster/pvm
 sys-devel/dev86
@@ -169,4 +168,3 @@ sys-libs/db
 sys-libs/libstdc++-v3
 sys-libs/timezone-data
 sys-power/apcupsd
-www-client/mozilla-firefox

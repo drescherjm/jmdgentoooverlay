@@ -1,0 +1,22 @@
+|| ( >=sys-fs/lvm2-2.02.45 sys-fs/device-mapper ) sys-fs/fuse x11-libs/wxGTK:2.8[X?] || ( dev-libs/pkcs11-helper dev-libs/opensc )
+|| ( >=sys-fs/lvm2-2.02.45 sys-fs/device-mapper ) sys-fs/fuse x11-libs/wxGTK:2.8[X?] app-admin/sudo
+0
+truecrypt-7.0.tar.gz
+bindist fetch mirror
+http://www.truecrypt.org/
+truecrypt-2.8
+Free open-source disk encryption software
+~amd64 ~ppc ~x86
+eutils flag-o-matic linux-info multilib portability toolchain-funcs versionator wxwidgets
+X
+
+
+
+2
+
+compile install nofetch postinst preinst prepare setup test
+
+
+
+
+

@@ -1,4 +1,4 @@
-dev-python/setuptools >=app-admin/eselect-python-20091230 dev-lang/python >=app-admin/webapp-config-1.50.15 dev-util/subversion net-misc/rsync
+dev-python/setuptools >=app-admin/eselect-python-20091230 dev-lang/python >=app-admin/webapp-config-1.50.15 dev-vcs/subversion net-misc/rsync
 >=dev-python/genshi-0.6 dev-python/pygments app-text/pytextile app-text/silvercity dev-python/Babel >=dev-python/docutils-0.3.9 dev-python/pytz cgi? ( virtual/httpd-cgi ) fastcgi? ( virtual/httpd-fastcgi ) mysql? ( >=dev-python/mysql-python-1.2.1 >=virtual/mysql-4.1 ) postgres? ( >=dev-python/psycopg-2 ) sqlite? ( >=dev-db/sqlite-3.3.4 || ( >=dev-lang/python-2.5[sqlite] >=dev-python/pysqlite-2.3.2 ) ) subversion? ( >=dev-util/subversion-1.4.2[python] ) !www-apps/trac-webadmin >=app-admin/eselect-python-20091230 dev-lang/python >=app-admin/webapp-config-1.50.15
 0
 

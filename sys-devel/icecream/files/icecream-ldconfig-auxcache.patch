@@ -1,0 +1,10 @@
+--- client/icecc-create-env_org	2010-07-19 20:26:27.772635625 +0200
++++ client/icecc-create-env	2010-07-19 20:26:50.349752256 +0200
+@@ -157,6 +157,7 @@ for i in $target_files; do 
+ done
+ 
+ if test -x /sbin/ldconfig; then
++   mkdir -p $tempdir/var/cache/ldconfig
+    /sbin/ldconfig -r $tempdir
+    new_target_files="$new_target_files etc/ld.so.cache"
+ fi

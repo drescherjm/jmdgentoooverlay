@@ -1,4 +1,4 @@
->=media-libs/libsdl-1.2.8 >=media-libs/sdl-mixer-1.2.5 dev-util/subversion net-misc/rsync
+>=media-libs/libsdl-1.2.8 >=media-libs/sdl-mixer-1.2.5 dev-vcs/subversion net-misc/rsync
 >=media-libs/libsdl-1.2.8 >=media-libs/sdl-mixer-1.2.5
 0
 demo? ( ftp://ftp.westwood.com/pub/redalert/previews/demo/ra95demo.zip mirror://3dgamers/ccredalert/ra95demo.zip )

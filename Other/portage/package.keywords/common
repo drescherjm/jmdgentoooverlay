@@ -59,7 +59,7 @@
 =sys-devel/icecream-0.9*
 =sys-devel/libtool-2.2*
 =sys-fs/cryptsetup-1.0.6*
-=sys-fs/e2fsprogs-1.41.6*
+=sys-fs/e2fsprogs-1.41.12*
 =sys-fs/udev-163*
 =sys-fs/xfsdump-3.0*
 =sys-fs/xfsprogs-3.0*
@@ -69,7 +69,7 @@
 =virtual/poppler-0.10.7*
 =virtual/poppler-glib-0.10.7*
 =www-client/firefox-3.6*
-=www-client/firefox-bin-3*
+=www-client/firefox-bin-3.6*
 =www-plugins/adobe-flash-10*
 =x11-proto/dri2proto-2.1*
 app-admin/eselect
@@ -168,3 +168,4 @@ sys-libs/db
 sys-libs/libstdc++-v3
 sys-libs/timezone-data
 sys-power/apcupsd
+=app-portage/gentoolkit-dev-0.2.8*

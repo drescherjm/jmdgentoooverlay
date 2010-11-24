@@ -43,7 +43,7 @@ pkg_setup()
 src_prepare() {
 
 	einfo "Removing modules-install"
-        sed -i ${S}/Makefile \
+        sed -i ${S}/v4l/Makefile \
         -e "s/install:: media-install firmware_install/install:: media-install/"
 
 	# apply local patches
@@ -72,10 +72,11 @@ src_prepare() {
 
 	echo
 
+	
 	elog "Removing autoload-entry from stradis-driver."
-	sed -i "${S}"/../linux/drivers/media/video/stradis.c -e '/MODULE_DEVICE_TABLE/d'
+	sed -i "${S}"/v4l/../linux/drivers/media/video/stradis.c -e '/MODULE_DEVICE_TABLE/d'
 
-	cd "${S}"
+	cd "${S}/v4l"
 	sed	-e '/-install::/s:rminstall::' \
 		-i Makefile
 
@@ -108,7 +109,7 @@ src_install() {
 		KDIRA="${DEST}" \
 	|| die "make install failed"
 
-	cd "${S}"/..
+	cd "${S}"/v4l/..
 	dodoc linux/Documentation/dvb/*.txt
 	dosbin linux/Documentation/dvb/get_dvb_firmware
 

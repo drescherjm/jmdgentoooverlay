@@ -7,6 +7,7 @@
 =app-emulation/vmware-modules-1.0.0*
 =app-misc/baobab-2.4*
 =app-portage/gentoolkit-0.2.4*
+=app-portage/gentoolkit-dev-0.2.8*
 =app-portage/glcu-0.9.7*
 =app-portage/portato-0.8*
 =app-shells/bash-3.2*
@@ -56,6 +57,7 @@
 =sys-block/partimage-0.6.4-r4 ~*
 =sys-devel/binutils-2.17
 =sys-devel/gcc-4.3.2*
+=sys-devel/gcc-4.5*
 =sys-devel/icecream-0.9*
 =sys-devel/libtool-2.2*
 =sys-fs/cryptsetup-1.0.6*
@@ -99,6 +101,7 @@ app-misc/screen
 app-office/openoffice
 app-office/openoffice-ximian
 app-portage/conf-update
+app-portage/eix
 app-portage/kuroo
 app-portage/udept
 app-shells/bash-completion
@@ -168,4 +171,3 @@ sys-libs/db
 sys-libs/libstdc++-v3
 sys-libs/timezone-data
 sys-power/apcupsd
-=app-portage/gentoolkit-dev-0.2.8*

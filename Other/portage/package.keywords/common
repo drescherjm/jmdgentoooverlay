@@ -7,6 +7,7 @@
 =app-emulation/vmware-modules-1.0.0*
 =app-misc/baobab-2.4*
 =app-portage/gentoolkit-0.2.4*
+=app-portage/gentoolkit-dev-0.2.8*
 =app-portage/glcu-0.9.7*
 =app-portage/portato-0.8*
 =app-shells/bash-3.2*
@@ -25,6 +26,7 @@
 =dev-util/portatosourceview-2.16*
 =dev-util/rapidsvn-0.9*
 =dev-vcs/git-1.6*
+=dev-vcs/mercurial-1.7*
 =mail-mta/postfix-2.3*
 =media-gfx/gqview-2.1*
 =media-libs/gst-plugins-bad-0.10.13*
@@ -168,4 +170,3 @@ sys-libs/db
 sys-libs/libstdc++-v3
 sys-libs/timezone-data
 sys-power/apcupsd
-=app-portage/gentoolkit-dev-0.2.8*

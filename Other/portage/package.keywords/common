@@ -26,6 +26,7 @@
 =dev-util/portatosourceview-2.16*
 =dev-util/rapidsvn-0.9*
 =dev-vcs/git-1.6*
+=dev-vcs/mercurial-1.7*
 =mail-mta/postfix-2.3*
 =media-gfx/gqview-2.1*
 =media-libs/gst-plugins-bad-0.10.13*

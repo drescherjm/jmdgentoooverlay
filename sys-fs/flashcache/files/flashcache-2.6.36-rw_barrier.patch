@@ -1,0 +1,15 @@
+--- ./src/flashcache_main.c.orig	2010-11-27 00:13:57.158106967 -0500
++++ ./src/flashcache_main.c	2010-11-27 00:15:46.208095600 -0500
+@@ -1534,8 +1534,12 @@
+ }
+ 
+ #if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,32)
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,36)
++#define bio_barrier(bio)        ((bio)->bi_rw & REQ_HARDBARRIER)
++#else
+ #define bio_barrier(bio)        ((bio)->bi_rw & (1 << BIO_RW_BARRIER))
+ #endif
++#endif
+ 
+ /*
+  * Decide the mapping and perform necessary cache operations for a bio request.

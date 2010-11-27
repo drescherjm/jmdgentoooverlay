@@ -30,7 +30,8 @@ src_compile() {
 
 src_install() {
     docinto
-    newdoc README README-utils || die
+    dodoc README || die
+    dodoc  ${S}/doc/flashcache-sa-guide.txt ${S}/doc/flashcache-doc.txt
     linux-mod_src_install
     dosbin "${S}/src/utils/flashcache_create" || die "install failed"
     dosbin "${S}/src/utils/flashcache_destroy" || die "install failed"

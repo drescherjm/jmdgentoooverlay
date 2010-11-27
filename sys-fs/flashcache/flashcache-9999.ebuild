@@ -16,6 +16,12 @@ MODULE_NAMES="flashcache(misc:${S}/src)"
 RDEPEND="dev-vcs/git"
 DEPEND="${RDEPEND}"
 
+src_unpack() {
+   git_src_unpack
+   cd "${S}"
+   epatch ${FILESDIR}/flashcache-2.6.36-rw_barrier.patch  
+}
+
 src_compile() {
     ARCH=x86
     MAKEOPTS="-j1"
@@ -23,11 +29,11 @@ src_compile() {
 }
 
 src_install() {
-	docinto
-	newdoc README README-utils || die
-	linux-mod_src_install
-	dosbin "${S}/src/utils/flashcache_create" || die "install failed"
-	dosbin "${S}/src/utils/flashcache_destroy" || die "install failed"
-	dosbin "${S}/src/utils/flashcache_load" || die "install failed"
+    docinto
+    newdoc README README-utils || die
+    linux-mod_src_install
+    dosbin "${S}/src/utils/flashcache_create" || die "install failed"
+    dosbin "${S}/src/utils/flashcache_destroy" || die "install failed"
+    dosbin "${S}/src/utils/flashcache_load" || die "install failed"
 }
 

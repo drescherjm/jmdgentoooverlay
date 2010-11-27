@@ -1,0 +1,33 @@
+EAPI="2"
+
+inherit eutils git linux-mod
+
+EGIT_REPO_URI="git://github.com/facebook/flashcache.git"
+KEYWORDS="~amd64 ~x86"
+
+DESCRIPTION="FlashCache provides a way to use a SSD as a cache for slower disks"
+HOMEPAGE="http://www.github.com/facebook/flashcache"
+
+LICENSE="GPL-2"
+SLOT="0"
+IUSE=""
+
+MODULE_NAMES="flashcache(misc:${S}/src)"
+RDEPEND="dev-vcs/git"
+DEPEND="${RDEPEND}"
+
+src_compile() {
+    ARCH=x86
+    MAKEOPTS="-j1"
+    emake CC=$(tc-getCC) KERNEL_TREE="${KV_DIR}" || die
+}
+
+src_install() {
+	docinto
+	newdoc README README-utils || die
+	linux-mod_src_install
+	dosbin "${S}/src/utils/flashcache_create" || die "install failed"
+	dosbin "${S}/src/utils/flashcache_destroy" || die "install failed"
+	dosbin "${S}/src/utils/flashcache_load" || die "install failed"
+}
+

@@ -7,8 +7,8 @@ inherit eutils
 DESCRIPTION="Samba LDAP management tools"
 HOMEPAGE="https://gna.org/projects/smbldap-tools/
 	http://www.iallanis.info/"
-#SRC_URI="http://download.gna.org/smbldap-tools/packages/${P}.tgz"
-SRC_URI="http://www.iallanis.info/smbldap-tools/development_release/${P}.tgz"
+SRC_URI="http://download.gna.org/smbldap-tools/sources/${PV}/${P}.tar.gz"
+#SRC_URI="http://www.iallanis.info/smbldap-tools/development_release/${P}.tgz"
 LICENSE="GPL-2"
 SLOT="0"
 KEYWORDS="~alpha ~amd64 ~arm ~hppa ~ia64 ~mips ~ppc ~ppc64 ~s390 ~sparc ~x86"

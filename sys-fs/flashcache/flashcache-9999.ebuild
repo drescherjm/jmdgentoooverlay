@@ -19,7 +19,7 @@ DEPEND="${RDEPEND}"
 src_unpack() {
    git_src_unpack
    cd "${S}"
-   epatch ${FILESDIR}/flashcache-2.6.36-rw_barrier.patch  
+#   epatch ${FILESDIR}/flashcache-2.6.36-rw_barrier.patch  
 }
 
 src_compile() {

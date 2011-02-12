@@ -1,0 +1,37 @@
+diff --git a/lib/metadata/metadata.c b/lib/metadata/metadata.c
+index c3accaf..ed2084d 100644
+--- a/lib/metadata/metadata.c
++++ b/lib/metadata/metadata.c
+@@ -1547,6 +1547,7 @@ static struct physical_volume *_alloc_pv(struct dm_pool *mem, struct device *dev
+ 	if (!pv)
+ 		return_NULL;
+ 
++	pv->fid = NULL;
+ 	pv->pe_size = 0;
+ 	pv->pe_start = 0;
+ 	pv->pe_count = 0;
+@@ -1638,6 +1639,12 @@ struct physical_volume *pv_create(const struct cmd_context *cmd,
+ 		goto bad;
+ 	}
+ 
++	if (!(pv->fid = fmt->ops->create_instance(fmt, (const char *) &pv->id,
++						  NULL, NULL, NULL))) {
++		log_error("Couldn't create format instance for PV %s.", pv_dev_name(pv));
++		goto bad;
++	}
++
+ 	pv->fmt = fmt;
+ 	pv->vg_name = fmt->orphan_vg_name;
+ 
+diff --git a/lib/metadata/pv.h b/lib/metadata/pv.h
+index a02f6f8..a9efcfe 100644
+--- a/lib/metadata/pv.h
++++ b/lib/metadata/pv.h
+@@ -24,6 +24,7 @@ struct physical_volume {
+ 	struct id id;
+ 	struct device *dev;
+ 	const struct format_type *fmt;
++	struct format_instance *fid;
+ 
+ 	/*
+ 	 * vg_name and vgid are used before the parent VG struct exists.

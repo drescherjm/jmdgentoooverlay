@@ -95,7 +95,15 @@ src_prepare() {
 	epatch "${FILESDIR}"/lvm2-2.02.84-remove_useless_mdas_parameter_from_PVread.patch
 	epatch "${FILESDIR}"/lvm2-2.02.84-add_pv_add_metadata_area_fn_to_supportadding_metadata_areas_on_demand.patch
 	epatch "${FILESDIR}"/lvm2-2.02.84-add_pv_remove_metadata_area_fn_to_supportremoving_metadata_areas_on_demand.patch
-
+	epatch "${FILESDIR}"/lvm2-2.02.84-add_pv_initialise_fn_to_format_handlerinterface.patch
+	epatch "${FILESDIR}"/lvm2-2.02.84-add_pe_start_locked_parameter_topv_create_fn.patch
+	epatch "${FILESDIR}"/lvm2-2.02.84-refactor_pv_setup_to_not_include_the_PVinitialisation_code.patch
+#	epatch "${FILESDIR}"/lvm2-2.02.84-remove_unused_mda_setup_code.patch
+	epatch "${FILESDIR}"/lvm2-2.02.84-cleanup_pv_write_code_to_use_recent_changes_in_metadata_handling_interface.patch
+	epatch "${FILESDIR}"/lvm2-2.02.84-use_new_metadata_handling_interface_to_provide_better_support_for_PV_resize.patch
+	epatch "${FILESDIR}"/lvm2-2.02.84-change_vg_convert_code_to_actually_work_with_recent_changes_in_metadata_handling_interface.patch
+	epatch "${FILESDIR}"/lvm2-2.02.84-fix_pvchange_to_work_with_recent_changes_in_metadata_handling_interface.patch
+	epatch "${FILESDIR}"/lvm2-2.02.84-fix_pvchange--metadataignore_to_work_with_recent_changes_in_metadata_handling_interface.patch
 	eautoreconf
 }
 

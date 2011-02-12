@@ -1,0 +1,334 @@
+diff --git a/lib/format1/format1.c b/lib/format1/format1.c
+index b79bd56..4f66cdc 100644
+--- a/lib/format1/format1.c
++++ b/lib/format1/format1.c
+@@ -331,8 +331,7 @@ static int _format1_vg_write(struct format_instance *fid, struct volume_group *v
+ }
+ 
+ static int _format1_pv_read(const struct format_type *fmt, const char *pv_name,
+-		    struct physical_volume *pv, struct dm_list *mdas __attribute__((unused)),
+-		    int scan_label_only __attribute__((unused)))
++		    struct physical_volume *pv, int scan_label_only __attribute__((unused)))
+ {
+ 	struct dm_pool *mem = dm_pool_create("lvm1 pv_read", 1024);
+ 	struct disk_list *dl;
+diff --git a/lib/format_pool/format_pool.c b/lib/format_pool/format_pool.c
+index 3ecbfe9..24ccfc2 100644
+--- a/lib/format_pool/format_pool.c
++++ b/lib/format_pool/format_pool.c
+@@ -206,7 +206,6 @@ static int _pool_pv_setup(const struct format_type *fmt __attribute__((unused)),
+ 
+ static int _pool_pv_read(const struct format_type *fmt, const char *pv_name,
+ 			 struct physical_volume *pv,
+-			 struct dm_list *mdas __attribute__((unused)),
+ 			 int scan_label_only __attribute__((unused)))
+ {
+ 	struct dm_pool *mem = dm_pool_create("pool pv_read", 1024);
+diff --git a/lib/format_text/format-text.c b/lib/format_text/format-text.c
+index a2f3d74..5dfe0b8 100644
+--- a/lib/format_text/format-text.c
++++ b/lib/format_text/format-text.c
+@@ -1669,10 +1669,8 @@ static uint64_t _metadata_locn_offset_raw(void *metadata_locn)
+ }
+ 
+ static int _text_pv_read(const struct format_type *fmt, const char *pv_name,
+-		    struct physical_volume *pv, struct dm_list *mdas,
+-		    int scan_label_only)
++		    struct physical_volume *pv, int scan_label_only)
+ {
+-	struct metadata_area *mda, *mda_new;
+ 	struct label *label;
+ 	struct device *dev;
+ 	struct lvmcache_info *info;
+@@ -1687,17 +1685,6 @@ static int _text_pv_read(const struct format_type *fmt, const char *pv_name,
+ 	if (!_populate_pv_fields(info, pv, scan_label_only))
+ 		return 0;
+ 
+-	if (!mdas)
+-		return 1;
+-
+-	/* Add copy of mdas to supplied list */
+-	dm_list_iterate_items(mda, &info->mdas) {
+-		mda_new = mda_copy(fmt->cmd->mem, mda);
+-		if (!mda_new)
+-			return 0;
+-		dm_list_add(mdas, &mda_new->list);
+-	}
+-
+ 	return 1;
+ }
+ 
+diff --git a/lib/metadata/metadata-exported.h b/lib/metadata/metadata-exported.h
+index d8247dd..da62764 100644
+--- a/lib/metadata/metadata-exported.h
++++ b/lib/metadata/metadata-exported.h
+@@ -340,8 +340,8 @@ int vg_revert(struct volume_group *vg);
+ struct volume_group *vg_read_internal(struct cmd_context *cmd, const char *vg_name,
+ 			     const char *vgid, int warnings, int *consistent);
+ struct physical_volume *pv_read(struct cmd_context *cmd, const char *pv_name,
+-				struct dm_list *mdas, uint64_t *label_sector,
+-				int warnings, int scan_label_only);
++				uint64_t *label_sector, int warnings,
++				int scan_label_only);
+ struct dm_list *get_pvs(struct cmd_context *cmd);
+ 
+ /*
+diff --git a/lib/metadata/metadata.c b/lib/metadata/metadata.c
+index dccc3af..591f7b5 100644
+--- a/lib/metadata/metadata.c
++++ b/lib/metadata/metadata.c
+@@ -38,7 +38,6 @@ static struct physical_volume *_pv_read(struct cmd_context *cmd,
+ 					struct dm_pool *pvmem,
+ 					const char *pv_name,
+ 					struct format_instance *fid,
+-					struct dm_list *mdas,
+ 					uint64_t *label_sector,
+ 					int warnings, int scan_label_only);
+ 
+@@ -1330,14 +1329,11 @@ static int pvcreate_check(struct cmd_context *cmd, const char *name,
+ {
+ 	struct physical_volume *pv;
+ 	struct device *dev;
+-	struct dm_list mdas;
+-
+-	dm_list_init(&mdas);
+ 
+ 	/* FIXME Check partition type is LVM unless --force is given */
+ 
+ 	/* Is there a pv here already? */
+-	pv = pv_read(cmd, name, &mdas, NULL, 0, 0);
++	pv = pv_read(cmd, name, NULL, 0, 0);
+ 
+ 	/*
+ 	 * If a PV has no MDAs it may appear to be an orphan until the
+@@ -1345,10 +1341,10 @@ static int pvcreate_check(struct cmd_context *cmd, const char *name,
+ 	 * this means checking every VG by scanning every PV on the
+ 	 * system.
+ 	 */
+-	if (pv && is_orphan(pv) && mdas_empty_or_ignored(&mdas)) {
++	if (pv && is_orphan(pv) && !dm_list_size(&pv->fid->metadata_areas_in_use)) {
+ 		if (!scan_vgs_for_pvs(cmd, 0))
+ 			return_0;
+-		pv = pv_read(cmd, name, NULL, NULL, 0, 0);
++		pv = pv_read(cmd, name, NULL, 0, 0);
+ 	}
+ 
+ 	/* Allow partial & exported VGs to be destroyed. */
+@@ -1811,20 +1807,18 @@ struct physical_volume *find_pv_by_name(struct cmd_context *cmd,
+ static struct physical_volume *_find_pv_by_name(struct cmd_context *cmd,
+ 			 			const char *pv_name)
+ {
+-	struct dm_list mdas;
+ 	struct physical_volume *pv;
+ 
+-	dm_list_init(&mdas);
+-	if (!(pv = _pv_read(cmd, cmd->mem, pv_name, NULL, &mdas, NULL, 1, 0))) {
++	if (!(pv = _pv_read(cmd, cmd->mem, pv_name, NULL, NULL, 1, 0))) {
+ 		log_error("Physical volume %s not found", pv_name);
+ 		return NULL;
+ 	}
+ 
+-	if (is_orphan_vg(pv->vg_name) && mdas_empty_or_ignored(&mdas)) {
++	if (is_orphan_vg(pv->vg_name) && !dm_list_size(&pv->fid->metadata_areas_in_use)) {
+ 		/* If a PV has no MDAs - need to search all VGs for it */
+ 		if (!scan_vgs_for_pvs(cmd, 1))
+ 			return_NULL;
+-		if (!(pv = _pv_read(cmd, cmd->mem, pv_name, NULL, NULL, NULL, 1, 0))) {
++		if (!(pv = _pv_read(cmd, cmd->mem, pv_name, NULL, NULL, 1, 0))) {
+ 			log_error("Physical volume %s not found", pv_name);
+ 			return NULL;
+ 		}
+@@ -2649,8 +2643,8 @@ static struct volume_group *_vg_read_orphans(struct cmd_context *cmd,
+ 	}
+ 
+ 	dm_list_iterate_items(info, &vginfo->infos) {
+-		if (!(pv = _pv_read(cmd, mem, dev_name(info->dev), vg->fid,
+-				    NULL, NULL, warnings, 0))) {
++		if (!(pv = _pv_read(cmd, mem, dev_name(info->dev),
++				    vg->fid, NULL, warnings, 0))) {
+ 			continue;
+ 		}
+ 		if (!(pvl = dm_pool_zalloc(mem, sizeof(*pvl)))) {
+@@ -3360,10 +3354,10 @@ const char *find_vgname_from_pvname(struct cmd_context *cmd,
+  *   FIXME - liblvm todo - make into function that returns handle
+  */
+ struct physical_volume *pv_read(struct cmd_context *cmd, const char *pv_name,
+-				struct dm_list *mdas, uint64_t *label_sector,
+-				int warnings, int scan_label_only)
++				uint64_t *label_sector, int warnings,
++				int scan_label_only)
+ {
+-	return _pv_read(cmd, cmd->mem, pv_name, NULL, mdas, label_sector, warnings, scan_label_only);
++	return _pv_read(cmd, cmd->mem, pv_name, NULL, label_sector, warnings, scan_label_only);
+ }
+ 
+ /* FIXME Use label functions instead of PV functions */
+@@ -3371,7 +3365,6 @@ static struct physical_volume *_pv_read(struct cmd_context *cmd,
+ 					struct dm_pool *pvmem,
+ 					const char *pv_name,
+ 					struct format_instance *fid,
+-					struct dm_list *mdas,
+ 					uint64_t *label_sector,
+ 					int warnings, int scan_label_only)
+ {
+@@ -3401,8 +3394,7 @@ static struct physical_volume *_pv_read(struct cmd_context *cmd,
+ 	}
+ 
+ 	/* FIXME Move more common code up here */
+-	if (!(info->fmt->ops->pv_read(info->fmt, pv_name, pv, mdas,
+-	      scan_label_only))) {
++	if (!(info->fmt->ops->pv_read(info->fmt, pv_name, pv, scan_label_only))) {
+ 		log_error("Failed to read existing physical volume '%s'",
+ 			  pv_name);
+ 		goto bad;
+@@ -4239,8 +4231,5 @@ char *tags_format_and_copy(struct dm_pool *mem, const struct dm_list *tags)
+  */
+ struct physical_volume *pv_by_path(struct cmd_context *cmd, const char *pv_name)
+ {
+-	struct dm_list mdas;
+-
+-	dm_list_init(&mdas);
+-	return _pv_read(cmd, cmd->mem, pv_name, NULL, &mdas, NULL, 1, 0);
++	return _pv_read(cmd, cmd->mem, pv_name, NULL, NULL, 1, 0);
+ }
+diff --git a/lib/metadata/metadata.h b/lib/metadata/metadata.h
+index bd638b5..7ebf85c 100644
+--- a/lib/metadata/metadata.h
++++ b/lib/metadata/metadata.h
+@@ -241,8 +241,7 @@ struct format_handler {
+ 	 * Return PV with given path.
+ 	 */
+ 	int (*pv_read) (const struct format_type * fmt, const char *pv_name,
+-			struct physical_volume * pv, struct dm_list *mdas,
+-			int scan_label_only);
++			struct physical_volume * pv, int scan_label_only);
+ 
+ 	/*
+ 	 * Tweak an already filled out a pv ready for importing into a
+diff --git a/tools/pvremove.c b/tools/pvremove.c
+index a8717e0..ace3c1d 100644
+--- a/tools/pvremove.c
++++ b/tools/pvremove.c
+@@ -25,15 +25,12 @@ const char _really_wipe[] =
+ static int pvremove_check(struct cmd_context *cmd, const char *name)
+ {
+ 	struct physical_volume *pv;
+-	struct dm_list mdas;
+-
+-	dm_list_init(&mdas);
+ 
+ 	/* FIXME Check partition type is LVM unless --force is given */
+ 
+ 	/* Is there a pv here already? */
+ 	/* If not, this is an error unless you used -f. */
+-	if (!(pv = pv_read(cmd, name, &mdas, NULL, 1, 0))) {
++	if (!(pv = pv_read(cmd, name, NULL, 1, 0))) {
+ 		if (arg_count(cmd, force_ARG))
+ 			return 1;
+ 		log_error("Physical Volume %s not found", name);
+@@ -47,13 +44,14 @@ static int pvremove_check(struct cmd_context *cmd, const char *name)
+ 	 * means checking every VG by scanning every
+ 	 * PV on the system.
+ 	 */
+-	if (is_orphan(pv) && !dm_list_size(&mdas)) {
++	if (is_orphan(pv) && !dm_list_size(&pv->fid->metadata_areas_in_use) &&
++	    !dm_list_size(&pv->fid->metadata_areas_ignored)) {
+ 		if (!scan_vgs_for_pvs(cmd, 0)) {
+ 			log_error("Rescan for PVs without metadata areas "
+ 				  "failed.");
+ 			return 0;
+ 		}
+-		if (!(pv = pv_read(cmd, name, NULL, NULL, 1, 0))) {
++		if (!(pv = pv_read(cmd, name, NULL, 1, 0))) {
+ 			log_error("Failed to read physical volume %s", name);
+ 			return 0;
+ 		}
+diff --git a/tools/pvresize.c b/tools/pvresize.c
+index 8582ef4..4f1d610 100644
+--- a/tools/pvresize.c
++++ b/tools/pvresize.c
+@@ -32,28 +32,26 @@ static int _pv_resize_single(struct cmd_context *cmd,
+ 	uint64_t size = 0;
+ 	uint32_t new_pe_count = 0;
+ 	int r = 0;
+-	struct dm_list mdas;
+ 	const char *pv_name = pv_dev_name(pv);
+ 	const char *vg_name = pv_vg_name(pv);
+ 	struct lvmcache_info *info;
+ 	int mda_count = 0;
+ 	struct volume_group *old_vg = vg;
+ 
+-	dm_list_init(&mdas);
+-
+ 	if (is_orphan_vg(vg_name)) {
+ 		if (!lock_vol(cmd, vg_name, LCK_VG_WRITE)) {
+ 			log_error("Can't get lock for orphans");
+ 			return 0;
+ 		}
+ 
+-		if (!(pv = pv_read(cmd, pv_name, &mdas, NULL, 1, 0))) {
++		if (!(pv = pv_read(cmd, pv_name, NULL, 1, 0))) {
+ 			unlock_vg(cmd, vg_name);
+ 			log_error("Unable to read PV \"%s\"", pv_name);
+ 			return 0;
+ 		}
+ 
+-		mda_count = dm_list_size(&mdas);
++		mda_count = dm_list_size(&pv->fid->metadata_areas_in_use) +
++			    dm_list_size(&pv->fid->metadata_areas_ignored);
+ 	} else {
+ 		vg = vg_read_for_update(cmd, vg_name, NULL, 0);
+ 
+diff --git a/tools/toollib.c b/tools/toollib.c
+index f76aacd..48f8ed5 100644
+--- a/tools/toollib.c
++++ b/tools/toollib.c
+@@ -640,7 +640,7 @@ static int _process_all_devs(struct cmd_context *cmd, void *handle,
+ 	}
+ 
+ 	while ((dev = dev_iter_get(iter))) {
+-		if (!(pv = pv_read(cmd, dev_name(dev), NULL, NULL, 0, 0))) {
++		if (!(pv = pv_read(cmd, dev_name(dev), NULL, 0, 0))) {
+ 			memset(&pv_dummy, 0, sizeof(pv_dummy));
+ 			dm_list_init(&pv_dummy.tags);
+ 			dm_list_init(&pv_dummy.segments);
+@@ -682,7 +682,6 @@ int process_each_pv(struct cmd_context *cmd, int argc, char **argv,
+ 	struct str_list *sll;
+ 	char *at_sign, *tagname;
+ 	int scanned = 0;
+-	struct dm_list mdas;
+ 
+ 	dm_list_init(&tags);
+ 
+@@ -724,10 +723,8 @@ int process_each_pv(struct cmd_context *cmd, int argc, char **argv,
+ 				}
+ 				pv = pvl->pv;
+ 			} else {
+-
+-				dm_list_init(&mdas);
+-				if (!(pv = pv_read(cmd, argv[opt], &mdas,
+-						   NULL, 1, scan_label_only))) {
++				if (!(pv = pv_read(cmd, argv[opt], NULL,
++						   1, scan_label_only))) {
+ 					log_error("Failed to read physical "
+ 						  "volume \"%s\"", argv[opt]);
+ 					ret_max = ECMD_FAILED;
+@@ -742,7 +739,8 @@ int process_each_pv(struct cmd_context *cmd, int argc, char **argv,
+ 				 * PV on the system.
+ 				 */
+ 				if (!scanned && is_orphan(pv) &&
+-				    !dm_list_size(&mdas)) {
++				    !dm_list_size(&pv->fid->metadata_areas_in_use) &&
++				    !dm_list_size(&pv->fid->metadata_areas_ignored)) {
+ 					if (!scan_label_only &&
+ 					    !scan_vgs_for_pvs(cmd, 1)) {
+ 						stack;
+@@ -751,7 +749,7 @@ int process_each_pv(struct cmd_context *cmd, int argc, char **argv,
+ 					}
+ 					scanned = 1;
+ 					if (!(pv = pv_read(cmd, argv[opt],
+-							   NULL, NULL, 1,
++							   NULL, 1,
+ 							   scan_label_only))) {
+ 						log_error("Failed to read "
+ 							  "physical volume "

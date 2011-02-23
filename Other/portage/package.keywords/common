@@ -170,3 +170,6 @@ sys-libs/db
 sys-libs/libstdc++-v3
 sys-libs/timezone-data
 sys-power/apcupsd
+app-emulation/vice
+app-admin/eselect-mesa
+=net-fs/nfs-utils-1.2*

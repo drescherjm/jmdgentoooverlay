@@ -17,10 +17,15 @@ for a in dev sys proc; do
 done
 
 cp /etc/resolv.conf "$1"/etc
+cp /root/.ssh "$1"/root -R
 
 mount --bind /dev "$1/dev"
 mount -t proc none "$1/proc"
 mount -t sysfs none "$1/sys"
+
+pushd .
+cd /auto/distfiles
+popd
 
 mkdir -p "$1/usr/portage/distfiles"
 

@@ -180,3 +180,15 @@
 =x11-themes/gnome-themes-2.32*
 =x11-themes/gtk-engines-2.20*
 =x11-wm/metacity-2.32*
+=x11-libs/gtk+-2.22*
+=x11-libs/gdk-pixbuf-2.22*
+=net-libs/telepathy-glib-0.12*
+=dev-libs/atk-1.32*
+=x11-themes/gnome-icon-theme-2.31*
+=gnome-extra/gcalctool-5.32*
+=dev-libs/gobject-introspection-0.9*
+=dev-lang/vala-0.10*
+=gnome-base/gdm-2.32*
+=dev-libs/libgweather-2.91*
+=x11-libs/gtk+-2.99*
+=dev-libs/glib-2.27*

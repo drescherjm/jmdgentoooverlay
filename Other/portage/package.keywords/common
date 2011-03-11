@@ -172,3 +172,15 @@ sys-libs/db
 sys-libs/libstdc++-v3
 sys-libs/timezone-data
 sys-power/apcupsd
+sys-fs/flashcache
+=net-fs/nfs-utils-1.2*
+=sys-apps/portage-2.2.0* **
+app-admin/eselect-mesa
+=sys-apps/dbus-1.4*
+=sys-auth/polkit-0.99*
+=dev-libs/dbus-glib-0.92*
+=x11-libs/vte-0.26*
+=dev-util/chromium-tools-0.1*
+=dev-libs/boost-1.45*
+app-emulation/q4wine
+=app-arch/xz-utils-5.0*

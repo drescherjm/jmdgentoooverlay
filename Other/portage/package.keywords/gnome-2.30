@@ -179,3 +179,4 @@
 =x11-themes/gnome-themes-2.30*
 =x11-themes/gtk-engines-2.20*
 =x11-wm/metacity-2.30*
+=dev-libs/glib-2.26*

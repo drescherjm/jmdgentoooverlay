@@ -1,5 +1,6 @@
 =app-admin/eselect-news-2010*
 =app-admin/webmin-1.4*
+=app-arch/xz-utils-5.0*
 =app-backup/bacula-5*
 =app-crypt/truecrypt-6.2*
 =app-emulation/virtualbox-bin-3.2*
@@ -16,11 +17,14 @@
 =app-text/xpdf-3.01-r8
 =dev-cpp/cairomm-1.2*
 =dev-db/hk_classes-0.8.2*
+=dev-libs/boost-1.45*
+=dev-libs/dbus-glib-0.92*
 =dev-libs/nspr-4.6*
 =dev-libs/openssl-1.0*
 =dev-python/lxml-1.3*
 =dev-python/setuptools-0.6*
 =dev-util/boost-build-1.38*
+=dev-util/chromium-tools-0.1*
 =dev-util/cmake-2.6*
 =dev-util/confcache-0.4*
 =dev-util/portatosourceview-2.16*
@@ -36,6 +40,7 @@
 =net-firewall/fwbuilder-3.0*
 =net-fs/autofs-5.0*
 =net-fs/nfs-utils-1.1*
+=net-fs/nfs-utils-1.2*
 =net-fs/samba-3.5*
 =net-libs/libfwbuilder-3.0*
 =net-libs/liblockfile-1.06-r1
@@ -44,17 +49,20 @@
 =net-print/cups-1.3*
 =sys-apps/baselayout-2*
 =sys-apps/coreutils-6.12*
+=sys-apps/dbus-1.4*
 =sys-apps/hal-0.5.12*
 =sys-apps/module-init-tools-3.2*
 =sys-apps/net-tools-1.60*
 =sys-apps/openrc-0.4*
 =sys-apps/portage-2.2*
+=sys-apps/portage-2.2.0* **
 =sys-apps/smartmontools-5.39*
 =sys-apps/smartmontools-5.40*
 =sys-apps/unscd-0.39*
 =sys-auth/consolekit-0.3*
 =sys-auth/consolekit-4.2*
 =sys-auth/pambase-2009*
+=sys-auth/polkit-0.99*
 =sys-block/partimage-0.6.4-r4 ~*
 =sys-devel/binutils-2.17
 =sys-devel/gcc-4.3.2*
@@ -74,8 +82,10 @@
 =www-client/firefox-3.6*
 =www-client/firefox-bin-3.6*
 =www-plugins/adobe-flash-10*
+=x11-libs/vte-0.26*
 =x11-proto/dri2proto-2.1*
 app-admin/eselect
+app-admin/eselect-mesa
 app-admin/eselect-opengl
 app-antivirus/f-prot
 app-arch/p7zip
@@ -87,9 +97,11 @@ app-emulation/emul-linux-x86-baselibs
 app-emulation/emul-linux-x86-soundlibs
 app-emulation/emul-linux-x86-xlibs
 app-emulation/libvirt
+app-emulation/q4wine
 app-emulation/qemu
 app-emulation/qemu-softmmu
 app-emulation/qemu-user
+app-emulation/vice
 app-emulation/vmware-server
 app-emulation/vmware-server-console
 app-emulation/vmware-server-modules
@@ -166,27 +178,10 @@ sys-cluster/pvm
 sys-devel/dev86
 sys-devel/gcc-config
 sys-devel/gdb
+sys-fs/flashcache
 sys-kernel/genkernel
 sys-kernel/gentoo-sources
 sys-libs/db
 sys-libs/libstdc++-v3
 sys-libs/timezone-data
 sys-power/apcupsd
-<<<<<<< HEAD
-sys-fs/flashcache
-=net-fs/nfs-utils-1.2*
-=sys-apps/portage-2.2.0* **
-app-admin/eselect-mesa
-=sys-apps/dbus-1.4*
-=sys-auth/polkit-0.99*
-=dev-libs/dbus-glib-0.92*
-=x11-libs/vte-0.26*
-=dev-util/chromium-tools-0.1*
-=dev-libs/boost-1.45*
-app-emulation/q4wine
-=app-arch/xz-utils-5.0*
-=======
-app-emulation/vice
-app-admin/eselect-mesa
-=net-fs/nfs-utils-1.2*
->>>>>>> origin/master

@@ -1,19 +1,13 @@
-<<<<<<< HEAD
-=media-plugins/mytharchive-9999::MythTV-0-23-fixes
-=media-tv/mythtv-9999::MythTV-0-23-fixes
-=media-plugins/mythmusic-9999::MythTV-0-23-fixes
-
-=======
-=media-plugins/mythbrowser-9999*::MythTV-0-23-fixes
-=media-plugins/mythstream-9999*::MythTV-0-23-fixes
-=www-apps/mythweb-9999*::MythTV-0-23-fixes
 =media-plugins/mytharchive-9999*::MythTV-0-23-fixes
-=media-plugins/mythnews-9999*::MythTV-0-23-fixes
-=media-plugins/mythgame-9999*::MythTV-0-23-fixes
-=www-apps/mythbrowser-9999*::MythTV-0-23-fixes
+=media-plugins/mytharchive-9999::MythTV-0-23-fixes
 =media-plugins/mythbrowser-9999*::MythTV-0-23-fixes
 =media-plugins/mythgallery-9999*::MythTV-0-23-fixes
-=media-plugins/mythweather-9999*::MythTV-0-23-fixes
-=media-plugins/mythvideo-9999*::MythTV-0-23-fixes
+=media-plugins/mythgame-9999*::MythTV-0-23-fixes
 =media-plugins/mythmusic-9999::MythTV-0-23-fixes
->>>>>>> origin/master
+=media-plugins/mythnews-9999*::MythTV-0-23-fixes
+=media-plugins/mythstream-9999*::MythTV-0-23-fixes
+=media-plugins/mythvideo-9999*::MythTV-0-23-fixes
+=media-plugins/mythweather-9999*::MythTV-0-23-fixes
+=media-tv/mythtv-9999::MythTV-0-23-fixes
+=www-apps/mythbrowser-9999*::MythTV-0-23-fixes
+=www-apps/mythweb-9999*::MythTV-0-23-fixes

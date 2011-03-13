@@ -7,7 +7,7 @@ http://www.webmin.com/
 BSD
 Webmin, a web-based system administration interface
 ~alpha ~amd64 ~arm ~hppa ~ia64 ~ppc ~ppc64 ~s390 ~sh ~sparc ~x86
-eutils multilib pam portability toolchain-funcs
+eutils flag-o-matic multilib pam portability toolchain-funcs
 apache2 mysql pam postgres ssl minimal
 
 

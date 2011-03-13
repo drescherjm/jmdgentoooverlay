@@ -7,7 +7,7 @@ http://www.samba.org/
 GPL-3
 A suite of SMB and CIFS client/server programs for UNIX
 ~amd64 ~x86
-confutils eutils multilib pam portability toolchain-funcs versionator
+confutils eutils flag-o-matic multilib pam portability toolchain-funcs versionator
 acl ads async automount caps cifs_spnego cluster cups doc examples ipv6 kernel_linux kerberos ldap fam pam quotas readline selinux swat syslog winbind
 
 

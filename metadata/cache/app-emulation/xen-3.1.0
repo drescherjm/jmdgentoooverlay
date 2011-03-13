@@ -14,7 +14,7 @@ debug custom-cflags pae
 
 
 
-compile install postinst preinst prerm setup unpack
+compile install postinst postrm preinst prerm setup unpack
 
 
 

@@ -1,0 +1,22 @@
+>=sys-apps/parted-2.2 >=dev-cpp/gtkmm-2.16.0 >=dev-util/pkgconfig-0.12 >=dev-util/intltool-0.35.5 app-text/scrollkeeper app-text/gnome-doc-utils app-text/docbook-xml-dtd:4.1.2 >=sys-apps/sed-4
+>=sys-apps/parted-2.2 >=dev-cpp/gtkmm-2.16.0 gnome? ( x11-libs/gksu ) xfce? ( x11-libs/gksu ) kde? ( || ( kde-base/kdesu kde-base/kdebase ) ) >=sys-fs/e2fsprogs-1.41.0 mdadm? ( sys-fs/mdadm ) dmraid? ( || ( >=sys-fs/lvm2-2.02.45 sys-fs/device-mapper ) sys-fs/dmraid sys-fs/multipath-tools ) fat? ( sys-fs/dosfstools ) ntfs? ( sys-fs/ntfsprogs ) hfs? ( sys-fs/udev sys-fs/hfsutils ) jfs? ( sys-fs/jfsutils ) reiserfs? ( sys-fs/reiserfsprogs ) reiser4? ( sys-fs/reiser4progs ) xfs? ( sys-fs/xfsprogs sys-fs/xfsdump )
+0
+mirror://sourceforge/gparted/gparted-0.6.1.tar.bz2
+
+http://gparted.sourceforge.net/
+GPL-2
+Gnome Partition Editor
+amd64 ~ppc ~sparc x86
+fdo-mime gnome.org gnome2 gnome2-utils libtool multilib toolchain-funcs
+dmraid fat gnome hfs jfs kde mdadm ntfs reiserfs reiser4 xfs xfce
+
+
+
+1
+
+compile install postinst postrm preinst setup unpack
+
+
+
+
+

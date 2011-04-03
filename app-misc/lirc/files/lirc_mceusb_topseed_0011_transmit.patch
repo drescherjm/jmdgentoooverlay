@@ -1,0 +1,10 @@
+--- drivers/lirc_mceusb/lirc_mceusb.c.orig	2011-03-11 15:11:28.395121870 -0500
++++ drivers/lirc_mceusb/lirc_mceusb.c	2011-03-11 15:11:50.988452765 -0500
+@@ -243,6 +243,7 @@
+ static struct usb_device_id gen3_list[] = {
+ 	{ USB_DEVICE(VENDOR_PINNACLE, 0x0225) },
+ 	{ USB_DEVICE(VENDOR_TOPSEED, 0x0008) },
++	{ USB_DEVICE(VENDOR_TOPSEED, 0x0011) },
+ 	{}
+ };
+ 

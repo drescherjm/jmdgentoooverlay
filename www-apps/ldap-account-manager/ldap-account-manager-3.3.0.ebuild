@@ -42,6 +42,7 @@ src_install() {
 	doins -r tmp
 	doins -r sess
 	doins -r lib
+	doins -r help
 	doins -r style
 	doins -r templates
 

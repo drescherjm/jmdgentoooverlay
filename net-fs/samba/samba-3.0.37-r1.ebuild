@@ -16,7 +16,7 @@ LICENSE="GPL-3 oav? ( GPL-2 LGPL-2.1 )"
 SLOT="0"
 KEYWORDS="alpha amd64 arm hppa ia64 ~mips ppc ppc64 s390 sh sparc x86 ~sparc-fbsd ~x86-fbsd"
 IUSE="acl ads async automount caps cups debug doc examples ipv6 kernel_linux ldap fam
-	pam python quotas readline selinux swat syslog winbind oav"
+	pam quotas readline selinux swat syslog winbind oav"
 
 RDEPEND="dev-libs/popt
 	virtual/libiconv
@@ -26,7 +26,6 @@ RDEPEND="dev-libs/popt
 	ads?       ( virtual/krb5 )
 	ldap?      ( net-nds/openldap )
 	pam?       ( virtual/pam )
-	python?    ( dev-lang/python )
 	readline?  ( sys-libs/readline )
 	selinux?   ( sec-policy/selinux-samba )
 	swat?      ( sys-apps/xinetd )
@@ -44,10 +43,6 @@ PRIVATE_DST=/var/lib/samba/private
 
 pkg_setup() {
 	confutils_use_depend_all ads ldap
-	if use python ; then
-	  python_set_active_version 2
-   	  python_pkg_setup
-	fi
 }
 
 src_unpack() {
@@ -83,9 +78,7 @@ src_compile() {
 	local mylangs
 	local mymod_shared
 
-	#python_version
 	myconf="--with-python=no"
-	use python && myconf="--with-python=${python}"
 
 	use winbind && mymod_shared="--with-shared-modules=idmap_rid"
 	if use ldap ; then
@@ -139,9 +132,6 @@ src_compile() {
 	emake -j1 proto || die "emake proto failed"
 	emake -j1 everything || die "emake everything failed"
 
-	if use python ; then
-		emake -j1 python_ext || die "emake python_ext failed"
-	fi
 
 	if use oav ; then
 		# maintainer-info:
@@ -211,11 +201,6 @@ src_install() {
 		dosym /usr/bin/smbspool $(cups-config --serverbin)/backend/smb
 	fi
 
-	if use python ; then
-		emake DESTDIR="${D}" python_install || die "emake installpython failed"
-		# We're doing that manually
-		find "${D}/usr/$(get_libdir)/python${PYVER}/site-packages" -iname "*.pyc" -delete
-	fi
 
 	cd "${S}/source"
 
@@ -268,10 +253,6 @@ src_install() {
 		doins -r "${S}/examples/"
 		find "${D}/usr/share/doc/${PF}" -type d -print0 | xargs -0 chmod 755
 		find "${D}/usr/share/doc/${PF}/examples" ! -type d -print0 | xargs -0 chmod 644
-		if use python ; then
-			insinto /usr/share/doc/${PF}/python
-			doins -r "${S}/source/python/examples"
-		fi
 	fi
 
 	if ! use doc ; then
@@ -314,10 +295,6 @@ pkg_preinst() {
 }
 
 pkg_postinst() {
-	if use python ; then
-		python_version
-		python_mod_optimize /usr/$(get_libdir)/python${PYVER}/site-packages/samba
-	fi
 
 	if use swat ; then
 		einfo "swat must be enabled by xinetd:"
@@ -347,9 +324,3 @@ pkg_postinst() {
 	ewarn "Otherwise they might not be able to connect to the volumes."
 }
 
-pkg_postrm() {
-	if use python ; then
-		python_version
-		python_mod_cleanup /usr/$(get_libdir)/python${PYVER}/site-packages/samba
-	fi
-}

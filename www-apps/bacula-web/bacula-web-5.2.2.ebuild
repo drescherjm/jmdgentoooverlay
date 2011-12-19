@@ -24,26 +24,6 @@ RDEPEND="virtual/httpd-php
 
 S=${WORKDIR}
 
-src_unpack() {
-        unpack ${A}
-	cd ${S}
-	pwd
-
-	#if use postgres; then
-	#	if has_version 'dev-lang/php' ; then
-        #        	require_php_with_use postgres gd apache2 truetype cli xml zlib pdo
-        #	fi
-	#fi
-
-
-	#if use mysql; then
-        #        if has_version 'dev-lang/php' ; then
-        #                require_php_with_use mysqli
-        #        fi
-        #fi
-
-}
-
 src_install() {
         webapp_src_preinst
 

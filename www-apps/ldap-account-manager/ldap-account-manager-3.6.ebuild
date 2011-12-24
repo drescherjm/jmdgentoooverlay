@@ -6,10 +6,9 @@ inherit webapp depend.php
 
 DESCRIPTION="PHP based tool for managing various account types (Unix, Samba, Kolab, ...) in an LDAP directory."
 HOMEPAGE="http://lam.sf.net"
-SRC_URI="mirror://sourceforge/lam/${PN}-3.6.tar.gz"
+SRC_URI="mirror://sourceforge/lam/${P}.tar.gz"
 LICENSE="GPL"
-#KEYWORDS="~amd64 ~ppc ~x86"
-KEYWORDS=""
+KEYWORDS="~amd64 ~ppc ~x86"
 
 IUSE=""
 
@@ -28,15 +27,20 @@ src_compile() {
         has_php
 }
 
+# Webserver user and group, here for Apache by default
+HTTPD_USER="${HTTPD_USER:-apache}"
+HTTPD_GROUP="${HTTPD_GROUP:-apache}"
+
 src_install() {
 	webapp_src_preinst
 
-	dodoc docs/*.txt
-	dodoc INSTALL README TODO HISTORY COPYING
-	dohtml -r doc/devel
+	#dodoc docs/*.txt
+	#dodoc INSTALL README TODO HISTORY COPYING
+	#dohtml -r doc/devel
 
 	insinto ${MY_HTDOCSDIR}
 
+	doins VERSION
 	doins -r config
 	doins -r graphics
 	doins -r locale
@@ -49,7 +53,14 @@ src_install() {
 
 	doins index.html
 
+	webapp_serverowned -R ${MY_HTDOCSDIR}/tmp
+
 	webapp_src_install
+
+
+	#fowners ${HTTPD_USER}:${HTTPD_GROUP} tmp
+	#ls -ald tmp
+
 }
 
 pkg_postinst() {

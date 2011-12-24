@@ -18,6 +18,7 @@ IUSE="mysql postgres"
 
 
 RDEPEND="virtual/httpd-php
+        dev-php/PEAR-DB
 	postgres? ( dev-lang/php[postgres,gd,apache2,truetype,cli,xml,zlib,pdo] )
 	mysql? ( dev-lang/php[mysql,gd,apache2,truetype,cli,xml,zlib,pdo] )
 	>=app-backup/bacula-5.2.0"

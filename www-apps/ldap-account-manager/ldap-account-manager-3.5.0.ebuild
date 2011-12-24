@@ -40,6 +40,7 @@ src_install() {
 
 	insinto ${MY_HTDOCSDIR}
 
+	doins VERSION
 	doins -r config
 	doins -r graphics
 	doins -r locale

@@ -34,9 +34,9 @@ HTTPD_GROUP="${HTTPD_GROUP:-apache}"
 src_install() {
 	webapp_src_preinst
 
-	dodoc docs/*.txt
-	dodoc INSTALL README TODO HISTORY COPYING
-	dohtml -r doc/devel
+	#dodoc docs/*.txt
+	#dodoc INSTALL README TODO HISTORY COPYING
+	#dohtml -r doc/devel
 
 	insinto ${MY_HTDOCSDIR}
 
@@ -52,9 +52,14 @@ src_install() {
 
 	doins index.html
 
+	webapp_serverowned -R ${MY_HTDOCSDIR}/tmp
+
 	webapp_src_install
 
-	fowners ${HTTPD_USER}:${HTTPD_GROUP} tmp
+
+	#fowners ${HTTPD_USER}:${HTTPD_GROUP} tmp
+	#ls -ald tmp
+
 }
 
 pkg_postinst() {

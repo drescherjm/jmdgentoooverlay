@@ -23,6 +23,6 @@ nmbd_reload="killall -HUP nmbd"
 
 winbind_start_options=""
 winbind_start="start-stop-daemon --start --exec /usr/sbin/winbindd -- ${winbind_start_options}"
-winbind_stop="start-stop-daemon --stop --oknodo --exec /usr/sbin/winbindd"
+winbind_stop="start-stop-daemon --stop --exec /usr/sbin/winbindd"
 winbind_reload="killall -HUP winbindd"
 

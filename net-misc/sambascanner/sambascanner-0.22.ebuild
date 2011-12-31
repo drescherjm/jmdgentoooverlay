@@ -7,7 +7,7 @@ inherit eutils toolchain-funcs
 MY_P="SambaScanner-${PV}"
 DESCRIPTION="a tool to search a whole samba network for files"
 HOMEPAGE="http://www.johannes-bauer.com/sambascanner/"
-SRC_URI="http://www.johannes-bauer.com/${PN}/${MY_P}.tar.bz2"
+SRC_URI="http://www.johannes-bauer.com/software/${PN}/${MY_P}.tar.bz2"
 
 LICENSE="GPL-2"
 SLOT="0"

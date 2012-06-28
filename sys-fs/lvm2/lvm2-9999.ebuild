@@ -2,7 +2,7 @@
 # Distributed under the terms of the GNU General Public License v2
 # $Header: /var/cvsroot/gentoo-x86/sys-fs/lvm2/lvm2-2.02.84.ebuild,v 1.1 2011/02/09 20:38:39 robbat2 Exp $
 
-EAPI=2
+EAPI=3
 inherit eutils git multilib toolchain-funcs autotools linux-info
 
 DESCRIPTION="User-land utilities for LVM2 (device-mapper) software."
@@ -14,7 +14,8 @@ EGIT_REPO_URI="git://sourceware.org/git/lvm2.git"
 
 LICENSE="GPL-2"
 SLOT="0"
-KEYWORDS="~alpha ~amd64 ~arm ~hppa ~ia64 ~mips ~ppc ~ppc64 ~s390 ~sh ~sparc ~x86"
+#KEYWORDS="~alpha ~amd64 ~arm ~hppa ~ia64 ~mips ~ppc ~ppc64 ~s390 ~sh ~sparc ~x86"
+KEYWORDS=""
 
 IUSE="readline +static clvm cman +lvm1 selinux"
 

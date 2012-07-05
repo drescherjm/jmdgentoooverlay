@@ -21,7 +21,7 @@ http://bugs.gentoo.org/260726
      opts.compiler_args = strarray_alloc();
      opts.winebuild_args = strarray_alloc();
 +#ifdef FORCE_POINTER_SIZE
-+	opts.force_pointer_size = sizeof(size_t);
++    opts.force_pointer_size = sizeof(size_t);
 +#endif
  
      /* determine the processor type */
@@ -47,7 +47,7 @@ http://bugs.gentoo.org/260726
      signal( SIGINT, exit_on_signal );
  
 +#ifdef FORCE_POINTER_SIZE
-+	force_pointer_size = sizeof(size_t);
++    force_pointer_size = sizeof(size_t);
 +#endif
 +
      output_file = stdout;

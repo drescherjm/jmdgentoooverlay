@@ -123,7 +123,7 @@ src_prepare() {
 	# bug #328701
 	epatch "${FILESDIR}"/5.2.3/${PN}-5.2.3-openssl-1.patch
 
-	epatch "${FILESDIR}"/5.2.3/${PN}-5.2.3-fix-static.patch
+	#epatch "${FILESDIR}"/5.2.3/${PN}-5.2.3-fix-static.patch
 }
 
 src_configure() {

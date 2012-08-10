@@ -10,5 +10,6 @@ sed -i -e s'#use-rcs=no#use-rcs=yes#g' -e s'#replace-wscomments=no#replace-wscom
 /etc/bacula/bacula-fd.conf \
 /etc/bacula/bacula-sd.conf \
 /etc/bacula/bconsole.conf \
-/etc/bacula/bat.conf"@g' ${file} 
+/etc/bacula/bat.conf \
+/etc/nagios/nrpe.cfg"@g' ${file} 
 

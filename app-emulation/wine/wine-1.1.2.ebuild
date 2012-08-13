@@ -39,7 +39,7 @@ RDEPEND=">=media-libs/freetype-2.0.0
 		x11-libs/libXi
 		x11-libs/libXmu
 		x11-libs/libXxf86vm
-		x11-apps/xmessage
+		
 	)
 	alsa? ( media-libs/alsa-lib )
 	esd? ( media-sound/esound )

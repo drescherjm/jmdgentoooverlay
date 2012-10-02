@@ -8,4 +8,4 @@ umount /auto/distfiles -fl
 /etc/init.d/autofs reload
 
 sed -i '/DISTDIR/d' /etc/make.conf
-echo "DISTDIR=\"/auto/distfiles\"" >> /etc/make.conf
+echo "DISTDIR=\"/auto/distfiles/x86\"" >> /etc/make.conf

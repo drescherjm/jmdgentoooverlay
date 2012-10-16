@@ -11,7 +11,13 @@ cat /root/fetch.txt | sort | uniq | sed '/\(^http\|^ftp\).*/!d;s/\ .*$//g' | sor
 
 DISTDIR=/usr/portage/distfiles
 
-source /etc/make.conf
+if [ -e /etc/make.conf]; then
+  source /etc/make.conf
+else
+  if [ -e /etc/portage/make.conf ]; then
+    source /etc/portage/make.conf
+  fi
+fi
 
 if [ -z "${DISTDIR}" ]; then
   echo "FATAL_ERROR: For some reason the DISTDIR is empty."

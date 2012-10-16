@@ -11,11 +11,15 @@ read -p "Input password:" A;
 stty echo;
 echo;
 
-if [ -z ${SERVERS} ]; then
+if [ -z "${SERVERS}" ]; then
+   source /root/servers.sh 2> /dev/null
+fi
+
+if [ -z "${SERVERS}" ]; then
    SERVERS="datastore0 datastore1 datastore2 datastore3 fileserver dev6 sysserv0 tempdata0"
 fi
 
-for HOST in ${SERVERS} 
+for HOST in ${SERVERS} ${SERVERS_EXTRA}
 do
 
 echo "Connecting to $HOST"

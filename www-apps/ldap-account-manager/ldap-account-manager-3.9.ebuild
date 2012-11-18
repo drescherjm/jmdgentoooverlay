@@ -20,7 +20,7 @@ pkg_setup() {
         webapp_pkg_setup
 
 	# Make sure php was built with the necessary USE flags.
-	require_php_with_use ldap xml mhash
+	require_php_with_use ldap xml mhash zip
 }
 
 src_compile() {

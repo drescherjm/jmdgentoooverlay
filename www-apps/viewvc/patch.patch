@@ -1,0 +1,15 @@
+--- /local/portage/tree/www-apps/viewvc/viewvc-1.1.17.ebuild	2012-02-21 17:14:12.000000000 +0100
++++ viewvc-1.1.17.ebuild	2012-04-10 14:27:40.547313140 +0200
+@@ -94,6 +94,12 @@
+ 		if use mysql; then
+ 			doins bin/mod_python/query.py || die "doins failed"
+ 		fi
++	elif use mod_wsgi; then
++		insinto "${MY_HTDOCSDIR}"
++		doins bin/wsgi/viewvc.wsgi || die "doins failed"
++		if use mysql; then
++			doins bin/wsgi/query.wsgi || die "doins failed"
++		fi
+ 	else
+ 		exeinto "${MY_CGIBINDIR}"
+ 		doexe bin/cgi/viewvc.cgi || die "doexe failed"

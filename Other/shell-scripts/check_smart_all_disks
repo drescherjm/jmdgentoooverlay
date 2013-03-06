@@ -1,0 +1,106 @@
+#!/bin/bash
+# $Id: check_smart_all_disks,v 1.16 2013/02/16 13:20:35 oernii Exp $
+
+DEVS=`find /dev/disk/by-id/ -iname '*ata*' -and -not -iname '*part*' -and -not -iname '*QEMU_DVD-ROM*' -ls | gawk  '{print $13}' | cut -f3 -d/ | sed -e 's/\(.*\)/\/dev\/\1/'|sort -u`
+DEVS=`echo $DEVS`
+OUT=`mktemp`
+ERRORDEVICES=''
+NAGIOS_OUTPUT=`mktemp`
+
+function check_ata_error_count()
+{
+	smartctl --quietmode=errorsonly --log=error $1 > $OUT
+
+	if [[ `cat $OUT | wc -l` -eq 0 ]]
+	then
+		echo 0
+	else
+		echo "" >> $NAGIOS_OUTPUT
+		echo "ATA Error log: $1" >> $NAGIOS_OUTPUT
+		cat $OUT >> $NAGIOS_OUTPUT
+		NUM=`cat $OUT | grep 'ATA Error Count:'| sed -e 's/^ATA Error Count: \([0-9]\+\) .*/\1/g'`
+		device_info $1
+		echo $NUM
+	fi
+	
+}
+
+function check_health() 
+{
+	RET=`smartctl -H $1 | grep -vq ": PASSED"`
+	echo $?
+}
+
+function check_attribute()
+{
+	LINE=`smartctl -A $1 | grep "$2"`
+	RET=`echo $LINE | gawk '{print $10}'`
+	if [[ $RET -gt 0 ]]
+	then
+		echo "" >> $NAGIOS_OUTPUT
+		echo $1 $LINE >> $NAGIOS_OUTPUT
+		device_info $1 >> $NAGIOS_OUTPUT
+	fi
+	echo $RET
+}
+
+function device_info() 
+{
+	echo "" >> $NAGIOS_OUTPUT
+	echo $1 >> $NAGIOS_OUTPUT
+	smartctl -a $1 | egrep "Device Model|Serial Number|User Capacity|Power_On_Hours" >> $NAGIOS_OUTPUT
+
+}
+
+if [ -z "$DEVS" ]
+then
+	echo "OK, No ATA/SATA devices found (virtual? hw-raid?)"
+	/bin/rm $OUT $NAGIOS_OUTPUT
+	exit 0
+fi
+
+let devcnt=0
+for dev in $DEVS
+do
+	errors=`check_ata_error_count $dev`
+	health=`check_health`
+	attr1=`check_attribute $dev "Offline_Uncorrectable"`
+	attr2=`check_attribute $dev "Reported_Uncorrect"`
+	#attr3=`check_attribute $dev "Seek_Error_Rate"`
+	attr4=`check_attribute $dev "UDMA_CRC_Error_Count"`
+	#attr5=`check_attribute $dev "Hardware_ECC_Recovered"`
+	attr6=`check_attribute $dev "Reallocated_Sector_Ct"`
+	attr7=`check_attribute $dev "Current_Pending_Sector"`
+	#attr8=`check_attribute $dev "Media_Wearout_Indicator"`
+	attr9=`check_attribute $dev "End-to-End_Error"`
+
+    let RESULTS[$devcnt]=0
+	if [ ! -z $errors ]; then let RESULTS[$devcnt]=${RESULTS[$devcnt]}+$errors; fi
+	if [ ! -z $health  ]; then let RESULTS[$devcnt]=${RESULTS[$devcnt]}+$health; fi
+	if [ ! -z $attr1  ]; then let RESULTS[$devcnt]=${RESULTS[$devcnt]}+$attr1; fi
+	if [ ! -z $attr2  ]; then let RESULTS[$devcnt]=${RESULTS[$devcnt]}+$attr2; fi
+	#if [ ! -z $attr3  ]; then let RESULTS[$devcnt]=${RESULTS[$devcnt]}+$attr3; fi
+	if [ ! -z $attr4  ]; then let RESULTS[$devcnt]=${RESULTS[$devcnt]}+$attr4; fi
+	#if [ ! -z $attr5  ]; then let RESULTS[$devcnt]=${RESULTS[$devcnt]}+$attr5; fi
+	if [ ! -z $attr6  ]; then let RESULTS[$devcnt]=${RESULTS[$devcnt]}+$attr6; fi
+	if [ ! -z $attr7  ]; then let RESULTS[$devcnt]=${RESULTS[$devcnt]}+$attr7; fi
+	if [ ! -z $attr8  ]; then let RESULTS[$devcnt]=${RESULTS[$devcnt]}+$attr8; fi
+	if [ ! -z $attr9  ]; then let RESULTS[$devcnt]=${RESULTS[$devcnt]}+$attr9; fi
+
+	if [[ ${RESULTS[$devcnt]} -gt 0 ]]
+	then
+		ERRORDEVICES="$ERRORDEVICES $dev"
+	fi
+	let TOTAL=$TOTAL+${RESULTS[$devcnt]}
+    let devcnt++
+done
+
+
+if [[ $TOTAL -gt 0 ]];
+then
+	echo "WARNING: SMART Errors found on disks $ERRORDEVICES [TOTAL: $TOTAL]"
+	cat $NAGIOS_OUTPUT
+	/bin/rm $OUT $NAGIOS_OUTPUT
+	exit 
+fi
+

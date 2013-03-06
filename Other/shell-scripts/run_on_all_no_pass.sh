@@ -6,10 +6,6 @@ then
 echo $0 "<commands>"
 else
 COMMAND="$@"
-stty -echo;
-read -p "Input password:" A;
-stty echo;
-echo;
 
 if [ -z "${SERVERS}" ]; then
    source /root/servers.sh 2> /dev/null
@@ -23,12 +19,7 @@ for HOST in ${SERVERS} ${SERVERS_EXTRA}
 do
 
 echo "Connecting to $HOST"
-expect -c "set timeout -1;\
-spawn ssh $HOST -l root ${COMMAND}
-match_max 100000;\
-expect *assword:*;\
-send -- $A\r;\
-interact;"
+ssh -o PasswordAuthentication=no $HOST -l root ${COMMAND}
 echo "Finished job on $HOST"
 
 done

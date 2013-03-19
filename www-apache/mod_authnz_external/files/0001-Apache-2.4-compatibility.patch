@@ -1,0 +1,27 @@
+From d48e9475153cd2f7f1a36941b5c6bc6d6908c818 Mon Sep 17 00:00:00 2001
+From: David Sansome <me@davidsansome.com>
+Date: Mon, 26 Mar 2012 17:34:00 +0100
+Subject: [PATCH] Apache 2.4 compatibility
+
+---
+ mod_authnz_external.c |    4 ++--
+ 1 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/mod_authnz_external.c b/mod_authnz_external.c
+index 479e57f..dbb5d39 100644
+--- a/mod_authnz_external.c
++++ b/mod_authnz_external.c
+@@ -443,8 +443,8 @@ static int exec_external(const char *extpath, const char *extmethod,
+ 	if (remote_host != NULL)
+ 	    child_env[i++]= apr_pstrcat(p, ENV_HOST"=", remote_host,NULL);
+ 
+-	if (c->remote_ip)
+-	    child_env[i++]= apr_pstrcat(p, ENV_IP"=", c->remote_ip, NULL);
++	if (c->client_ip)
++	    child_env[i++]= apr_pstrcat(p, ENV_IP"=", c->client_ip, NULL);
+ 
+ 	if (r->uri)
+ 	    child_env[i++]= apr_pstrcat(p, ENV_URI"=", r->uri, NULL);
+-- 
+1.7.0.4
+

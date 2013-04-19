@@ -14,7 +14,7 @@ SRC_URI="mirror://sourceforge/itk/InsightToolkit-${PV}.tar.gz"
 LICENSE="BSD"
 SLOT="0"
 KEYWORDS="~x86 ~amd64"
-IUSE="debug examples fftw +shared test python hdf5 itkv3compat review"
+IUSE="debug examples fftw +shared test python hdf5 itkv3compat review gdcm"
 
 RDEPEND="sys-libs/zlib
 	fftw? ( sci-libs/fftw )
@@ -27,6 +27,7 @@ RDEPEND="sys-libs/zlib
 DEPEND="${RDEPEND}
 		  >=dev-util/cmake-2.8
 	python? ( >=dev-lang/python-2.5 >=dev-lang/swig-2.0 >=dev-cpp/gccxml-0.9.0_pre20120309 )
+        gdcm? ( sci-libs/gdcm )
 	"
 
 MY_PN=InsightToolkit
@@ -58,6 +59,7 @@ src_configure() {
 		$(cmake-utils_use shared BUILD_SHARED_LIBS)
 		$(cmake-utils_use test BUILD_TESTING)
 		$(cmake-utils_use review ITK_USE_REVIEW)
+                $(cmake-utils_use gdcm ITK_USE_SYSTEM_GDCM)
 		)
 
 	if use itkv3compat; then 

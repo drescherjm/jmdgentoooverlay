@@ -17,7 +17,7 @@ IUSE="doc examples expat java jpeg pdf python vtk test uuid wxwindows zlib"
 RDEPEND="expat? ( dev-libs/expat )
 	java? ( >=virtual/jre-1.5 )
 	doc? ( app-doc/doxygen )
-	python? ( >=dev-lang/python-2.0 dev-lang/swig )
+	python? ( >=dev-lang/python-2.0 >=dev-lang/swig-2.0.7 )
 	vtk? ( sci-libs/vtk )
 	wxwindows? ( =x11-libs/wxGTK-2.8* )
 	zlib? ( sys-libs/zlib )

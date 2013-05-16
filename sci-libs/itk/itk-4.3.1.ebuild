@@ -64,7 +64,7 @@ src_configure() {
 		)
 
 	if use itkv3compat; then 
-		mycmakeargs+=( -DITKV3_COMPATIBILITY=ON  -DModule_ITKV3Compatibility )
+		mycmakeargs+=( -DITKV3_COMPATIBILITY=ON  -DModule_ITKV3Compatibility=ON )
 	fi  
 
 	

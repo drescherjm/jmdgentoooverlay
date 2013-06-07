@@ -1,0 +1,9 @@
+--- source4/scripting/bin/samba_dnsupdate.inst.orig	2013-05-25 09:01:56.870801131 -0400
++++ source4/scripting/bin/samba_dnsupdate.inst	2013-05-25 09:02:10.944135029 -0400
+@@ -1,4 +1,5 @@
+-#!/usr/bin/python2.7# vim: expandtab
++#!/usr/bin/python2.7
++# vim: expandtab
+ #
+ # update our DNS names using TSIG-GSS
+ #

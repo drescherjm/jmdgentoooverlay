@@ -101,6 +101,7 @@ src_prepare() {
 
 	sed -i 's/AM_CONFIG_HEADER/AC_CONFIG_HEADERS/g' configure.ac || die
 	epatch ${FILESDIR}/0001-build-use-libtool-for-linking-the-library-and-link-l.patch
+        #epatch ${FILESDIR}/0002-build-make-sure-to-expand-all-variables-that-are-sub.patch
 	epatch ${FILESDIR}/0003-lxc-include-sched.h-to-have-a-declaration-of-clone.patch
 	eautoreconf
 }
@@ -142,7 +143,12 @@ src_compile() {
 }
 
 src_install() {
+
+	mkdir -p "${D}"/usr/share/lxc
+
+
 	default
+
 
 #	rm -r "${D}"/usr/sbin/lxc-setcap \
 #		|| die "unable to remove lxc-setcap"

@@ -1,0 +1,32 @@
+From 3ff23470ce15e15408e8e442b8e714219c445e68 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Diego=20Elio=20Petten=C3=B2?= <flameeyes@flameeyes.eu>
+Date: Fri, 3 Aug 2012 21:49:44 -0700
+Subject: [PATCH 2/3] build: make sure to expand all variables that are
+ substituted.
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+This fixes lxc-sshd still referring to '${libdir}'.
+
+Signed-off-by: Diego Elio Pettenò <flameeyes@flameeyes.eu>
+---
+ configure.ac | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/configure.ac b/configure.ac
+index a9a88c5..cf653ef 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -70,7 +70,7 @@ AS_AC_EXPAND(LXCPATH, "${with_config_path}")
+ AS_AC_EXPAND(LXCROOTFSMOUNT, "${with_rootfs_path}")
+ AS_AC_EXPAND(LXCTEMPLATEDIR, ['${datadir}/lxc/templates'])
+ 
+-AC_SUBST(LXCINITDIR, ['${libexecdir}'])
++AS_AC_EXPAND(LXCINITDIR, ['${libexecdir}'])
+ 
+ AC_CHECK_HEADERS([linux/unistd.h linux/netlink.h linux/genetlink.h],
+ 				  [],
+-- 
+1.8.0
+

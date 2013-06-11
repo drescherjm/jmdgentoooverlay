@@ -1,44 +1,39 @@
-# Copyright 1999-2012 Gentoo Foundation
+# Copyright 1999-2013 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
-# $Header: /var/cvsroot/gentoo-x86/app-emulation/lxc/lxc-0.8.0-r1.ebuild,v 1.1 2012/11/14 02:15:10 flameeyes Exp $
+# $Header: /var/cvsroot/gentoo-x86/app-emulation/lxc/lxc-0.8.0-r1.ebuild,v 1.2 2013/05/04 21:42:25 jlec Exp $
 
-EAPI="4"
+EAPI="5"
+PYTHON_COMPAT=( python{3_1,3_2,3_3} )
 
 MY_P="${P/_/-}"
 
-BACKPORTS=1
+inherit autotools eutils flag-o-matic linux-info versionator distutils-r1
 
-inherit eutils linux-info versionator flag-o-matic git
-
-if [[ -n ${BACKPORTS} ]]; then
-	inherit autotools
-fi
-
-EGIT_REPO_URI="git://lxc.git.sourceforge.net/gitroot/lxc/lxc"
 DESCRIPTION="LinuX Containers userspace utilities"
 HOMEPAGE="http://lxc.sourceforge.net/"
-#SRC_URI="http://lxc.sourceforge.net/download/lxc/${MY_P}.tar.gz
-#	${BACKPORTS:+http://dev.gentoo.org/~flameeyes/${PN}/${MY_P}-backports-${BACKPORTS}.tar.xz}"
-
-
+SRC_URI="http://lxc.sourceforge.net/download/lxc/${MY_P}.tar.gz"
 S="${WORKDIR}/${MY_P}"
 
-KEYWORDS="~amd64 ~ppc64 ~x86"
+KEYWORDS="~amd64 ~arm ~ppc64 ~x86"
 
 LICENSE="LGPL-3"
 SLOT="0"
-IUSE="examples"
+IUSE="doc examples lua python seccomp"
 
-RDEPEND="sys-libs/libcap"
+RDEPEND="
+	lua? ( >=dev-lang/lua-5.1 )
+	python? ( >=dev-lang/python-3 )
+	sys-libs/libcap
+	seccomp? ( sys-libs/libseccomp[static-libs] )"
 
 DEPEND="${RDEPEND}
-	app-text/docbook-sgml-utils
+	doc? ( app-text/docbook2X )
 	>=sys-kernel/linux-headers-3.2"
 
 RDEPEND="${RDEPEND}
-	sys-apps/util-linux
 	app-misc/pax-utils
 	>=sys-apps/openrc-0.9.9.1
+	sys-apps/util-linux
 	virtual/awk"
 
 CONFIG_CHECK="~CGROUPS ~CGROUP_DEVICE
@@ -47,7 +42,7 @@ CONFIG_CHECK="~CGROUPS ~CGROUP_DEVICE
 	~CGROUP_SCHED
 
 	~NAMESPACES
-	~IPC_NS ~PID_NS
+	~IPC_NS ~USER_NS ~PID_NS
 
 	~DEVPTS_MULTIPLE_INSTANCES
 	~CGROUP_FREEZER
@@ -86,7 +81,42 @@ ERROR_GRKERNSEC_CHROOT_CAPS=":CONFIG_GRKERNSEC_CHROOT_CAPS	some GRSEC features m
 
 DOCS=(AUTHORS CONTRIBUTING MAINTAINERS TODO README doc/FAQ.txt)
 
-src_configure() {	append-flags -fno-strict-aliasing
+src_prepare() {
+	# prepare python
+    if use python
+	then
+		#First we need one python impl to pass the configure
+		echo_epython() {
+		    echo ${EPYTHON}
+		}
+		ONEPYTHON=$(python_foreach_impl echo_epython | \
+						tail -n1 | \
+						sed "s,python,python-,g")
+		sed -i "s,python3,${ONEPYTHON}," configure.ac || die
+		#Disable python management by Makefile
+		echo > src/python-lxc/Makefile.am
+	fi
+
+	sed -i 's,docbook2x-man,docbook2man.pl,' configure.ac || die
+
+	sed -i 's/AM_CONFIG_HEADER/AC_CONFIG_HEADERS/g' configure.ac || die
+	epatch ${FILESDIR}/0001-build-use-libtool-for-linking-the-library-and-link-l.patch
+	epatch ${FILESDIR}/0003-lxc-include-sched.h-to-have-a-declaration-of-clone.patch
+	eautoreconf
+}
+
+src_configure() {
+	append-flags -fno-strict-aliasing
+
+	local myconf
+
+	if use lua ; then
+		myconf+=" --enable-lua"
+	fi
+
+	if use python; then
+		myconf+=" --enable-python"
+	fi
 
 	econf \
 		--localstatedir=/var \
@@ -94,16 +124,35 @@ src_configure() {	append-flags -fno-strict-aliasing
 		--docdir=/usr/share/doc/${PF} \
 		--with-config-path=/etc/lxc	\
 		--with-rootfs-path=/usr/lib/lxc/rootfs \
-		--enable-doc \
+		$(use_enable doc) \
+		$(use_enable seccomp) \
 		--disable-apparmor \
-		$(use_enable examples)
+		$(use_enable examples) \
+		${myconf}
+}
+
+src_compile() {
+	default
+	if use python
+	then
+	  cd "${S}/src/python-lxc"
+	  ln -s ../lxc/.libs/liblxc-0.9.0.so liblxc.so
+	  python_foreach_impl distutils-r1_python_compile build_ext -I ../ -L ./
+	fi
 }
 
 src_install() {
 	default
 
-	rm -r "${D}"/usr/sbin/lxc-setcap \
-		|| die "unable to remove lxc-setcap"
+#	rm -r "${D}"/usr/sbin/lxc-setcap \
+#		|| die "unable to remove lxc-setcap"
+
+	if use python
+	then
+		cd "${S}/src/python-lxc"
+		echo ${BUILD_DIR}
+		python_foreach_impl distutils-r1_python_install
+	fi
 
 	keepdir /etc/lxc /usr/lib/lxc/rootfs
 
@@ -115,6 +164,7 @@ src_install() {
 }
 
 pkg_postinst() {
+    use python && distutils_pkg_postinst
 	elog "There is an init script provided with the package now; no documentation"
 	elog "is currently available though, so please check out /etc/init.d/lxc ."
 	elog "You _should_ only need to symlink it to /etc/init.d/lxc.configname"
@@ -136,3 +186,9 @@ pkg_postinst() {
 	ewarn "Diego Elio Pettenò's weblog at http://blog.flameeyes.eu/tag/lxc for further"
 	ewarn "details."
 }
+
+pkg_postrm() {
+	default
+    use python && distutils_pkg_postrm
+}
+

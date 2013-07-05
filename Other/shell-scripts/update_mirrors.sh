@@ -1,5 +1,5 @@
 #!/bin/sh
 
-sed -i '/GENTOO_MIRRORS/d' /etc/make.conf
+sed -i '/GENTOO_MIRRORS/d' /etc/portage/make.conf
 
-echo "GENTOO_MIRRORS=\"http://chi-10g-1-mirror.fastsoft.net/pub/linux/gentoo/gentoo-distfiles/ http://mirror.mcs.anl.gov/pub/gentoo/ http://mirrors.rit.edu/gentoo/ ftp://chi-10g-1-mirror.fastsoft.net/pub/linux/gentoo/gentoo-distfiles/\"" >> /etc/make.conf
+echo "GENTOO_MIRRORS=\"http://gentoo.mirrors.pair.com/ ftp://gentoo.mirrors.pair.com/ http://mirror.mcs.anl.gov/pub/gentoo/ http://mirror.lug.udel.edu/pub/gentoo/ ftp://mirror.mcs.anl.gov/pub/gentoo/\"" >> /etc/portage/make.conf

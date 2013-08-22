@@ -38,7 +38,7 @@ pkg_setup() {
 }
 
 src_prepare() {
-	epatch "${FILESDIR}/nagios-3.3.1-htmlmakefile.patch"
+	#epatch "${FILESDIR}/nagios-3.3.1-htmlmakefile.patch"
 	local strip="$(echo '$(MAKE) strip-post-install')"
 	sed -i -e "s:${strip}::" {cgi,base}/Makefile.in || die "sed failed in Makefile.in"
 }

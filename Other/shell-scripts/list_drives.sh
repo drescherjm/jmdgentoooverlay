@@ -1,10 +1,10 @@
 #!/bin/sh
 
-for drive in sda sdb sdc sdd sde sdf sdg
+for drive in /dev/sd?
 do
-  echo -n $drive " "
-  [ -e /dev/$drive ] && hdparm -I /dev/$drive | grep "erial N"
-  #blkid | grep /dev/$drive
-  ls -al /dev/disk/by-id/ | grep $drive
+  echo -n ${drive} " "
+  [ -e ${drive} ] && hdparm -I ${drive} | grep "erial N"
+  #blkid | grep $drive
+  ls -al /dev/disk/by-id/ | grep ${drive}
 done
 

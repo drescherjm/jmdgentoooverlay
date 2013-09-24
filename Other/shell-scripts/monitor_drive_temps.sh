@@ -119,6 +119,17 @@ check_temps()
   done
 }
 
+warn_about_disabled_shutdown()
+{
+  if [ ! -z "${DISABLE_SHUTDOWN}" ]; then
+    log_echo "WARNING: Automatic temperature shutdown has been disabled!"
+    if [ -f ${SHUTDOWN_DISABLE_FILE} ]; then
+      log_echo "You can reenable automatic temperature shutdown by deleting the following file: ${SHUTDOWN_DISABLE_FILE}"
+    fi
+  fi
+}
+
+
 MON_RETRY_DELAY=60
 DEFAULT_WARN_TEMP=36
 DEFAULT_CRIT_TEMP=45
@@ -157,14 +168,10 @@ if [ ${warn} -gt 0 ] || [ ${crit} -gt 0 ]; then
         sync;sync
         ${SHUTDOWN} -h 0
       fi
-    elif [ ! -z "${DISABLE_SHUTDOWN}" ]; then
-      log_echo "WARNING: Automatic temperature shutdown has been disabled!"
-      if [ -f ${SHUTDOWN_DISABLE_FILE} ]; then
-        log_echo "You can reenable automatic temperature shutdown by deleting the following file: ${SHUTDOWN_DISABLE_FILE}"
-      fi
     fi
   else
     log_echo "Drive temps are okay! OKAY=${okay} WARN=${warn} CRIT=${crit}"
   fi 
+  warn_about_disabled_shutdown
 fi
 

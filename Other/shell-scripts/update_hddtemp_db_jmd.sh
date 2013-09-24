@@ -5,13 +5,13 @@ update_db() {
 	local dst=$2
 
 	while read line ; do
-		if [[ -z $(echo "${line}" | sed -re 's/(^#.*|^\w*$)//') ]]; then
-			echo "${line}" >> "${dst}"
-		fi
+		#if [[ -z $(echo "${line}" | sed -re 's/(^#.*|^\w*$)//') ]]; then
+		#	echo "${line}" >> "${dst}"
+		#fi
 
-		id=$(echo "${line}" | grep -o '"[^"]*"')
-
-		grep "${id}" "${dst}" 2>&1 >/dev/null || echo "${line}" >> "${dst}"
+		id=$(echo "${line}" | grep -o '^"[^"]*"')
+		echo "Looking for ${id}"
+		grep "${id}" "${dst}" 2>&1 >/dev/null || (echo "Adding  ${id}" &&  echo "${line}" >> "${dst}")
 	done < "${src}"
 }
 

@@ -35,7 +35,7 @@ verbose_echo()
 log_echo()
 {
   if [ -e "${LOGGER}" ]; then
-    ${LOGGER} $@
+    ${LOGGER} -s $@
   fi
 }
 
@@ -106,6 +106,7 @@ get_drive_info()
   fi
 }
 
+# This function will check the temperatures on all drives in the system and keep a count of how many drives are okay or in a warning or critical state
 check_temps()
 {
   warn=0 
@@ -118,8 +119,10 @@ check_temps()
   done
 }
 
+
+MON_RETRY_DELAY=60
 DEFAULT_WARN_TEMP=31
-DEFAULT_CRIT_TEMP=34
+DEFAULT_CRIT_TEMP=35
 DRIVE_SETTINGS_FILE="/root/shell-scripts/data/drive_temp_limits.txt"
 LOGGER="/usr/bin/logger"
 SHUTDOWN=/sbin/shutdown
@@ -127,18 +130,21 @@ SHUTDOWN=/sbin/shutdown
 check_temps
 
 if [ ${warn} -gt 0 ] || [ ${crit} -gt 0 ]; then
-  echo "WARN=${warn} CRIT=${crit}"
+  echo "OKAY=${okay} WARN=${warn} CRIT=${crit}"
 
   if [ ${crit} -gt ${okay} ]; then
     log_echo "CRITICAL: There are ${crit} drives are are over their threshold temperatures."
 
-
     if [ -z "${DISABLE_SHUTDOWN}" ] && [ -e ${SHUTDOWN} ]; then
-      # Wait 5 minutes and test again
-      sleep 1m
+
+      # Wait a few minutes and test again
+      sleep ${MON_RETRY_DELAY}
       check_temps
 
       if [ ${crit} -gt ${okay} ]; then
+
+	# The test failed again. We will now issue a shutdown
+
         log_echo "CRITICAL: There are ${crit} drives are are over their threshold temperatures on the second try. The system will shutdown to reduce the chance of damage to the drives."
         sync;sync
         ${SHUTDOWN} -h 0

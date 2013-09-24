@@ -99,7 +99,7 @@ get_drive_info()
 {
   if [ -e $1 ]; then
     drv=$1
-    drv_serial=$(hdparm -I $1 | grep "erial N" | sed 's#Serial\ Number:##g')
+    drv_serial=$(hdparm -I $1 2> /dev/null | grep "erial N" | sed 's#Serial\ Number:##g')
     drv_temp=$(hddtemp --numeric -u C $1 2>/dev/null)
     verbose_echo ${drv} ${drv_serial} ${drv_temp}
     verify_drive_temps "${drv_serial}" "${drv_temp}"
@@ -119,13 +119,18 @@ check_temps()
   done
 }
 
-
 MON_RETRY_DELAY=60
 DEFAULT_WARN_TEMP=32
 DEFAULT_CRIT_TEMP=35
 DRIVE_SETTINGS_FILE="/root/shell-scripts/data/drive_temp_limits.txt"
 LOGGER="/usr/bin/logger"
 SHUTDOWN=/sbin/shutdown
+SHUTDOWN_DISABLE_FILE="/var/run/DISABLE_TEMP_SHUTDOWN"
+
+
+if [ -f ${SHUTDOWN_DISABLE_FILE} ]; then
+  DISABLE_SHUTDOWN=1
+fi
 
 check_temps
 
@@ -136,6 +141,9 @@ if [ ${warn} -gt 0 ] || [ ${crit} -gt 0 ]; then
     log_echo "CRITICAL: There are ${crit} drives are are over their threshold temperatures."
 
     if [ -z "${DISABLE_SHUTDOWN}" ] && [ -e ${SHUTDOWN} ]; then
+
+      log_echo "Waiting ${MON_RETRY_DELAY} seconds before checking the temperatures again."
+      log_echo "The automatic shutdown can be disabled by the executing the follwing command at the shell: touch ${SHUTDOWN_DISABLE_FILE}"
 
       # Wait a few minutes and test again
       sleep ${MON_RETRY_DELAY}
@@ -148,6 +156,11 @@ if [ ${warn} -gt 0 ] || [ ${crit} -gt 0 ]; then
         log_echo "CRITICAL: There are ${crit} drives are are over their threshold temperatures on the second try. The system will shutdown to reduce the chance of damage to the drives."
         sync;sync
         ${SHUTDOWN} -h 0
+      fi
+    elif [ ! -z "${DISABLE_SHUTDOWN}" ]; then
+      log_echo "WARNING: Automatic temperature shutdown has been disabled!"
+      if [ -f ${SHUTDOWN_DISABLE_FILE} ]; then
+        log_echo "You can reenable automatic temperature shutdown by deleting the following file: ${SHUTDOWN_DISABLE_FILE}"
       fi
     fi
   fi 

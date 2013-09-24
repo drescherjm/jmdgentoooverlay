@@ -35,7 +35,7 @@ verbose_echo()
 log_echo()
 {
   if [ -e "${LOGGER}" ]; then
-    ${LOGGER} -s $@
+    ${LOGGER} -t TEMPMON -s $@
   fi
 }
 
@@ -120,8 +120,8 @@ check_temps()
 }
 
 MON_RETRY_DELAY=60
-DEFAULT_WARN_TEMP=32
-DEFAULT_CRIT_TEMP=35
+DEFAULT_WARN_TEMP=36
+DEFAULT_CRIT_TEMP=45
 DRIVE_SETTINGS_FILE="/root/shell-scripts/data/drive_temp_limits.txt"
 LOGGER="/usr/bin/logger"
 SHUTDOWN=/sbin/shutdown
@@ -163,6 +163,8 @@ if [ ${warn} -gt 0 ] || [ ${crit} -gt 0 ]; then
         log_echo "You can reenable automatic temperature shutdown by deleting the following file: ${SHUTDOWN_DISABLE_FILE}"
       fi
     fi
+  else
+    log_echo "Temps look fine! OKAY=${okay} WARN=${warn} CRIT=${crit}"
   fi 
 fi
 

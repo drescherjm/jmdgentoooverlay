@@ -121,7 +121,7 @@ check_temps()
 
 
 MON_RETRY_DELAY=60
-DEFAULT_WARN_TEMP=31
+DEFAULT_WARN_TEMP=32
 DEFAULT_CRIT_TEMP=35
 DRIVE_SETTINGS_FILE="/root/shell-scripts/data/drive_temp_limits.txt"
 LOGGER="/usr/bin/logger"

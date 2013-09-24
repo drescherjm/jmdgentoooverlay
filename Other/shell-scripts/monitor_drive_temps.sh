@@ -164,7 +164,7 @@ if [ ${warn} -gt 0 ] || [ ${crit} -gt 0 ]; then
       fi
     fi
   else
-    log_echo "Temps look fine! OKAY=${okay} WARN=${warn} CRIT=${crit}"
+    log_echo "Drive temps are okay! OKAY=${okay} WARN=${warn} CRIT=${crit}"
   fi 
 fi
 

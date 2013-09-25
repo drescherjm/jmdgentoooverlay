@@ -15,11 +15,25 @@ KEYWORDS="amd64 x86"
 IUSE=""
 
 DEPEND=""
-RDEPEND="dev-lang/perl"
+RDEPEND="dev-lang/perl
+         app-admin/sudo"
 
 S="${WORKDIR}/${MY_P}"
 
+
+src_compile() {
+cat - > "${T}"/50${PN} <<EOF
+Cmnd_Alias NAGIOS_PLUGINS_JMD_CMDS = /usr/lib/nagios/plugins/check_smartmon
+User_Alias NAGIOS_PLUGINS_JMD_USERS = nagios
+
+NAGIOS_PLUGINS_JMD_USERS ALL=(root) NOPASSWD: NAGIOS_PLUGINS_JMD_CMDS
+EOF
+}
+
 src_install() {
+	insinto /etc/sudoers.d
+        doins "${T}"/50${PN}
+
 	exeinto /usr/$(get_libdir)/nagios/plugins
 	doexe check_smartmon
 }

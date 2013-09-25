@@ -172,6 +172,9 @@ if [ ${warn} -gt 0 ] || [ ${crit} -gt 0 ]; then
   else
     log_echo "Drive temps are okay! OKAY=${okay} WARN=${warn} CRIT=${crit}"
   fi 
-  warn_about_disabled_shutdown
+else
+  log_echo "Drive temps are good! OKAY=${okay} WARN=${warn} CRIT=${crit}"
 fi
+
+warn_about_disabled_shutdown
 

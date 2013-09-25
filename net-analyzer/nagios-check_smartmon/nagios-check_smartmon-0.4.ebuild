@@ -28,4 +28,7 @@ src_unpack() {
         # The file in the download is the perl text file so we do not do the standard unpack
         mkdir -p "${S}"
 	cp "${DISTDIR}/${A}" "${S}"
+
+	# BUG Fix the --attr-raw and --attr were not working for more than 1 attribute.
+	sed -i -e 's#@ATTRRAW = splice(@ATTRRAW, $idx, 1);##g' -e 's#@ATTR = splice(@ATTR, $idx, 1);##g' "${S}/${A}"
 }

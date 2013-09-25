@@ -5,9 +5,9 @@ inherit multilib
 MY_PV="${PV/_rc/rc}"
 MY_P="${PN#nagios-}_v${MY_PV}"
 
-DESCRIPTION="lm_sensors plugin for Nagios"
-HOMEPAGE="https://svn.id.ethz.ch/nagios_plugins/check_lm_sensors"
-SRC_URI="https://svn.id.ethz.ch/nagios_plugins/check_lm_sensors/check_lm_sensors"
+DESCRIPTION="nagios plugin to check smartctl output"
+HOMEPAGE="http://lancet.mit.edu/mwall/projects/nagios/plugins.html"
+SRC_URI="http://lancet.mit.edu/mwall/projects/nagios/check_smartmon"
 
 LICENSE="GPL-3"
 SLOT="0"
@@ -15,21 +15,17 @@ KEYWORDS="amd64 x86"
 IUSE=""
 
 DEPEND=""
-RDEPEND="dev-lang/perl
-        dev-perl/Readonly
-        dev-perl/List-MoreUtils
-	dev-perl/Nagios-Plugin"
+RDEPEND="dev-lang/perl"
 
 S="${WORKDIR}/${MY_P}"
 
 src_install() {
 	exeinto /usr/$(get_libdir)/nagios/plugins
-	doexe check_lm_sensors 
+	doexe check_smartmon
 }
 
 src_unpack() {
         # The file in the download is the perl text file so we do not do the standard unpack
         mkdir -p "${S}"
 	cp "${DISTDIR}/${A}" "${S}"
-        sed -i 'sQ#!perlQ#!/usr/bin/perlQg' "${S}/${A}" 
 }

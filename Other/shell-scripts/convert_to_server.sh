@@ -27,6 +27,8 @@ for p in /var/db/pkg/net-wireless/*; do echo $p|sed -e 's#.*/#=#' ; done | xargs
 for p in /var/db/pkg/net-p2p/*; do echo $p|sed -e 's#.*/#=#' ; done | xargs emerge -C
 for p in /var/db/pkg/app-accessibility/*; do echo $p|sed -e 's#.*/#=#' ; done | xargs emerge -C
 for p in /var/db/pkg/app-cdr/*; do echo $p|sed -e 's#.*/#=#' ; done | xargs emerge -C
+equery depends gnome-base/libglade | awk '{ print $1 }' | xargs emerge -C
+equery depends x11-libs/gtk+ | awk '{ print $1 }' | xargs emerge -C
 
 emerge -C net-misc/vinagre  
 emerge -C app-arch/file-roller 

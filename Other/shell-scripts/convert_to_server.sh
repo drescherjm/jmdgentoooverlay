@@ -27,4 +27,4 @@ for p in /var/db/pkg/net-wireless/*; do echo $p|sed -e 's#.*/#=#' ; done | xargs
 for p in /var/db/pkg/net-p2p/*; do echo $p|sed -e 's#.*/#=#' ; done | xargs emerge -C
 for p in /var/db/pkg/app-accessibility/*; do echo $p|sed -e 's#.*/#=#' ; done | xargs emerge -C
 for p in /var/db/pkg/app-cdr/*; do echo $p|sed -e 's#.*/#=#' ; done | xargs emerge -C
-emerge -C app-editors/xemacs app-editors/gedit app-text/evince 
+emerge -C net-misc/vinagre app-arch/file-roller net-misc/tightvnc app-editors/qemacs app-admin/gkrellm  app-editors/emacs app-editors/xemacs app-editors/gedit app-text/evince 

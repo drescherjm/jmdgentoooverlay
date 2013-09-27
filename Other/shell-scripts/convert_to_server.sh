@@ -18,3 +18,4 @@ for p in /var/db/pkg/net-voip/*; do echo $p|sed -e 's#.*/#=#' ; done | xargs eme
 for p in /var/db/pkg/net-dialup/*; do echo $p|sed -e 's#.*/#=#' ; done | xargs emerge -C
 for p in /var/db/pkg/net-irc/*; do echo $p|sed -e 's#.*/#=#' ; done | xargs emerge -C
 for p in /var/db/pkg/lxde-base/*; do echo $p|sed -e 's#.*/#=#' ; done | xargs emerge -C
+for p in /var/db/pkg/xfce-*/*; do echo $p|sed -e 's#.*/#=#' ; done | xargs emerge -C

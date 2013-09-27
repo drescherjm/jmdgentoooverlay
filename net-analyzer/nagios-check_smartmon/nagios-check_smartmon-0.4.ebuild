@@ -36,6 +36,8 @@ src_install() {
 
 	exeinto /usr/$(get_libdir)/nagios/plugins
 	doexe check_smartmon
+
+	einfo "For sudo to work make sure you have the following in your sudoers file #includedir /etc/sudoers.d"
 }
 
 src_unpack() {

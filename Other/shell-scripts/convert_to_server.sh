@@ -27,8 +27,10 @@ for p in /var/db/pkg/net-wireless/*; do echo $p|sed -e 's#.*/#=#' ; done | xargs
 for p in /var/db/pkg/net-p2p/*; do echo $p|sed -e 's#.*/#=#' ; done | xargs emerge -C
 for p in /var/db/pkg/app-accessibility/*; do echo $p|sed -e 's#.*/#=#' ; done | xargs emerge -C
 for p in /var/db/pkg/app-cdr/*; do echo $p|sed -e 's#.*/#=#' ; done | xargs emerge -C
-equery depends gnome-base/libglade | awk '{ print $1 }' | xargs emerge -C
-equery depends x11-libs/gtk+ | awk '{ print $1 }' | xargs emerge -C
+
+# The following are very dangerous 
+#equery depends gnome-base/libglade | awk '{ print $1 }' | xargs emerge -C
+#equery depends x11-libs/gtk+ | awk '{ print $1 }' | xargs emerge -C
 
 emerge -C net-misc/vinagre  
 emerge -C app-arch/file-roller 
@@ -39,3 +41,24 @@ emerge -C app-editors/emacs
 emerge -C app-editors/xemacs 
 emerge -C app-editors/gedit 
 emerge -C app-text/evince 
+emerge -C app-text/epdfview
+emerge -C dev-libs/libunique
+emerge -C dev-libs/gdl
+emerge -C app-admin/conky
+emerge -C app-emulation/virtualbox*
+emerge -C app-editors/vim
+emerge -C app-editors/gvim
+emerge -C mail-client/claws-mail
+emerge -C app-editors/bluefish
+emerge -C mail-client/thunderbird
+emerge -C dev-python/pygtksourceview
+emerge -C sys-block/partitionmanager
+emerge -C net-libs/libktorrent
+emerge -C dev-python/gst-python
+emerge -C net-libs/farsight2
+emerge -C app-text/texlive-core
+emerge -C mail-client/claws-mail
+emerge -C sys-block/gparted
+emerge -C app-text/libspectre
+emerge -C net-libs/xulrunner
+emerge -C app-laptop/radeontool

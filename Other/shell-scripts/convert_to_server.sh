@@ -71,4 +71,15 @@ emerge -C sys-apps/groff
 emerge -C net-misc/rdesktop
 emerge -C sys-fs/mtools
 emerge -C dev-python/notify-python
+emerge -C net-misc/putty
+emerge -C app-text/wv
+emerge -C dev-libs/folks
+emerge -C net-ftp/gftp
+emerge -C app-misc/emelfm2
+emerge -C app-editors/scite
+emerge -C net-nntp/pan
+emerge -C dev-libs/rasqal
+emerge -C net-nntp/pan
+emerge -C mail-client/sylpheed
+emerge -C app-text/gtkspell
 

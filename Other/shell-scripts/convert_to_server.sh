@@ -62,3 +62,13 @@ emerge -C sys-block/gparted
 emerge -C app-text/libspectre
 emerge -C net-libs/xulrunner
 emerge -C app-laptop/radeontool
+emerge -C net-print/cups-pk-helper
+emerge -C dev-python/pycups
+emerge -C app-text/podofo
+emerge -C net-libs/libmediawiki
+emerge -C net-libs/telepathy-farsight
+emerge -C sys-apps/groff
+emerge -C net-misc/rdesktop
+emerge -C sys-fs/mtools
+emerge -C dev-python/notify-python
+

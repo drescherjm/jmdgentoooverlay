@@ -8,7 +8,7 @@ MY_P="${P/_/-}"
 
 BACKPORTS=1
 
-inherit eutils linux-info versionator flag-o-matic git
+inherit eutils linux-info versionator flag-o-matic git-2
 
 if [[ -n ${BACKPORTS} ]]; then
 	inherit autotools

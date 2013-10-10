@@ -30,7 +30,7 @@ DEPEND="
 		!bacula-nodir? ( virtual/mta )
 	)
 	qt4? (
-		x11-libs/qt-svg:4
+		dev-qt/qtsvg:4
 		x11-libs/qwt:5
 	)
 	logwatch? ( sys-apps/logwatch )

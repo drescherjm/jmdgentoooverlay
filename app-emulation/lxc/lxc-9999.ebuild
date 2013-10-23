@@ -23,7 +23,7 @@ HOMEPAGE="http://lxc.sourceforge.net/"
 
 S="${WORKDIR}/${MY_P}"
 
-KEYWORDS="~amd64 ~ppc64 ~x86"
+KEYWORDS=""
 
 LICENSE="LGPL-3"
 SLOT="0"

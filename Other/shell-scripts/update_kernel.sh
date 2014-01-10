@@ -7,3 +7,4 @@ fi
 
 genkernel $@ all --save-config --color --install
 
+emerge @module-rebuild

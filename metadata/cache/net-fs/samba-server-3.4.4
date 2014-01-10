@@ -1,4 +1,4 @@
-!<net-fs/samba-3.3 ads? ( virtual/krb5 sys-fs/e2fsprogs net-fs/samba-libs[ads] ) dev-libs/popt virtual/libiconv avahi? ( net-dns/avahi ) zeroconf? ( !avahi? ( || ( net-dns/avahi[mdnsresponder-compat] net-misc/mDNSResponder ) ) ) caps? ( sys-libs/libcap ) cups? ( net-print/cups ) debug? ( dev-libs/dmalloc ) fam? ( dev-libs/libgamin ) ldap? ( net-nds/openldap ) syslog? ( virtual/logger ) sys-libs/tdb sys-libs/talloc ~net-fs/samba-libs-3.4.4[caps?,cluster?,cups?,ldap?,syslog?,winbind?,ads?,samba4?] || ( =sys-devel/automake-1.11* ) >=sys-devel/autoconf-2.61 >=sys-devel/libtool-2.2.6b
+!<net-fs/samba-3.3 ads? ( virtual/krb5 sys-fs/e2fsprogs net-fs/samba-libs[ads] ) dev-libs/popt virtual/libiconv avahi? ( net-dns/avahi ) zeroconf? ( !avahi? ( || ( net-dns/avahi[mdnsresponder-compat] net-misc/mDNSResponder ) ) ) caps? ( sys-libs/libcap ) cups? ( net-print/cups ) debug? ( dev-libs/dmalloc ) fam? ( dev-libs/libgamin ) ldap? ( net-nds/openldap ) syslog? ( virtual/logger ) sys-libs/tdb sys-libs/talloc ~net-fs/samba-libs-3.4.4[caps?,cluster?,cups?,ldap?,syslog?,winbind?,ads?,samba4?] || ( >=sys-devel/automake-1.12:1.12 >=sys-devel/automake-1.13:1.13 ) >=sys-devel/autoconf-2.68 sys-devel/libtool
 !<net-fs/samba-3.3 ads? ( virtual/krb5 sys-fs/e2fsprogs net-fs/samba-libs[ads] ) dev-libs/popt virtual/libiconv avahi? ( net-dns/avahi ) zeroconf? ( !avahi? ( || ( net-dns/avahi[mdnsresponder-compat] net-misc/mDNSResponder ) ) ) caps? ( sys-libs/libcap ) cups? ( net-print/cups ) debug? ( dev-libs/dmalloc ) fam? ( dev-libs/libgamin ) ldap? ( net-nds/openldap ) syslog? ( virtual/logger ) sys-libs/tdb sys-libs/talloc ~net-fs/samba-libs-3.4.4[caps?,cluster?,cups?,ldap?,syslog?,winbind?,ads?,samba4?]
 0
 mirror://samba/samba-3.4.4.tar.gz
@@ -7,7 +7,7 @@ http://www.samba.org/
 GPL-3
 Samba Server component
 ~amd64 ~hppa ~ppc ~ppc64 ~x86
-autotools confutils eutils flag-o-matic libtool multilib pam portability toolchain-funcs versionator
+autotools confutils eutils flag-o-matic libtool multilib multiprocessing pam toolchain-funcs user versionator
 samba4 acl ads aio avahi caps cluster cups debug doc examples fam ldap quota swat syslog winbind zeroconf
 
 

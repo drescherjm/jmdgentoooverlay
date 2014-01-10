@@ -7,7 +7,7 @@ http://www.linuxtv.org
 GPL-2
 live development version of v4l&dvb-driver for Kernel 2.6
 ~amd64 ~x86
-eutils linux-info linux-mod mercurial multilib portability savedconfig toolchain-funcs versionator
+eutils linux-info linux-mod mercurial multilib portability savedconfig toolchain-funcs user versionator
 kernel_linux savedconfig
 
 

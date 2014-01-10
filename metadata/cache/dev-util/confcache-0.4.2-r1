@@ -1,5 +1,5 @@
->=dev-lang/python-2.2 >=app-admin/eselect-python-20091230 dev-lang/python
->=dev-lang/python-2.2 >=sys-apps/sandbox-1.2.12 >=app-admin/eselect-python-20091230 dev-lang/python
+>=dev-lang/python-2.2 dev-lang/python
+>=dev-lang/python-2.2 >=sys-apps/sandbox-1.2.12 dev-lang/python
 0
 http://dev.gentooexperimental.org/~masterdriverz/confcache-0.4.2.tar.bz2
 

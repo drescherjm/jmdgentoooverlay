@@ -1,0 +1,22 @@
+>=sys-libs/zlib-1.1.4 dev-libs/gmp !bacula-clientonly? ( postgres? ( dev-db/postgresql-server ) mysql? ( virtual/mysql ) sqlite3? ( dev-db/sqlite:3 ) !bacula-nodir? ( virtual/mta ) ) qt4? ( x11-libs/qt-svg:4 >=x11-libs/qwt-5 ) ssl? ( dev-libs/openssl ) logwatch? ( sys-apps/logwatch ) tcpd? ( >=sys-apps/tcp-wrappers-7.6 ) readline? ( >=sys-libs/readline-4.1 ) sys-libs/ncurses python? ( dev-lang/python[threads] ) >=dev-vcs/git-1.6
+>=sys-libs/zlib-1.1.4 dev-libs/gmp !bacula-clientonly? ( postgres? ( dev-db/postgresql-server ) mysql? ( virtual/mysql ) sqlite3? ( dev-db/sqlite:3 ) !bacula-nodir? ( virtual/mta ) ) qt4? ( x11-libs/qt-svg:4 >=x11-libs/qwt-5 ) ssl? ( dev-libs/openssl ) logwatch? ( sys-apps/logwatch ) tcpd? ( >=sys-apps/tcp-wrappers-7.6 ) readline? ( >=sys-libs/readline-4.1 ) sys-libs/ncurses python? ( dev-lang/python[threads] ) !bacula-clientonly? ( !bacula-nosd? ( sys-block/mtx app-arch/mt-st ) )
+0
+
+
+http://www.bacula.org/
+GPL-2
+Featureful client/server network backup suite
+amd64 hppa ~ppc sparc x86
+eutils git multilib toolchain-funcs user
+bacula-clientonly bacula-nodir bacula-nosd ipv6 logwatch mysql postgres python qt4 readline +sqlite3 ssl static tcpd X
+
+
+
+2
+
+compile configure install postinst prepare setup unpack
+
+
+
+
+

@@ -1,0 +1,22 @@
+=dev-lang/python-2* >=app-admin/webapp-config-1.50.15
+cvs? ( dev-vcs/rcs ) subversion? ( >=dev-vcs/subversion-1.3.1[python] ) mod_python? ( www-apache/mod_python ) mod_wsgi? ( www-apache/mod_wsgi ) !mod_python? ( !mod_wsgi? ( virtual/httpd-cgi ) ) cvsgraph? ( >=dev-vcs/cvsgraph-1.5.0 ) mysql? ( >=dev-python/mysql-python-0.9.0 ) pygments? ( dev-python/pygments app-misc/mime-types ) =dev-lang/python-2* >=app-admin/webapp-config-1.50.15
+0
+http://viewvc.tigris.org/files/documents/3330/49161/viewvc-1.1.13.tar.gz
+
+http://viewvc.org/
+BSD-2
+ViewVC, a web interface to CVS and Subversion
+amd64 ~ppc x86
+confutils eutils multilib python toolchain-funcs user webapp
+cvs cvsgraph mod_python mod_wsgi mysql pygments +subversion vhosts
+
+
+
+3
+
+install postinst postrm prepare prerm setup
+
+
+
+
+

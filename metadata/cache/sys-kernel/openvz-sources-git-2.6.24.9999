@@ -7,7 +7,7 @@ http://wiki.openvz.org/Main_Page
 GPL-2
 Openvz sources Kernel git
 ~x86 ~amd64
-eutils git multilib portability toolchain-funcs
+eutils git multilib toolchain-funcs user
 
 
 

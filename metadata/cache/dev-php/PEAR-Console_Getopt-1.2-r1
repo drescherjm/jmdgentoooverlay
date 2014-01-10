@@ -1,5 +1,5 @@
-dev-lang/php || ( ( >=dev-php/PEAR-PEAR-1.6.1 <dev-php/PEAR-PEAR-1.8.1 ) >=dev-php/pear-1.8.1 )
-dev-lang/php || ( ( >=dev-php/PEAR-PEAR-1.6.1 <dev-php/PEAR-PEAR-1.8.1 ) >=dev-php/pear-1.8.1 )
+dev-lang/php >=dev-php/pear-1.8.1
+dev-lang/php >=dev-php/pear-1.8.1
 0
 http://pear.php.net/get/Console_Getopt-1.2.tgz
 

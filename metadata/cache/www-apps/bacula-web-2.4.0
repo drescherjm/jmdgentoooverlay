@@ -7,7 +7,7 @@ http://www.bacula.org/
 GPL-2
 Web based (PHP Script) bacula status viewer.
 ~amd64 ~x86
-depend.php eutils multilib phpconfutils portability toolchain-funcs webapp
+depend.php eutils multilib phpconfutils toolchain-funcs user webapp
 mysql postgres vhosts
 
 

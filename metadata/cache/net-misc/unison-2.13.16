@@ -7,7 +7,7 @@ http://www.cis.upenn.edu/~bcpierce/unison/
 GPL-2
 Two-way cross-platform file synchronizer
 x86 ppc ~amd64 sparc
-eutils multilib portability toolchain-funcs
+eutils multilib toolchain-funcs user
 gtk gtk2 static debug threads
 
 

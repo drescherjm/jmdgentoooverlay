@@ -7,7 +7,7 @@ http://mjpeg.sourceforge.net/
 as-is
 JPEG library with mmx enhancements
 -* x86
-eutils flag-o-matic multilib portability toolchain-funcs
+eutils flag-o-matic multilib toolchain-funcs user
 
 
 

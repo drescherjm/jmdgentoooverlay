@@ -1,18 +1,18 @@
-doc? ( app-text/docbook-sgml-utils ) sys-libs/libcap >=sys-kernel/linux-headers-2.6.29 || ( =sys-devel/automake-1.11* ) >=sys-devel/autoconf-2.61 >=sys-devel/libtool-2.2.6b >=dev-vcs/git-1.6
-sys-libs/libcap >=sys-kernel/linux-headers-2.6.29
+sys-libs/libcap app-text/docbook-sgml-utils >=sys-kernel/linux-headers-3.2 >=dev-vcs/git-1.6 || ( >=sys-devel/automake-1.12:1.12 >=sys-devel/automake-1.13:1.13 ) >=sys-devel/autoconf-2.68 sys-devel/libtool
+sys-libs/libcap sys-apps/util-linux app-misc/pax-utils >=sys-apps/openrc-0.9.9.1 virtual/awk
 0
 
 
 http://lxc.sourceforge.net/
 LGPL-3
 LinuX Containers userspace utilities
+~amd64 ~ppc64 ~x86
+autotools eutils flag-o-matic git libtool linux-info multilib multiprocessing toolchain-funcs user versionator
+examples
 
-autotools eutils git libtool linux-info multilib portability toolchain-funcs versionator
-doc examples extra
 
 
-
-2
+4
 
 configure install postinst prepare setup unpack
 

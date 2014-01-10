@@ -7,7 +7,7 @@ http://www.virtualbox.org/
 GPL-2
 VirtualBox kernel modules and user-space tools for Linux guests
 ~amd64 ~x86
-eutils linux-info linux-mod multilib portability toolchain-funcs versionator
+eutils linux-info linux-mod multilib toolchain-funcs user versionator
 X kernel_linux
 
 

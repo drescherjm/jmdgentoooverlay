@@ -79,6 +79,7 @@ done
 
 # adding only compile-time depends
 DEPEND="${RDEPEND} ${DEPEND}
+	virtual/modutils
 	virtual/linux-sources
 	lirc_devices_ftdi? ( dev-embedded/libftdi )
 	lirc_devices_all? ( dev-embedded/libftdi )"

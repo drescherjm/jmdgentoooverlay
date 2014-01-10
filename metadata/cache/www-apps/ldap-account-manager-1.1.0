@@ -7,7 +7,7 @@ http://lam.sf.net
 GPL
 PHP based tool for managing various account types (Unix, Samba, Kolab, ...) in an LDAP directory.
 ~amd64 ~ppc ~x86
-depend.php eutils multilib phpconfutils portability toolchain-funcs webapp
+depend.php eutils multilib phpconfutils toolchain-funcs user webapp
 vhosts
 
 

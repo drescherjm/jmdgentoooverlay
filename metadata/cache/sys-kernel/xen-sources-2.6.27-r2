@@ -1,20 +1,20 @@
->=sys-devel/binutils-2.17 !build? ( sys-apps/sed >=sys-devel/binutils-2.11.90.0.31 )
->=sys-devel/binutils-2.17 !build? ( >=sys-libs/ncurses-5.2 sys-devel/make )
+>=sys-devel/binutils-2.17 !build? ( sys-apps/sed >=sys-devel/binutils-2.11.90.0.31 ) deblob? ( =dev-lang/python-2* )
+>=sys-devel/binutils-2.17 !build? ( >=sys-libs/ncurses-5.2 sys-devel/make dev-lang/perl sys-devel/bc )
 2.6.27-r2
-mirror://kernel/linux/kernel/v2.6/linux-2.6.27.tar.bz2 deblob? ( http://www.fsfla.org/svnwiki/selibre/linux-libre//download/releases/LATEST-2.6.27.N/deblob-2.6.27 mirror://gentoo/deblob-check-2.6.27 ) mirror://gentoo/genpatches-2.6.27-4.base.tar.bz2 http://home.comcast.net/~drescherjm/xen-patches-2.6.27-4.tar.bz2
+mirror://kernel/linux/kernel/v2.6/linux-2.6.27.tar.xz deblob? ( http://www.fsfla.org/svnwiki/selibre/linux-libre//download/releases/LATEST-2.6.27.N/deblob-2.6.27 mirror://gentoo/deblob-check-2.6.27 ) mirror://gentoo/genpatches-2.6.27-4.base.tar.xz http://home.comcast.net/~drescherjm/xen-patches-2.6.27-4.tar.bz2
 binchecks strip
 http://xen.org/
 GPL-2 !deblob? ( freedist )
 Full sources for a dom0/domU Linux kernel to run under Xen
 ~x86 ~amd64
-eutils kernel-2 multilib portability toolchain-funcs versionator
+eutils kernel-2 multilib toolchain-funcs user versionator
 symlink build deblob
 
 !build? ( virtual/dev-manager )
-virtual/linux-sources virtual/alsa
 
 
-compile install postinst preinst setup test unpack
+
+compile install postinst postrm preinst setup test unpack
 
 
 

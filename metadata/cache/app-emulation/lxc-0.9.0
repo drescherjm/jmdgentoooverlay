@@ -1,0 +1,22 @@
+lua? ( >=dev-lang/lua-5.1 ) python? ( >=dev-lang/python-3 ) sys-libs/libcap seccomp? ( sys-libs/libseccomp[static-libs] ) doc? ( app-text/docbook2X ) >=sys-kernel/linux-headers-3.2 || ( >=sys-devel/automake-1.12:1.12 >=sys-devel/automake-1.13:1.13 ) >=sys-devel/autoconf-2.68 sys-devel/libtool python_targets_python3_1? ( dev-lang/python:3.1 ) python_targets_python3_2? ( dev-lang/python:3.2 ) python_targets_python3_3? ( dev-lang/python:3.3 ) dev-python/python-exec[python_targets_python3_1(-)?,python_targets_python3_2(-)?,python_targets_python3_3(-)?,-python_single_target_python3_1(-),-python_single_target_python3_2(-),-python_single_target_python3_3(-)]
+lua? ( >=dev-lang/lua-5.1 ) python? ( >=dev-lang/python-3 ) sys-libs/libcap seccomp? ( sys-libs/libseccomp[static-libs] ) app-misc/pax-utils >=sys-apps/openrc-0.9.9.1 sys-apps/util-linux virtual/awk python_targets_python3_1? ( dev-lang/python:3.1 ) python_targets_python3_2? ( dev-lang/python:3.2 ) python_targets_python3_3? ( dev-lang/python:3.3 ) dev-python/python-exec[python_targets_python3_1(-)?,python_targets_python3_2(-)?,python_targets_python3_3(-)?,-python_single_target_python3_1(-),-python_single_target_python3_2(-),-python_single_target_python3_3(-)]
+0
+http://lxc.sourceforge.net/download/lxc/lxc-0.9.0.tar.gz
+
+http://lxc.sourceforge.net/
+LGPL-3
+LinuX Containers userspace utilities
+~amd64 ~arm ~ppc64 ~x86
+autotools distutils-r1 eutils flag-o-matic libtool linux-info multibuild multilib multiprocessing python-r1 python-utils-r1 toolchain-funcs user versionator
+doc examples lua python seccomp python_targets_python3_1 python_targets_python3_2 python_targets_python3_3
+|| ( python_targets_python3_1 python_targets_python3_2 python_targets_python3_3 )
+
+
+5
+
+compile configure install postinst postrm prepare setup test
+
+
+
+
+

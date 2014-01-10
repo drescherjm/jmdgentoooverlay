@@ -1,0 +1,22 @@
+=x11-drivers/nvidia-drivers-3* || ( >=x11-drivers/nvidia-drivers-300.00 <x11-drivers/nvidia-drivers-295.33[-gtk] ) x11-libs/libX11 x11-libs/libXext x11-libs/libXxf86vm x11-libs/gtk+:2 x11-libs/gdk-pixbuf[X] media-libs/mesa x11-libs/pango[X] x11-libs/libXv x11-libs/libXrandr dev-libs/glib:2 virtual/pkgconfig x11-proto/xproto
+=x11-drivers/nvidia-drivers-3* || ( >=x11-drivers/nvidia-drivers-300.00 <x11-drivers/nvidia-drivers-295.33[-gtk] ) x11-libs/libX11 x11-libs/libXext x11-libs/libXxf86vm x11-libs/gtk+:2 x11-libs/gdk-pixbuf[X] media-libs/mesa x11-libs/pango[X] x11-libs/libXv x11-libs/libXrandr dev-libs/glib:2
+0
+ftp://download.nvidia.com/XFree86/nvidia-settings/nvidia-settings-302.07.tar.bz2
+
+http://www.nvidia.com/
+GPL-2
+NVIDIA Linux X11 Settings Utility
+-* ~amd64 ~x86 ~x86-fbsd
+eutils multilib toolchain-funcs user
+examples
+
+
+
+4
+
+compile install prepare
+
+
+
+
+

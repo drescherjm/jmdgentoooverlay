@@ -1,4 +1,4 @@
-=x11-libs/wxGTK-2.8* x11-libs/gtk+ !dev-util/codeblocks !dev-util/codeblocks-cvs >=sys-devel/autoconf-2.5 >=sys-devel/automake-1.7 >=sys-devel/libtool-1.4 app-arch/zip || ( =sys-devel/automake-1.11* ) >=sys-devel/autoconf-2.61 >=sys-devel/libtool-2.2.6b dev-vcs/subversion net-misc/rsync
+=x11-libs/wxGTK-2.8* x11-libs/gtk+ !dev-util/codeblocks !dev-util/codeblocks-cvs >=sys-devel/autoconf-2.5 >=sys-devel/automake-1.7 >=sys-devel/libtool-1.4 app-arch/zip || ( >=sys-devel/automake-1.12 >=sys-devel/automake-1.13 ) >=sys-devel/autoconf-2.68 sys-devel/libtool dev-vcs/subversion net-misc/rsync
 =x11-libs/wxGTK-2.8* x11-libs/gtk+ !dev-util/codeblocks !dev-util/codeblocks-cvs
 0
 
@@ -7,7 +7,7 @@ http://www.codeblocks.org/
 GPL-2
 free cross-platform C/C++ IDE
 ~x86 ~amd64
-autotools eutils flag-o-matic libtool multilib portability subversion toolchain-funcs wxwidgets
+autotools eutils flag-o-matic libtool multilib multiprocessing subversion toolchain-funcs user wxwidgets
 contrib unicode debug
 
 

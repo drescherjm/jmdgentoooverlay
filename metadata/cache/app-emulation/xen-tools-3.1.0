@@ -1,5 +1,5 @@
-dev-lang/python sys-libs/zlib ioemu? ( media-libs/libsdl ) sys-devel/gcc dev-lang/perl sys-devel/dev86 app-misc/pax-utils doc? ( dev-tex/latex2html media-gfx/transfig ) ioemu? ( x11-proto/xproto net-libs/libvncserver ) >=app-admin/eselect-python-20091230 dev-lang/python
-dev-lang/python sys-libs/zlib ioemu? ( media-libs/libsdl ) sys-apps/iproute2 net-misc/bridge-utils screen? ( app-misc/screen app-admin/logrotate ) || ( sys-fs/udev sys-apps/hotplug ) >=app-admin/eselect-python-20091230 dev-lang/python
+dev-lang/python sys-libs/zlib ioemu? ( media-libs/libsdl ) sys-devel/gcc dev-lang/perl sys-devel/dev86 app-misc/pax-utils doc? ( dev-tex/latex2html media-gfx/transfig ) ioemu? ( x11-proto/xproto net-libs/libvncserver ) dev-lang/python
+dev-lang/python sys-libs/zlib ioemu? ( media-libs/libsdl ) sys-apps/iproute2 net-misc/bridge-utils screen? ( app-misc/screen app-admin/logrotate ) || ( sys-fs/udev sys-apps/hotplug ) dev-lang/python
 0
 http://bits.xensource.com/oss-xen/release/3.1.0/src.tgz/xen-3.1.0-src.tgz
 
@@ -7,7 +7,7 @@ http://www.xensource.com/xen/xen/
 GPL-2
 Xend daemon and tools
 ~amd64 ~x86
-distutils eutils flag-o-matic multilib portability python toolchain-funcs
+distutils eutils flag-o-matic multilib python toolchain-funcs user
 doc debug screen custom-cflags pygrub ioemu
 
 

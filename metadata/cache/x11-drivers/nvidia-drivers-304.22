@@ -1,0 +1,22 @@
+app-admin/eselect-opencl kernel_linux? ( >=sys-libs/glibc-2.6.1 ) multilib? ( app-emulation/emul-linux-x86-xlibs ) X? ( <x11-base/xorg-server-1.12.99 >=app-admin/eselect-opengl-1.0.9 ) kernel_linux? ( virtual/linux-sources virtual/pkgconfig ) kernel_linux? ( virtual/modutils ) sys-apps/sed kernel_linux? ( virtual/linux-sources ) sys-apps/pciutils
+app-admin/eselect-opencl kernel_linux? ( >=sys-libs/glibc-2.6.1 ) multilib? ( app-emulation/emul-linux-x86-xlibs ) X? ( <x11-base/xorg-server-1.12.99 >=app-admin/eselect-opengl-1.0.9 ) acpi? ( sys-power/acpid ) tools? ( dev-libs/atk dev-libs/glib x11-libs/gdk-pixbuf x11-libs/gtk+:2 x11-libs/libX11 x11-libs/libXext x11-libs/pango[X] ) X? ( x11-libs/libXvMC ) kernel_linux? ( virtual/modutils )
+0
+x86? ( http://us.download.nvidia.com/XFree86/Linux-x86/304.22/NVIDIA-Linux-x86-304.22.run ) amd64? ( http://us.download.nvidia.com/XFree86/Linux-x86_64/304.22/NVIDIA-Linux-x86_64-304.22.run ) amd64-fbsd? ( http://us.download.nvidia.com/XFree86/FreeBSD-x86_64/304.22/NVIDIA-FreeBSD-x86_64-304.22.tar.gz ) x86-fbsd? ( http://us.download.nvidia.com/XFree86/FreeBSD-x86/304.22/NVIDIA-FreeBSD-x86-304.22.tar.gz )
+strip
+http://www.nvidia.com/
+NVIDIA
+NVIDIA X11 driver and GLX libraries
+-* ~amd64 ~x86 ~amd64-fbsd ~x86-fbsd
+eutils flag-o-matic linux-info linux-mod multilib nvidia-driver portability toolchain-funcs unpacker user versionator
+acpi multilib kernel_FreeBSD kernel_linux +tools +X kernel_linux
+tools? ( X )
+X? ( >=x11-libs/libvdpau-0.3-r1 )
+
+4
+
+compile install postinst postrm preinst prepare prerm pretend setup unpack
+
+
+
+
+

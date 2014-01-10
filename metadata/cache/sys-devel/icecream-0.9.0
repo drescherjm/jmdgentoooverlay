@@ -1,4 +1,4 @@
-virtual/libc || ( =sys-devel/automake-1.11* ) >=sys-devel/autoconf-2.61 >=sys-devel/libtool-2.2.6b
+virtual/libc || ( >=sys-devel/automake-1.12 >=sys-devel/automake-1.13 ) >=sys-devel/autoconf-2.68 sys-devel/libtool
 virtual/libc
 0
 ftp://ftp.suse.com/pub/projects/icecream/icecc-0.9.0.tar.bz2
@@ -7,7 +7,7 @@ http://en.opensuse.org/Icecream
 GPL-2
 icecc is a program for distributed compiling of C(++) code across several machines.
 ~amd64 ~ppc ~sparc ~x86
-autotools eutils flag-o-matic libtool multilib portability toolchain-funcs
+autotools eutils flag-o-matic libtool multilib multiprocessing toolchain-funcs user
 
 
 

@@ -1,0 +1,22 @@
+<x11-base/xorg-server-1.12.99 kernel_linux? ( >=sys-libs/glibc-2.6.1 ) multilib? ( app-emulation/emul-linux-x86-xlibs ) >=app-admin/eselect-opengl-1.0.9 app-admin/eselect-opencl kernel_linux? ( virtual/linux-sources ) kernel_linux? ( virtual/modutils ) sys-apps/sed kernel_linux? ( virtual/linux-sources ) sys-apps/pciutils
+<x11-base/xorg-server-1.12.99 kernel_linux? ( >=sys-libs/glibc-2.6.1 ) multilib? ( app-emulation/emul-linux-x86-xlibs ) >=app-admin/eselect-opengl-1.0.9 app-admin/eselect-opencl x11-libs/libXvMC acpi? ( sys-power/acpid ) tools? ( dev-libs/atk dev-libs/glib x11-libs/gdk-pixbuf x11-libs/gtk+:2 x11-libs/libX11 x11-libs/libXext x11-libs/pango ) kernel_linux? ( virtual/modutils )
+0
+x86? ( http://us.download.nvidia.com/XFree86/Linux-x86/302.07/NVIDIA-Linux-x86-302.07.run ) amd64? ( http://us.download.nvidia.com/XFree86/Linux-x86_64/302.07/NVIDIA-Linux-x86_64-302.07.run ) amd64-fbsd? ( http://us.download.nvidia.com/XFree86/FreeBSD-x86_64/302.07/NVIDIA-FreeBSD-x86_64-302.07.tar.gz ) x86-fbsd? ( http://us.download.nvidia.com/XFree86/FreeBSD-x86/302.07/NVIDIA-FreeBSD-x86-302.07.tar.gz )
+strip
+http://www.nvidia.com/
+NVIDIA
+NVIDIA X11 driver and GLX libraries
+-* ~amd64 ~x86 ~amd64-fbsd ~x86-fbsd
+eutils flag-o-matic linux-info linux-mod multilib nvidia-driver portability toolchain-funcs unpacker user versionator
+acpi multilib kernel_FreeBSD kernel_linux +tools kernel_linux
+
+>=x11-libs/libvdpau-0.3-r1
+
+2
+
+compile install postinst postrm preinst prepare prerm setup unpack
+
+
+
+
+

@@ -82,4 +82,4 @@ emerge -C dev-libs/rasqal
 emerge -C net-nntp/pan
 emerge -C mail-client/sylpheed
 emerge -C app-text/gtkspell
-
+emerge -C dev-cpp/libglademm

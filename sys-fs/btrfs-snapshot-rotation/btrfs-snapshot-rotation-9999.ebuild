@@ -2,7 +2,15 @@ EAPI=5
 
 inherit git-2
 
-EGIT_REPO_URI="http://github.com/drescherjm/btrfs-snapshot-rotation.git"
+if [ "${PV}" = "9999" ]; then
+        EGIT_REPO_URI="http://github.com/drescherjm/btrfs-snapshot-rotation.git"
+        KEYWORDS=""
+        inherit git-2
+else
+        SRC_URI="https://github.com/drescherjm/btrfs-snapshot-rotation/archive/1.0.0.zip"
+fi
+
+
 
 #MY_PV="${PV/_rc/rc}"
 #MY_P="${PN#nagios-}_v${MY_PV}"

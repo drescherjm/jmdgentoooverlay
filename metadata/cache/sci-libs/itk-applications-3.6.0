@@ -1,5 +1,5 @@
-sys-libs/zlib media-libs/jpeg media-libs/libpng media-libs/tiff >=sci-libs/itk-3.6 >=app-admin/eselect-python-20091230 dev-lang/python
->=dev-util/cmake-2.4 >=app-admin/eselect-python-20091230 dev-lang/python
+sys-libs/zlib media-libs/jpeg media-libs/libpng media-libs/tiff >=sci-libs/itk-3.6 dev-lang/python
+>=dev-util/cmake-2.4 dev-lang/python
 0
 mirror://sourceforge/itk/InsightApplications-3.6.0.tar.gz ftp://public.kitware.com/pub/itk/v3.6/InsightApplications-3.6.0.tar.gz
 
@@ -7,7 +7,7 @@ http://www.itk.org
 BSD
 NLM Insight Segmentation and Registration Toolkit
 ~x86 ~amd64
-distutils eutils flag-o-matic multilib portability python toolchain-funcs versionator
+distutils eutils flag-o-matic multilib python toolchain-funcs user versionator
 
 
 

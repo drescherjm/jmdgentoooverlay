@@ -1,0 +1,22 @@
+virtual/perl-Sys-Syslog virtual/perl-Time-HiRes virtual/perl-Time-Local dev-perl/Authen-Libwrap dev-perl/IO-Tty dev-perl/MD5 dev-perl/Net-SSLeay dev-perl/Authen-PAM dev-perl/Sys-Hostname-Long >=net-dns/dnssec-tools-1.13 !minimal? ( mysql? ( dev-perl/DBD-mysql ) postgres? ( dev-perl/DBD-Pg ) ldap? ( dev-perl/perl-ldap ) dev-perl/XML-Generator dev-perl/XML-Parser ) ssl? ( dev-libs/openssl )
+virtual/perl-Sys-Syslog virtual/perl-Time-HiRes virtual/perl-Time-Local dev-perl/Authen-Libwrap dev-perl/IO-Tty dev-perl/MD5 dev-perl/Net-SSLeay dev-perl/Authen-PAM dev-perl/Sys-Hostname-Long >=net-dns/dnssec-tools-1.13 !minimal? ( mysql? ( dev-perl/DBD-mysql ) postgres? ( dev-perl/DBD-Pg ) ldap? ( dev-perl/perl-ldap ) dev-perl/XML-Generator dev-perl/XML-Parser )
+0
+minimal? ( mirror://sourceforge/webadmin/webmin-1.650-minimal.tar.gz ) !minimal? ( mirror://sourceforge/webadmin/webmin-1.650.tar.gz )
+
+http://www.webmin.com/
+BSD GPL-2
+A web-based Unix systems administration interface
+~amd64 ~x86
+eutils flag-o-matic multilib pam ssl-cert toolchain-funcs user
+minimal +ssl mysql postgres ldap ssl
+
+
+
+3
+
+config install postinst postrm preinst prepare prerm
+
+
+
+
+

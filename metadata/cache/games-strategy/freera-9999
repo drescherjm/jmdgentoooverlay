@@ -7,7 +7,7 @@ http://www.freera.org/
 GPL-2
 Game engine for Red Alert
 ~x86 ~amd64
-base eutils games multilib portability subversion toolchain-funcs
+base eutils games multilib subversion toolchain-funcs user
 demo doc tools
 
 

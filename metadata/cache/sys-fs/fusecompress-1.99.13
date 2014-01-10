@@ -7,7 +7,7 @@ http://miio.net/fusecompress/
 GPL-2
 Transparent filesystem compression via FUSE. Supports lzo, gzip and bzip2
 ~x86 ~amd64
-eutils multilib portability toolchain-funcs
+eutils multilib toolchain-funcs user
 
 
 

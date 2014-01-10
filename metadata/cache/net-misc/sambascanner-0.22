@@ -1,13 +1,13 @@
 >=net-fs/samba-3
 >=net-fs/samba-3
 0
-http://www.johannes-bauer.com/sambascanner/SambaScanner-0.22.tar.bz2
+http://www.johannes-bauer.com/software/sambascanner/SambaScanner-0.22.tar.bz2
 
 http://www.johannes-bauer.com/sambascanner/
 GPL-2
 a tool to search a whole samba network for files
 ~x86 ~amd64
-eutils multilib portability toolchain-funcs
+eutils multilib toolchain-funcs user
 debug linguas_de
 
 

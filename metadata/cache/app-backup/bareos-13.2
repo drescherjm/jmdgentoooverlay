@@ -1,0 +1,22 @@
+>=sys-libs/zlib-1.1.4 readline? ( >=sys-libs/readline-4.1 ) tcpd? ( >=sys-apps/tcp-wrappers-7.6 ) gnome? ( gnome-base/libgnome ) gnome? ( app-admin/gnomesu ) !bareos-clientonly? ( sqlite? ( =dev-db/sqlite-2* ) mysql? ( >=dev-db/mysql-3.23 ) postgres? ( >=dev-db/postgresql-7.4.0 ) sys-apps/mtx ) X? ( virtual/x11 ) wxwindows? ( >=x11-libs/wxGTK-2.4.2 ) virtual/mta dev-libs/gmp app-text/tetex dev-tex/latex2html
+>=sys-libs/zlib-1.1.4 readline? ( >=sys-libs/readline-4.1 ) tcpd? ( >=sys-apps/tcp-wrappers-7.6 ) gnome? ( gnome-base/libgnome ) gnome? ( app-admin/gnomesu ) !bareos-clientonly? ( sqlite? ( =dev-db/sqlite-2* ) mysql? ( >=dev-db/mysql-3.23 ) postgres? ( >=dev-db/postgresql-7.4.0 ) sys-apps/mtx ) X? ( virtual/x11 ) wxwindows? ( >=x11-libs/wxGTK-2.4.2 ) virtual/mta dev-libs/gmp app-text/tetex dev-tex/latex2html !bareos-clientonly? ( sys-apps/mtx app-arch/mt-st )
+0
+mirror://sourceforge/bareos/bareos-13.2.tar.gz
+
+http://www.bareos.org/
+GPL-2
+featureful client/server network backup suite
+x86 ~ppc ~sparc ~amd64
+eutils multilib toolchain-funcs user
+readline tcpd gnome mysql sqlite X static postgres wxwindows bareos-clientonly bareos-split
+
+
+
+
+
+compile install postinst
+
+
+
+
+

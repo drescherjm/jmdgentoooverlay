@@ -1,4 +1,4 @@
-app-arch/lzma-utils !virtual/os-headers
+app-arch/lzma-utils
 
 0
 mirror://gentoo/gentoo-headers-base-2.6.26.tar.lzma mirror://gentoo/gentoo-headers-2.6.26-1.tar.lzma
@@ -7,14 +7,14 @@ http://www.kernel.org/ http://www.gentoo.org/
 GPL-2
 Linux system headers
 -* ~alpha ~amd64 ~arm ~hppa ~ia64 ~m68k ~mips ~ppc ~ppc64 ~s390 ~sh ~sparc ~x86
-eutils kernel-2 multilib portability toolchain-funcs versionator
+eutils kernel-2 multilib toolchain-funcs user versionator
 
 
 
-virtual/os-headers
 
 
-compile install postinst preinst setup test unpack
+
+compile install postinst postrm preinst setup test unpack
 
 
 

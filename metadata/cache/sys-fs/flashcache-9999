@@ -7,7 +7,7 @@ http://www.github.com/facebook/flashcache
 GPL-2
 FlashCache provides a way to use a SSD as a cache for slower disks
 ~amd64 ~x86
-eutils git linux-info linux-mod multilib portability toolchain-funcs versionator
+eutils git linux-info linux-mod multilib toolchain-funcs user versionator
 kernel_linux
 
 

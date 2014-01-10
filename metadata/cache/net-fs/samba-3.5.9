@@ -1,0 +1,22 @@
+dev-libs/popt !net-fs/samba-client !net-fs/samba-libs !net-fs/samba-server !net-fs/cifs-utils sys-libs/talloc sys-libs/tdb virtual/libiconv ads? ( virtual/krb5 sys-fs/e2fsprogs client? ( sys-apps/keyutils ) ) avahi? ( net-dns/avahi[dbus] ) caps? ( sys-libs/libcap ) client? ( !net-fs/mount-cifs dev-libs/iniparser ) cluster? ( >=dev-db/ctdb-1.0.114_p1 ) cups? ( net-print/cups ) debug? ( dev-libs/dmalloc ) fam? ( virtual/fam ) ldap? ( net-nds/openldap ) pam? ( virtual/pam winbind? ( dev-libs/iniparser ) ) readline? ( >=sys-libs/readline-5.2 ) syslog? ( virtual/logger )
+dev-libs/popt !net-fs/samba-client !net-fs/samba-libs !net-fs/samba-server !net-fs/cifs-utils sys-libs/talloc sys-libs/tdb virtual/libiconv ads? ( virtual/krb5 sys-fs/e2fsprogs client? ( sys-apps/keyutils ) ) avahi? ( net-dns/avahi[dbus] ) caps? ( sys-libs/libcap ) client? ( !net-fs/mount-cifs dev-libs/iniparser ) cluster? ( >=dev-db/ctdb-1.0.114_p1 ) cups? ( net-print/cups ) debug? ( dev-libs/dmalloc ) fam? ( virtual/fam ) ldap? ( net-nds/openldap ) pam? ( virtual/pam winbind? ( dev-libs/iniparser ) ) readline? ( >=sys-libs/readline-5.2 ) syslog? ( virtual/logger )
+0
+mirror://samba/samba-3.5.9.tar.gz http://dev.gentoo.org/~dagger/files/smb_traffic_analyzer_v2.diff.bz2
+test
+http://www.samba.org/
+GPL-3
+Library bits of the samba network filesystem
+~alpha ~amd64 ~arm ~hppa ~ia64 ~mips ~ppc ~ppc64 ~s390 ~sh ~sparc ~x86
+eutils flag-o-matic multilib pam toolchain-funcs user versionator
+acl addns ads +aio avahi caps +client cluster cups debug doc examples fam ldap ldb +netapi pam quota +readline +server +smbclient smbsharemodes smbtav2 swat syslog winbind
+ads? ( ldap ) swat? ( server )
+
+
+4
+
+compile configure install postinst prepare setup
+
+
+
+
+

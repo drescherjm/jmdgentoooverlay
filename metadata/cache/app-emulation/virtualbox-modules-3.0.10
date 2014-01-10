@@ -7,7 +7,7 @@ http://www.virtualbox.org/
 GPL-2
 Kernel Modules for Virtualbox
 ~amd64 x86
-eutils linux-info linux-mod multilib portability toolchain-funcs versionator
+eutils linux-info linux-mod multilib toolchain-funcs user versionator
 kernel_linux
 
 

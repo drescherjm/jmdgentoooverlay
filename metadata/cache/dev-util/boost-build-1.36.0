@@ -7,7 +7,7 @@ http://www.boost.org/tools/build/v2/index.html
 Boost-1.0
 A system for large project software construction, which is simple to use and powerful.
 ~alpha ~amd64 ~arm ~hppa ~ia64 ~mips ~ppc ~ppc64 ~s390 ~sh ~sparc ~x86
-eutils flag-o-matic multilib portability toolchain-funcs versionator
+eutils flag-o-matic multilib toolchain-funcs user versionator
 examples python
 
 

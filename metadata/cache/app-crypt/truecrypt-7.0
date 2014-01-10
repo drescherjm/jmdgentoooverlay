@@ -7,7 +7,7 @@ http://www.truecrypt.org/
 truecrypt-2.8
 Free open-source disk encryption software
 ~amd64 ~ppc ~x86
-eutils flag-o-matic linux-info multilib portability toolchain-funcs versionator wxwidgets
+eutils flag-o-matic linux-info multilib toolchain-funcs user versionator wxwidgets
 X
 
 

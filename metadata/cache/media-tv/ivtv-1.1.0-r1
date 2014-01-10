@@ -7,7 +7,7 @@ http://www.ivtvdriver.org
 GPL-2
 ivtv driver for Hauppauge PVR PCI cards
 ~amd64 ~ppc ~x86
-eutils linux-info linux-mod multilib portability toolchain-funcs versionator
+eutils linux-info linux-mod multilib toolchain-funcs user versionator
 perl kernel_linux
 
 =media-tv/pvr-firmware-20070217 perl? ( dev-perl/Video-Frequencies dev-perl/Video-ivtv dev-perl/Config-IniFiles virtual/perl-Getopt-Long dev-perl/perl-tk )

@@ -1,0 +1,9 @@
+dn: uid=dgur_laptop$,ou=Hosts,dc=radimg,dc=pitt,dc=edu
+changetype: modify
+replace: gidNumber
+gidNumber: 515
+
+dn: uid=radimgws41$,ou=Hosts,dc=radimg,dc=pitt,dc=edu
+changetype: modify
+replace: gidNumber
+gidNumber: 515

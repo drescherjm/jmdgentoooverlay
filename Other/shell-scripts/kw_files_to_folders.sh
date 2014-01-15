@@ -12,7 +12,7 @@ function update {
 update /etc/portage/package.keywords 
 update /etc/portage/package.mask
 update /etc/portage/package.unmask 
-
+update /etc/portage/package.use
 
 
 

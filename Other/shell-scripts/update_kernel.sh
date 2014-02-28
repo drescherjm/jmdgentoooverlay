@@ -5,7 +5,7 @@ if [ ! -f /usr/src/linux/.config ] ; then
 	zcat /proc/config.gz > /usr/src/linux/.config
 fi
 
-if [! -e /etc/zfs/vdev_id.conf ]; then
+if [ ! -e /etc/zfs/vdev_id.conf ]; then
   genkernel $@ all --save-config --color --install
   emerge @module-rebuild
 else

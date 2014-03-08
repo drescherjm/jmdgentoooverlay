@@ -23,10 +23,10 @@ S="${WORKDIR}/${MY_P}"
 
 src_compile() {
 cat - > "${T}"/50${PN} <<EOF
-Cmnd_Alias NAGIOS_PLUGINS_JMD_CMDS = /usr/lib/nagios/plugins/check_zfs
-User_Alias NAGIOS_PLUGINS_JMD_USERS = nagios
+Cmnd_Alias NAGIOS_PLUGINS_CHECK_ZFS_CMDS = /usr/lib/nagios/plugins/check_zfs
+User_Alias NAGIOS_PLUGINS_CHECK_ZFS_USERS = nagios
 
-NAGIOS_PLUGINS_JMD_USERS ALL=(root) NOPASSWD: NAGIOS_PLUGINS_JMD_CMDS
+NAGIOS_PLUGINS_CHECK_ZFS_USERS ALL=(root) NOPASSWD: NAGIOS_PLUGINS_CHECK_ZFS_CMDS
 EOF
 
 cat - > "${T}"/91-zfs-permissions.rules <<EOF

@@ -23,10 +23,10 @@ S="${WORKDIR}/${MY_P}"
 
 src_compile() {
 cat - > "${T}"/50${PN} <<EOF
-Cmnd_Alias NAGIOS_PLUGINS_JMD_CMDS = /usr/lib/nagios/plugins/check_smartmon
-User_Alias NAGIOS_PLUGINS_JMD_USERS = nagios
+Cmnd_Alias NAGIOS_PLUGINS_CHECK_SMARTMON_CMDS = /usr/lib/nagios/plugins/check_smartmon
+User_Alias NAGIOS_PLUGINS_CHECK_SMARTMON_USERS = nagios
 
-NAGIOS_PLUGINS_JMD_USERS ALL=(root) NOPASSWD: NAGIOS_PLUGINS_JMD_CMDS
+NAGIOS_PLUGINS_CHECK_SMARTMON_USERS ALL=(root) NOPASSWD: NAGIOS_PLUGINS_CHECK_SMARTMON_CMDS
 EOF
 }
 

@@ -1,0 +1,195 @@
+# ChangeLog for sys-kernel/vanilla-sources
+# Copyright 1999-2014 Gentoo Foundation; Distributed under the GPL v2
+# $Header: /var/cvsroot/gentoo-x86/sys-kernel/vanilla-sources/ChangeLog,v 1.1273 2014/03/31 18:51:22 mpagano Exp $
+
+*vanilla-sources-3.13.8 (31 Mar 2014)
+*vanilla-sources-3.10.35 (31 Mar 2014)
+*vanilla-sources-3.4.85 (31 Mar 2014)
+
+  31 Mar 2014; Michael Pagano <mpagano@gentoo.org>
+  -vanilla-sources-3.4.84.ebuild, +vanilla-sources-3.4.85.ebuild,
+  -vanilla-sources-3.10.34.ebuild, +vanilla-sources-3.10.35.ebuild,
+  -vanilla-sources-3.13.7.ebuild, +vanilla-sources-3.13.8.ebuild:
+  Version bumps. Remove old
+
+  31 Mar 2014; Michael Pagano <mpagano@gentoo.org>
+  vanilla-sources-3.14.0.ebuild:
+  Support just released deblob script for 3.14.0
+
+*vanilla-sources-3.14.0 (31 Mar 2014)
+
+  31 Mar 2014; Mike Pagano <mpagano@gentoo.org> +vanilla-sources-3.14.0.ebuild:
+  Version bump. Deblob script not available at this momment. Will update ebuild
+  when it is. Ping me on IRC if you see it before me.
+
+*vanilla-sources-3.12.15 (27 Mar 2014)
+
+  27 Mar 2014; Agostino Sarubbo <ago@gentoo.org>
+  +vanilla-sources-3.12.15.ebuild, -vanilla-sources-3.12.14.ebuild:
+  Version bump for the 3.12 series, remove old.
+
+*vanilla-sources-3.10.34 (24 Mar 2014)
+*vanilla-sources-3.13.7 (24 Mar 2014)
+*vanilla-sources-3.4.84 (24 Mar 2014)
+
+  24 Mar 2014; Agostino Sarubbo <ago@gentoo.org>
+  +vanilla-sources-3.10.34.ebuild, +vanilla-sources-3.13.7.ebuild,
+  +vanilla-sources-3.4.84.ebuild, -vanilla-sources-3.10.33.ebuild,
+  -vanilla-sources-3.13.6.ebuild, -vanilla-sources-3.4.83.ebuild:
+  Version bump for the 3.4 / 3.10 / 3.13 series, remove old.
+
+*vanilla-sources-3.4.83 (12 Mar 2014)
+
+  12 Mar 2014; Agostino Sarubbo <ago@gentoo.org> +vanilla-sources-3.4.83.ebuild,
+  -vanilla-sources-3.4.82.ebuild:
+  Version bump for the 3.4 series, remove old.
+
+*vanilla-sources-3.12.14 (10 Mar 2014)
+
+  10 Mar 2014; Mike Pagano <mpagano@gentoo.org>
+  -vanilla-sources-3.12.13.ebuild, +vanilla-sources-3.12.14.ebuild:
+  Version bump. Remove old
+
+*vanilla-sources-3.13.6 (09 Mar 2014)
+*vanilla-sources-3.10.33 (09 Mar 2014)
+
+  09 Mar 2014; Agostino Sarubbo <ago@gentoo.org>
+  +vanilla-sources-3.10.33.ebuild, +vanilla-sources-3.13.6.ebuild,
+  -vanilla-sources-3.10.32.ebuild, -vanilla-sources-3.13.5.ebuild:
+  Version bump for the 3.10 / 3.13 series, remove old.
+
+*vanilla-sources-3.13.5 (22 Feb 2014)
+
+  22 Feb 2014; Greg Kroah-Hartman <gregkh@gentoo.org>
+  +vanilla-sources-3.13.5.ebuild, -vanilla-sources-3.13.4.ebuild:
+  3.13.4 version bump
+
+*vanilla-sources-3.12.13 (22 Feb 2014)
+
+  22 Feb 2014; Greg Kroah-Hartman <gregkh@gentoo.org>
+  +vanilla-sources-3.12.13.ebuild, -vanilla-sources-3.12.12.ebuild:
+  3.12.13 version bump
+
+*vanilla-sources-3.10.32 (22 Feb 2014)
+
+  22 Feb 2014; Greg Kroah-Hartman <gregkh@gentoo.org>
+  +vanilla-sources-3.10.32.ebuild, -vanilla-sources-3.10.31.ebuild:
+  3.10.32 version bump
+
+*vanilla-sources-3.4.82 (22 Feb 2014)
+
+  22 Feb 2014; Greg Kroah-Hartman <gregkh@gentoo.org>
+  +vanilla-sources-3.4.82.ebuild, -vanilla-sources-3.4.81.ebuild:
+  3.4.82 kernel version bump
+
+*vanilla-sources-3.13.4 (20 Feb 2014)
+*vanilla-sources-3.12.12 (20 Feb 2014)
+*vanilla-sources-3.10.31 (20 Feb 2014)
+*vanilla-sources-3.4.81 (20 Feb 2014)
+
+  20 Feb 2014; Mike Pagano <mpagano@gentoo.org> -vanilla-sources-3.4.80.ebuild,
+  +vanilla-sources-3.4.81.ebuild, -vanilla-sources-3.10.30.ebuild,
+  +vanilla-sources-3.10.31.ebuild, -vanilla-sources-3.12.11.ebuild,
+  +vanilla-sources-3.12.12.ebuild, -vanilla-sources-3.13.3.ebuild,
+  +vanilla-sources-3.13.4.ebuild:
+  Version bumps, remove old
+
+*vanilla-sources-3.2.55 (16 Feb 2014)
+
+  16 Feb 2014; Agostino Sarubbo <ago@gentoo.org> +vanilla-sources-3.2.55.ebuild,
+  -vanilla-sources-3.2.54.ebuild:
+  Version bump for the 3.2 series, remove old.
+
+*vanilla-sources-3.13.3 (14 Feb 2014)
+*vanilla-sources-3.12.11 (14 Feb 2014)
+*vanilla-sources-3.10.30 (14 Feb 2014)
+*vanilla-sources-3.4.80 (14 Feb 2014)
+
+  14 Feb 2014; Michael Pagano <mpagano@gentoo.org>
+  -vanilla-sources-3.4.79.ebuild, +vanilla-sources-3.4.80.ebuild,
+  -vanilla-sources-3.10.29.ebuild, +vanilla-sources-3.10.30.ebuild,
+  -vanilla-sources-3.12.10.ebuild, +vanilla-sources-3.12.11.ebuild,
+  -vanilla-sources-3.13.2.ebuild, +vanilla-sources-3.13.3.ebuild:
+  Version bumps, remove old
+
+*vanilla-sources-3.4.79 (11 Feb 2014)
+
+  11 Feb 2014; Mike Pagano <mpagano@gentoo.org> -vanilla-sources-3.4.78.ebuild,
+  +vanilla-sources-3.4.79.ebuild:
+  Version bump, remove old
+
+*vanilla-sources-3.13.2 (06 Feb 2014)
+*vanilla-sources-3.4.78 (06 Feb 2014)
+
+  06 Feb 2014; Greg Kroah-Hartman <gregkh@gentoo.org>
+  +vanilla-sources-3.13.2.ebuild, +vanilla-sources-3.4.78.ebuild,
+  -vanilla-sources-3.13.1.ebuild, -vanilla-sources-3.4.77.ebuild:
+  3.12.2 and 3.4.78 version bumps
+
+*vanilla-sources-3.10.29 (06 Feb 2014)
+
+  06 Feb 2014; Greg Kroah-Hartman <gregkh@gentoo.org>
+  +vanilla-sources-3.10.29.ebuild, -vanilla-sources-3.10.28.ebuild:
+  3.10.29 version bump
+
+*vanilla-sources-3.12.10 (06 Feb 2014)
+
+  06 Feb 2014; Greg Kroah-Hartman <gregkh@gentoo.org>
+  +vanilla-sources-3.12.10.ebuild, -vanilla-sources-3.12.9.ebuild:
+  3.12.10 version bump
+
+*vanilla-sources-3.13.1 (29 Jan 2014)
+
+  29 Jan 2014; Mike Pagano <mpagano@gentoo.org> -vanilla-sources-3.13.0.ebuild,
+  +vanilla-sources-3.13.1.ebuild:
+  Version bump
+
+*vanilla-sources-3.10.28 (26 Jan 2014)
+*vanilla-sources-3.12.9 (26 Jan 2014)
+
+  26 Jan 2014; Agostino Sarubbo <ago@gentoo.org>
+  +vanilla-sources-3.10.28.ebuild, +vanilla-sources-3.12.9.ebuild,
+  -vanilla-sources-3.10.27.ebuild, -vanilla-sources-3.11.10.ebuild,
+  -vanilla-sources-3.12.8.ebuild:
+  Version bump for the 3.10 / 3.12 series, remove old.
+
+*vanilla-sources-3.13.0 (20 Jan 2014)
+
+  20 Jan 2014; Michael Pagano <mpagano@gentoo.org>
+  +vanilla-sources-3.13.0.ebuild:
+  Version bump
+
+*vanilla-sources-3.12.8 (16 Jan 2014)
+*vanilla-sources-3.10.27 (16 Jan 2014)
+*vanilla-sources-3.4.77 (16 Jan 2014)
+
+  16 Jan 2014; Michael Pagano <mpagano@gentoo.org>
+  -vanilla-sources-3.4.76.ebuild, +vanilla-sources-3.4.77.ebuild,
+  -vanilla-sources-3.10.26.ebuild, +vanilla-sources-3.10.27.ebuild,
+  -vanilla-sources-3.12.7.ebuild, +vanilla-sources-3.12.8.ebuild:
+  Version bumps. Remove old.
+
+*vanilla-sources-3.12.7 (10 Jan 2014)
+*vanilla-sources-3.10.26 (10 Jan 2014)
+
+  10 Jan 2014; Michael Pagano <mpagano@gentoo.org>
+  -vanilla-sources-3.10.25.ebuild, +vanilla-sources-3.10.26.ebuild,
+  -vanilla-sources-3.12.6.ebuild, +vanilla-sources-3.12.7.ebuild:
+  Verison bumps, remove old
+
+*vanilla-sources-3.4.76 (09 Jan 2014)
+
+  09 Jan 2014; Agostino Sarubbo <ago@gentoo.org> +vanilla-sources-3.4.76.ebuild,
+  -vanilla-sources-3.4.75.ebuild:
+  Version bump for the 3.4 series, remove old.
+
+*vanilla-sources-3.2.54 (03 Jan 2014)
+
+  03 Jan 2014; Agostino Sarubbo <ago@gentoo.org> +vanilla-sources-3.2.54.ebuild,
+  -vanilla-sources-3.2.53.ebuild:
+  Version bump for the 3.2 series, remove old.
+
+  01 Jan 2014; Andreas K. Huettel <dilfridge@gentoo.org> +ChangeLog-2013:
+  Rotate ChangeLog
+
+  For previous entries, please see ChangeLog-2013.

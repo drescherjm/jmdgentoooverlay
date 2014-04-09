@@ -8,6 +8,8 @@ emerge -eF world 2>&1 >> /var/log/update_distfiles.txt &
 
 sh /root/shell-scripts/run_on_all_no_pass.sh emerge --sync
 
-sh /root/shell-scripts/run_on_all_no_pass.sh rsync -ax --delete --progress rsync://192.168.2.184:/layman  /usr/portage/local/layman
+sh /root/shell-scripts/run_on_all_no_pass.sh rsync -ax --delete --progress rsync://192.168.2.184:/layman/  /var/lib/layman/
 
 sh /root/shell-scripts/run_on_all_no_pass.sh rsync -ax --delete --progress rsync://192.168.2.184/gentoo-keywords/ /usr/local/gentoo-keywords/
+
+sh /root/shell-scripts/run_on_all_no_pass.sh /root/shell-scripts/glsa-fix.sh

@@ -10,6 +10,8 @@ function process_device()
         echo
 }
 
+date
+
 for a in /dev/sd?;
 do
         device=${a/\/dev\//}

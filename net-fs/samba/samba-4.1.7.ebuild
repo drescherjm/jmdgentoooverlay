@@ -19,14 +19,13 @@ LICENSE="GPL-3"
 
 SLOT="0"
 
-IUSE="acl addns ads aio avahi client cluster cups dmapi fam gnutls iprint
-ldap quota selinux syslog test winbind"
+IUSE="acl addns ads aio avahi bi_heimdal client cluster cups dmapi fam gnutls iprint ldap quota selinux syslog test winbind"
 
 # sys-apps/attr is an automagic dependency (see bug #489748)
 # dev-libs/libaio is an automagic dependency (see bug #489764)
 # sys-libs/pam is an automagic dependency (see bug #489770)
 CDEPEND="${PYTHON_DEPS}
-	>=app-crypt/heimdal-1.5[-ssl]
+	!bi_heimdal? ( >=app-crypt/heimdal-1.5[-ssl] )
 	dev-libs/iniparser
 	dev-libs/libaio
 	dev-libs/popt
@@ -43,6 +42,7 @@ CDEPEND="${PYTHON_DEPS}
 	virtual/pam
 	acl? ( virtual/acl )
 	addns? ( net-dns/bind-tools[gssapi] )
+        bi_heimdal? ( !>=app-crypt/heimdal-1.5[-ssl] )
 	cluster? ( >=dev-db/ctdb-1.0.114_p1 )
 	cups? ( net-print/cups )
 	dmapi? ( sys-apps/dmapi )
@@ -93,6 +93,7 @@ src_configure() {
 	local myconf=''
 	use "cluster" && myconf+=" --with-ctdb-dir=/usr"
 	use "test" && myconf+=" --enable-selftest"
+        use "bi_heimdal" && myconf+=" --bundled-libraries=heimdal"
 	myconf="${myconf} \
 		--enable-fhs \
 		--sysconfdir=/etc \

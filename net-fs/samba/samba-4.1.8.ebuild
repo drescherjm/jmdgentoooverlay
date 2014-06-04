@@ -106,8 +106,6 @@ src_configure() {
 		--disable-rpath-install \
 		--nopyc \
 		--nopyo \
-		--bundled-libraries=ntdb \
-		--builtin-libraries=ntdb \
 		$(use_with addns dnsupdate) \
 		$(use_with acl acl-support) \
 		$(use_with ads) \

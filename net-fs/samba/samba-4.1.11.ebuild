@@ -36,7 +36,7 @@ CDEPEND="${PYTHON_DEPS}
 	sys-libs/libcap
         >=sys-libs/ntdb-1.0[python]
 	>=sys-libs/ldb-1.1.16
-	>=sys-libs/tdb-1.2.11[python]
+	>=sys-libs/tdb-1.2.13[python]
 	>=sys-libs/talloc-2.0.8[python]
 	>=sys-libs/tevent-0.9.18
 	sys-libs/zlib

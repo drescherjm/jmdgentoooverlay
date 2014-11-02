@@ -16,8 +16,7 @@ app-portage/eix
 app-portage/elogv
 app-portage/gentoolkit
 app-portage/layman
-dev-util/lafilefixer
->=sys-apps/portage-2.2_rc67"
+>=sys-apps/portage-2.2"
 
 src_install() {
         exeinto /usr/bin

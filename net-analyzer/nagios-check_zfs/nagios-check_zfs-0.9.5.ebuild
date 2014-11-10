@@ -1,6 +1,6 @@
 EAPI=5
 
-inherit multilib
+inherit multilib eutils
 
 MY_PV="${PV/_rc/rc}"
 MY_P="${PN#nagios-}_v${MY_PV}"
@@ -59,5 +59,7 @@ src_unpack() {
         # The file in the download is the perl text file so we do not do the standard unpack
         mkdir -p "${S}"
 	cp "${DISTDIR}/${A}" "${S}"
+        cd "${S}"
         epatch ${FILESDIR}/zfs_0.6.4-zpool_list.patch
+
 }

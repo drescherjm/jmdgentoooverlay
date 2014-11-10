@@ -1,0 +1,33 @@
+--- check_zfs.orig	2014-11-10 15:43:31.208078020 -0500
++++ check_zfs	2014-11-10 15:52:04.612010388 -0500
+@@ -501,8 +501,11 @@
+ my $cap="";
+ my $health="";
+ my $dmge="";
++my $expand="";
++my $frag="";
+ 
+ my $dedup=0;
++my $expandz=0;
+ 
+ if ($verbosity < 1 || $verbosity > 3)
+ {
+@@ -545,9 +548,17 @@
+ 		$dedup = 1;
+ 		next;
+ 	}
++	elsif (/^NAME\s+SIZE\s+ALLOC\s+FREE\s+EXPANDSZ\s+FRAG\s+CAP\s+DEDUP\s+HEALTH\s+ALTROOT/)
++	{
++		$expandz = 1;
++		next;
++	}
+ 	if (/^${pool}\s+/)
+ 	{
+-		if ($dedup)
++                if ($expandz) {
++			($dummy, $size, $used, $avail, $expand, $frag, $cap, $deduprat, $health) = split(/\s+/);                     
++                }
++		elsif ($dedup)
+ 		{
+ 			($dummy, $size, $used, $avail, $cap, $deduprat, $health) = split(/\s+/);
+ 		}

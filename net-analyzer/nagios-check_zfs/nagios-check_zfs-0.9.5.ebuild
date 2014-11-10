@@ -59,4 +59,5 @@ src_unpack() {
         # The file in the download is the perl text file so we do not do the standard unpack
         mkdir -p "${S}"
 	cp "${DISTDIR}/${A}" "${S}"
+        epatch ${FILESDIR}/zfs_0.6.4-zpool_list.patch
 }

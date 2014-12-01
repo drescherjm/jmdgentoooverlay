@@ -68,7 +68,6 @@ CONFDIR="${FILESDIR}/$(get_version_component_range 1-2)"
 # sys-apps/dmapi is an automagic dependency (see bug #474492)
 PATCHES=(
 	"${FILESDIR}/${PN}-4.0.19-automagic_aio_fix.patch"
-	"${FILESDIR}/named.conf.dlz.patch"
 )
 
 

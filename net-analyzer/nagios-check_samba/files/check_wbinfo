@@ -1,0 +1,14 @@
+################# Check Winbind ####################
+# Plugin do Nagios desenvolvido por Andre L. Facina #
+#####################################################
+#!/bin/sh
+
+command=`wbinfo -t 2>&1 /dev/null`
+
+if [ $? != 0 ]; then
+echo "[wbinfo -t] Failed Winbind"
+exit 2
+else 
+echo "[wbinfo -t] Checking succeeded!"
+exit 0
+fi

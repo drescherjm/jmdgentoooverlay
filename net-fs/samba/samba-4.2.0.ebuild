@@ -19,7 +19,7 @@ LICENSE="GPL-3"
 
 SLOT="0"
 
-IUSE="acl addns ads aio avahi bi_heimdal client cluster cups dmapi fam gnutls iprint ldap quota selinux syslog test winbind"
+IUSE="acl addns ads aio avahi bi_heimdal client cluster cups dmapi fam iprint ldap minimal quota selinux syslog test winbind"
 
 # sys-apps/attr is an automagic dependency (see bug #489748)
 # dev-libs/libaio is an automagic dependency (see bug #489764)
@@ -48,8 +48,9 @@ CDEPEND="${PYTHON_DEPS}
 	cups? ( net-print/cups )
 	dmapi? ( sys-apps/dmapi )
 	fam? ( virtual/fam )
-	gnutls? ( dev-libs/libgcrypt:0
+	!minimal? ( dev-libs/libgcrypt:0
 		>=net-libs/gnutls-1.4.0 )
+        minimal? ( ldap? ( !net-nds/openldap[gnutls] ) )
 	ldap? ( net-nds/openldap )
 	selinux? ( sec-policy/selinux-samba )"
 DEPEND="${CDEPEND}
@@ -116,7 +117,7 @@ src_configure() {
 		$(use_enable cups) \
 		$(use_with dmapi) \
 		$(use_with fam) \
-		$(use_enable gnutls) \
+		$(use_enable !minimal gnutls) \
 		$(use_enable iprint) \
 		$(use_with ldap) \
 		--with-pam \

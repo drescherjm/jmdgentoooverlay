@@ -24,6 +24,9 @@ IUSE="acl addns ads aio avahi bi_heimdal client cluster cups dmapi fam iprint ld
 # sys-apps/attr is an automagic dependency (see bug #489748)
 # dev-libs/libaio is an automagic dependency (see bug #489764)
 # sys-libs/pam is an automagic dependency (see bug #489770)
+	#>=sys-libs/ldb-1.1.16
+	#>=sys-libs/tevent-0.9.18
+
 CDEPEND="${PYTHON_DEPS}
 	!bi_heimdal? ( >=app-crypt/heimdal-1.5[-ssl] )
 	dev-libs/iniparser
@@ -35,10 +38,8 @@ CDEPEND="${PYTHON_DEPS}
 	sys-apps/attr
 	sys-libs/libcap
         >=sys-libs/ntdb-1.0[python]
-	>=sys-libs/ldb-1.1.16
 	>=sys-libs/tdb-1.2.11[python]
 	>=sys-libs/talloc-2.0.8[python]
-	>=sys-libs/tevent-0.9.18
 	sys-libs/zlib
 	virtual/pam
 	acl? ( virtual/acl )

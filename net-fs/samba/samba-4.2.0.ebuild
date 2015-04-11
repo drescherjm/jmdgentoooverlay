@@ -5,7 +5,7 @@
 EAPI=5
 PYTHON_COMPAT=( python2_{6,7} )
 
-inherit python-r1 waf-utils multilib linux-info systemd
+inherit python-r1 waf-utils multilib multilib-minimal linux-info systemd
 
 MY_PV="${PV/_rc/rc}"
 MY_P="${PN}-${MY_PV}"
@@ -37,22 +37,22 @@ CDEPEND="${PYTHON_DEPS}
 	dev-python/subunit
 	sys-apps/attr
 	sys-libs/libcap
-        >=sys-libs/ntdb-1.0[python]
-	>=sys-libs/tdb-1.2.11[python]
-	>=sys-libs/talloc-2.0.8[python]
+        >=sys-libs/ntdb-1.0[${MULTILIB_USEDEP}]
+	>=sys-libs/tdb-1.3.0[${MULTILIB_USEDEP}]
+	>=sys-libs/talloc-2.0.8-r1[${MULTILIB_USEDEP}]
 	sys-libs/zlib
 	virtual/pam
 	acl? ( virtual/acl )
 	addns? ( net-dns/bind-tools[gssapi] )
         bi_heimdal? ( !>=app-crypt/heimdal-1.5[-ssl] )
-	cluster? ( >=dev-db/ctdb-1.0.114_p1 )
+	cluster? ( >=dev-db/ctdb-1.13 )
 	cups? ( net-print/cups )
 	dmapi? ( sys-apps/dmapi )
 	fam? ( virtual/fam )
 	!minimal? ( dev-libs/libgcrypt:0
 		>=net-libs/gnutls-1.4.0 )
-        minimal? ( ldap? ( !net-nds/openldap[gnutls] ) )
-	ldap? ( net-nds/openldap )
+        minimal? ( ldap? ( !net-nds/openldap[${MULTILIB_USEDEP}] ) )
+	ldap? ( net-nds/openldap[${MULTILIB_USEDEP}] )
 	selinux? ( sec-policy/selinux-samba )"
 DEPEND="${CDEPEND}
 	virtual/pkgconfig"
@@ -77,6 +77,11 @@ PATCHES=(
 
 WAF_BINARY="${S}/buildtools/bin/waf"
 
+src_prepare() {
+	multilib_copy_sources
+}
+
+
 pkg_setup() {
 	python_export_best
 	if use aio; then
@@ -93,8 +98,8 @@ pkg_setup() {
 	fi
 }
 
-src_configure() {
-	local myconf=''
+multilib_src_configure() {
+	local myconf=()
 	use "cluster" && myconf+=" --with-ctdb-dir=/usr"
 	use "test" && myconf+=" --enable-selftest"
         use "bi_heimdal" && myconf+=" --bundled-libraries=heimdal"
@@ -109,22 +114,22 @@ src_configure() {
 		--disable-rpath-install \
 		--nopyc \
 		--nopyo \
-		$(use_with addns dnsupdate) \
-		$(use_with acl acl-support) \
-		$(use_with ads) \
-		$(use_with aio aio-support) \
-		$(use_enable avahi) \
-		$(use_with cluster cluster-support) \
-		$(use_enable cups) \
-		$(use_with dmapi) \
-		$(use_with fam) \
-		$(use_enable !minimal gnutls) \
-		$(use_enable iprint) \
-		$(use_with ldap) \
+		$(multilib_native_use_with addns dnsupdate) \
+		$(multilib_native_use_with acl acl-support) \
+		$(multilib_native_use_with ads) \
+		$(multilib_native_use_with aio aio-support) \
+		$(multilib_native_use_enable avahi) \
+		$(multilib_native_use_with cluster cluster-support) \
+		$(multilib_native_use_enable cups) \
+		$(multilib_native_use_with dmapi) \
+		$(multilib_native_use_with fam) \
+		$(multilib_native_use_enable !minimal gnutls) \
+		$(multilib_native_use_enable iprint) \
+		$(multilib_native_use_with ldap) \
 		--with-pam \
 		--with-pam_smbpass \
-		$(use_with quota quotas) \
-		$(use_with syslog) \
+		$(multilib_native_use_with quota quotas) \
+		$(multilib_native_use_with syslog) \
 		$(use_with winbind)
 		"
 	use "ads" && myconf+=" --with-shared-modules=idmap_ad"

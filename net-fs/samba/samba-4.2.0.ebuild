@@ -57,7 +57,9 @@ CDEPEND="${PYTHON_DEPS}
 DEPEND="${CDEPEND}
 	virtual/pkgconfig"
 RDEPEND="${CDEPEND}
-	client? ( net-fs/cifs-utils[ads?] )"
+	client? ( net-fs/cifs-utils[ads?] )
+	!sys-libs/tevent
+"
 
 REQUIRED_USE="ads? ( acl ldap )"
 

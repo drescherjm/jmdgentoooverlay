@@ -7,7 +7,7 @@ fi
 
 # Now add the date and machine name to the local version
 sed -i '/CONFIG_LOCALVERSION/d' /usr/src/linux/.config
-cho CONFIG_LOCALVERSION=\"-$(uname -n)-$(date +%Y%m%d)\" >> /usr/src/linux/.config
+echo CONFIG_LOCALVERSION=\"-$(uname -n)-$(date +%Y%m%d)\" >> /usr/src/linux/.config
 
 if [ ! -e /etc/zfs/vdev_id.conf ]; then
   genkernel $@ all --save-config --color --install

@@ -20,4 +20,4 @@ sh run_on_all_no_pass.sh emerge -ep world >> /root/fetch.txt
 
 sh /root/shell-scripts/run_on_all_no_pass.sh /root/shell-scripts/glsa-fix.sh
 
-sh /root/shell-scripts/run_on_all_no_pass.sh rsync -ax --delete --progress rsync://192.168.2.83/clamav-db /var/lib/clamav
+sh /root/shell-scripts/run_on_all_no_pass.sh rsync -ax --delete --progress rsync://192.168.2.83/clamav-db/ /var/lib/clamav/

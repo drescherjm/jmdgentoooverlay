@@ -26,6 +26,7 @@ IUSE="acl addns ads aio avahi bi_heimdal client cluster cups dmapi fam iprint ld
 # sys-libs/pam is an automagic dependency (see bug #489770)
 	#>=sys-libs/ldb-1.1.16
 	#>=sys-libs/tevent-0.9.18
+	#>=sys-libs/talloc-2.0.8[python]
 
 CDEPEND="${PYTHON_DEPS}
 	!bi_heimdal? ( >=app-crypt/heimdal-1.5[-ssl] )
@@ -39,7 +40,6 @@ CDEPEND="${PYTHON_DEPS}
 	sys-libs/libcap
         >=sys-libs/ntdb-1.0[python]
 	>=sys-libs/tdb-1.2.11[python]
-	>=sys-libs/talloc-2.0.8[python]
 	sys-libs/zlib
 	virtual/pam
 	acl? ( virtual/acl )
@@ -57,7 +57,9 @@ CDEPEND="${PYTHON_DEPS}
 DEPEND="${CDEPEND}
 	virtual/pkgconfig"
 RDEPEND="${CDEPEND}
-	client? ( net-fs/cifs-utils[ads?] )"
+	client? ( net-fs/cifs-utils[ads?] )
+	!sys-libs/tevent
+	!sys-libs/talloc"
 
 REQUIRED_USE="ads? ( acl ldap )"
 

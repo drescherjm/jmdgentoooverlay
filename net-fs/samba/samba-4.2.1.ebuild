@@ -24,10 +24,7 @@ IUSE="acl addns ads aio avahi bi_heimdal client cluster cups dmapi fam iprint ld
 # sys-apps/attr is an automagic dependency (see bug #489748)
 # dev-libs/libaio is an automagic dependency (see bug #489764)
 # sys-libs/pam is an automagic dependency (see bug #489770)
-	#>=sys-libs/ldb-1.1.16
-	#>=sys-libs/tevent-0.9.18
-	#>=sys-libs/talloc-2.0.8[python]
-
+	
 CDEPEND="${PYTHON_DEPS}
 	!bi_heimdal? ( >=app-crypt/heimdal-1.5[-ssl] )
 	dev-libs/iniparser
@@ -40,6 +37,9 @@ CDEPEND="${PYTHON_DEPS}
 	sys-libs/libcap
         >=sys-libs/ntdb-1.0[python]
 	>=sys-libs/tdb-1.2.11[python]
+	>=sys-libs/ldb-1.1.16
+	>=sys-libs/tevent-0.9.18
+	>=sys-libs/talloc-2.0.8[python]
 	sys-libs/zlib
 	virtual/pam
 	acl? ( virtual/acl )
@@ -58,8 +58,7 @@ DEPEND="${CDEPEND}
 	virtual/pkgconfig"
 RDEPEND="${CDEPEND}
 	client? ( net-fs/cifs-utils[ads?] )
-	!sys-libs/tevent
-	!sys-libs/talloc"
+	bi_heimdal? ( !app-crypt/heimdal )"
 
 REQUIRED_USE="ads? ( acl ldap )"
 
@@ -125,6 +124,7 @@ src_configure() {
 		$(use_with ldap) \
 		--with-pam \
 		--with-pam_smbpass \
+		--bundled-libraries={!talloc,!tevent,!ldb} \
 		$(use_with quota quotas) \
 		$(use_with syslog) \
 		$(use_with winbind)

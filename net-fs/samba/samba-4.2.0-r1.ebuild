@@ -3,9 +3,9 @@
 # $Header: /var/cvsroot/gentoo-x86/net-fs/samba/samba-4.1.5-r1.ebuild,v 1.1 2014/03/06 09:35:19 polynomial-c Exp $
 
 EAPI=5
-PYTHON_COMPAT=( python2_{6,7} )
+PYTHON_COMPAT=( python2_7 )
 
-inherit python-r1 waf-utils multilib multilib-minimal linux-info systemd
+inherit waf-utils python-single-r1 multilib multilib-minimal linux-info systemd
 
 MY_PV="${PV/_rc/rc}"
 MY_P="${PN}-${MY_PV}"
@@ -78,6 +78,10 @@ PATCHES=(
 #        "${FILESDIR}/${PN}-4.1.14-libsystemd.patch"
 )
 
+MULTILIB_WRAPPED_HEADERS=(
+        # python goes only for native
+        /usr/include/pytalloc.h
+)
 
 WAF_BINARY="${S}/buildtools/bin/waf"
 
@@ -171,8 +175,6 @@ src_test() {
 }
 
 pkg_postinst() {
-	elog "This is is the first stable release of Samba 4.0"
-
 	ewarn "Be aware the this release contains the best of all of Samba's"
 	ewarn "technology parts, both a file server (that you can reasonably expect"
 	ewarn "to upgrade existing Samba 3.x releases to) and the AD domain"
@@ -180,6 +182,6 @@ pkg_postinst() {
 
 	elog "For further information and migration steps make sure to read "
 	elog "http://samba.org/samba/history/${P}.html "
-	elog "http://samba.org/samba/history/${PN}-4.0.0.html and"
+	elog "http://samba.org/samba/history/${PN}-4.2.0.html and"
 	elog "http://wiki.samba.org/index.php/Samba4/HOWTO "
 }

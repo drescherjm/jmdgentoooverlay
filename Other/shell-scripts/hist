@@ -1,0 +1,202 @@
+bconsole
+cd
+cd /usr/src/
+ls
+rm -rf linux-3.17.5 linux-3.16.7-gentoo
+dmesg
+ls -al
+mythtv-status 
+snapraid sync
+snapraid -e fix
+reboot
+exit
+screen -r -d
+screen 
+uanme -a
+uname  -a
+zpool status
+zpool export zfs_4t2
+zpool export zfs_4t1
+zpool export zfs_2t0
+zpool import zfs_2t0
+zpool import zfs_4t1
+zpool import zfs_4t2
+uname -a
+rm /etc/zfs/zpool.cache 
+snapraid scrub -p 5
+snapraid diff
+snapraid sync && snapraid scrub
+snapraid scrub && snapraid -e fix
+snapraid status
+cd /auto/mythtv_isos/current/
+cd ..
+cd old/
+rm days_2014120*
+rm days_2014121*
+rm days_20141222.iso days_20141224.iso
+equery list mythtv
+equery list mythtv -p
+echo =media-tv/mythtv-0.27.4_p20150124* >> /etc/portage/package.keywords/local 
+emerge -av mythtv
+equery list mythplugins -p
+echo =media-plugins/mythplugins-0.27.4_p20150124* >> /etc/portage/package.keywords/local 
+emerge -av mythtv mythplugins 
+echo '>=media-tv/mythtv-0.27.4_p20150124 -hls -theora -vorbis
+echo ">=media-tv/mythtv-0.27.4_p20150124 -hls -theora -vorbis" >> /etc/portage/package.use/local 
+cd /usr/bin/
+ls -al mythffmpeg
+ls -al mythffmpeg -al
+rm mythffmpeg
+ln -s ffmpeg mythffmpeg
+top
+cd /mnt/mythtv/work/
+ls -al work/
+ls -al work/mythburn.iso 
+ls -alh /auto/mythtv_isos/old/
+mv work/mythburn.iso /auto/mythtv_isos/current/
+cat config/mydata.xml 
+mv /auto/mythtv_isos/current/mythburn.iso days_20150106.iso
+mv days_20150106.iso /auto/mythtv_isos/current/
+ls -alh work/
+mv work/mythburn.iso /auto/mythtv_isos/current/days_20150108.iso
+smartctl --all /dev/sda
+smartctl --all /dev/sdb
+smartctl --all /dev/sdc
+smartctl --all /dev/sdd
+ls -alh work/mythburn.iso 
+mv work/mythburn.iso /auto/mythtv_isos/current/days_20150112.iso
+ls work/
+emerge --sync
+s
+ls work/ -al
+mv work/mythburn.iso /auto/mythtv_isos/current/days_20150114.iso
+mv work/mythburn.iso /auto/mythtv_isos/current/days_20150116.iso
+mv work/mythburn.iso /auto/mythtv_isos/current/days_20150120.iso
+mv work/mythburn.iso /auto/mythtv_isos/current/days_20150122.iso
+mv work/mythburn.iso /auto/mythtv_isos/current/days_20150126.iso
+mv work/mythburn.iso /auto/mythtv_isos/current/days_20150128.iso
+smbstatus 
+eselect kernel list
+uptime 
+'snapraid -e fix'
+snapraid scrub
+emerge -av gentoo-sources 
+emerge -C =gentoo-sources-3.17.7
+cd shell-scripts/
+rm -rf /usr/src/linux-3.17.7-gentoo
+sh update_kernel.sh --menuconfig
+cmake --help-variable-list
+cmake --help-variable CMAKE_SYSTEM_LIBRARY_PATH
+cmake --help-variable CMAKE_SYSTEM_PACKAGE_PATH
+cmake --help-variable CMAKE_SYSTEM_PRFIX_PATH
+cmake --help-variable CMAKE_SYSTEM_PREFIX_PATH
+cmake --help-variable CMAKE_SYSTEM_MODULE_PATH
+cmake --help-variable CMAKE_MODULE_PATH
+cd /boot
+cd /auto/mythtv_isos/
+cd current/
+mv days_2015010* ../old/
+/etc/init.d/mythbackend restart
+ping 192.168.1.126
+mv days_20150112.iso ../old/
+mv days_20150114.iso ../old/
+mv days_20150116.iso ../old/
+mv days_20150120.iso ../old/
+mv days_20150122.iso ../old/
+lxc-start --name vs_svn
+nano -wc update_kernel.sh 
+zcat /proc/config.gz > /usr/src/linux/.config
+nano -wc /usr/src/linux/.config 
+grep CONFIG_LOCALVERSION=
+grep CONFIG_LOCALVERSION= /usr/src/linux/.config 
+sh update_kernel.sh 
+grep CONFIG_LOCALVERSION= /usr/src/linux/.config
+grep CONFIG_LOCALVERSION= /usr/src/linux/.config | sed 's#[0-9]\"$#g'
+grep CONFIG_LOCALVERSION= /usr/src/linux/.config | sed 's#[0-9]\"$##g'
+grep CONFIG_LOCALVERSION= /usr/src/linux/.config | sed 's#[0-9][0-9]\"$##g'
+grep CONFIG_LOCALVERSION= /usr/src/linux/.config | sed 's#[0-9][0-9][0-9]\"$##g'
+grep CONFIG_LOCALVERSION= /usr/src/linux/.config | sed 's#[0-9][0-9][0-9][0-9]\"$##g'
+grep CONFIG_LOCALVERSION= /usr/src/linux/.config | sed 's#[0-9][0-9][0-9][0-9][0-9]\"$##g'
+grep CONFIG_LOCALVERSION= /usr/src/linux/.config | sed 's#[0-9]{8}\"$##g'
+grep CONFIG_LOCALVERSION= /usr/src/linux/.config | sed 's#[0-9]{7}\"$##g'
+grep CONFIG_LOCALVERSION= /usr/src/linux/.config | sed 's#[0-9]{2}\"$##g'
+grep CONFIG_LOCALVERSION= /usr/src/linux/.config | sed 's#[0-9]\{7}\"$##g'
+grep CONFIG_LOCALVERSION= /usr/src/linux/.config | sed 's#[0-9]\{7\}\"$##g'
+grep CONFIG_LOCALVERSION= /usr/src/linux/.config | sed 's#[0-9]\{8\}\"$##g'
+grep CONFIG_LOCALVERSION= /usr/src/linux/.config | sed 's#[0-9]\{8\}\"$#\"#g'
+grep CONFIG_LOCALVERSION= /usr/src/linux/.config | sed 's#[0-9]\{9\}\"$#\"#g'
+grep CONFIG_LOCALVERSION= /usr/src/linux/.config | sed -e 's#[0-9]\{8\}\"$##g' -e 's#\"$#"g'
+grep CONFIG_LOCALVERSION= /usr/src/linux/.config | sed -e 's#[0-9]\{8\}\"$##g' -e 's#\"$##g'
+grep CONFIG_LOCALVERSION= /usr/src/linux/.config | sed -e 's#[0-9]\{9\}\"$##g' -e 's#\"$##g'
+grep CONFIG_LOCALVERSION= /usr/src/linux/.config | sed -e 's#[0-9]\{8\}\"$##g' -e 's#\"$##g' -e 's#\-$##g'
+emerge -1v app-portage/cpuinfo2cpuflags
+eselect news read
+cpuinfo2cpuflags-x86
+echo 'CPU_FLAGS_X86="mmx mmxext sse sse2 sse3 sse4_1 ssse3"' >> /etc/portage/make.conf
+emerge -auDvN system
+cd /mnt/mythtv/jmd0_vg_2t0_0/videos/
+ls -alrt
+df -h .
+mount
+mount | grep mythdata
+lvs
+ls -al .unre*
+ls -al *.unre*
+ls -alh *.unre*
+rm 4204_20140908020000.mpg.unrecoverable.unrecoverable
+cd /usr/local/gentoo-keywords/
+git pull
+emerge -av btrfs-progs
+cd /var/log
+less messages
+slapcat 
+less dead.letter 
+lxc-start vs_mail
+lxc-start --name vs_mail
+git add base/package.keywords/system 
+git commit -m "update bash"
+git push
+cd base/package.keywords/l
+cd base/package.keywords
+cat system 
+nano -wc system 
+equery l git
+git add system 
+git commit -m "cleanup old packages"
+equery list lxc
+git add system
+lcx-start --name vs_svn
+equery l mysql -p
+cd /etc/cron.daily/
+./mythtv.cron 
+cat mythtv.cron 
+mysqlrepair -u mythtv -pmythtv --all-databases
+cd /zfs/zfs_4t0
+cd mythtv_isos/
+cd mythdata/
+cd database/
+rm mythtv-2014-*
+mkdir tmp
+rmdir tmp/
+mv mythtv-2015-02-03.bz2 mythtv-2015-02-03.0.bz2 
+rc-status 
+/etc/init.d/mysql start
+/etc/init.d/mysql zap
+mysql
+mysqldump
+tail /var/log/messages
+tail /var/log/messages -n 100
+/etc/init.d/mysql status
+cd /var/lib/mysql/
+cd mysql/
+mysql_upgrade 
+mysql -u mythconverg
+mysql_upgrade -u mythconverg -p
+emerge -av mysql-5.5*
+emerge -av =mysql-5.5*
+emerge -C virtual/mysql-5.6*
+rc-status mysql
+screen
+zpool status | less
+mount /boot
+eclean-kernel --ask -n 4

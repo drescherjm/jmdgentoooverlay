@@ -142,7 +142,7 @@ multilib_src_configure() {
 		waf-utils_src_configure ${myconf}
 }
 
-src_install() {
+multilib_src_install() {
 	waf-utils_src_install
 
 	# install ldap schema for server (bug #491002)

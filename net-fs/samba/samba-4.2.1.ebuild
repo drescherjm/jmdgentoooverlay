@@ -36,10 +36,10 @@ CDEPEND="${PYTHON_DEPS}
 	sys-apps/attr
 	sys-libs/libcap
         >=sys-libs/ntdb-1.0[python]
-	>=sys-libs/tdb-1.2.11[python]
-	>=sys-libs/ldb-1.1.16
-	>=sys-libs/tevent-0.9.18
-	>=sys-libs/talloc-2.0.8[python]
+	>=sys-libs/tdb-1.3.4[python]
+	>=sys-libs/ldb-1.1.20
+	>=sys-libs/tevent-0.9.24
+	>=sys-libs/talloc-2.1.2[python]
 	sys-libs/zlib
 	virtual/pam
 	acl? ( virtual/acl )

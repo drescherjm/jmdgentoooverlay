@@ -12,7 +12,7 @@ SRC_URI="mirror://sourceforge/${PN}/${P}.tar.bz2"
 LICENSE="as-is"
 SLOT="0"
 KEYWORDS="~amd64 ~x86"
-IUSE="doc examples expat java jpeg pdf python vtk test uuid wxwindows zlib"
+IUSE="doc examples expat java jpeg pdf python vtk test uuid wxwindows zlib libxml2"
 
 RDEPEND="expat? ( dev-libs/expat )
 	java? ( >=virtual/jre-1.5 )
@@ -22,7 +22,8 @@ RDEPEND="expat? ( dev-libs/expat )
 	wxwindows? ( =x11-libs/wxGTK-2.8* )
 	zlib? ( sys-libs/zlib )
 	uuid? ( dev-libs/ossp-uuid )
-	jpeg? ( virtual/jpeg )"
+	jpeg? ( virtual/jpeg )
+        libxml2? ( dev-libs/libxml2 )"
 DEPEND="${RDEPEND}
 	java? ( >=virtual/jdk-1.5 dev-lang/swig )
 	>=dev-util/cmake-2.4"
@@ -56,6 +57,7 @@ src_compile() {
 	use uuid && CMAKE_VARIABLES="${CMAKE_VARIABLES} -DGDCM_USE_SYSTEM_UUID:BOOL=ON"
 	use python && CMAKE_VARIABLES="${CMAKE_VARIABLES} -DGDCM_WRAP_PYTHON:BOOL=ON"
 	use vtk && CMAKE_VARIABLES="${CMAKE_VARIABLES} -DGDCM_USE_VTK:BOOL=ON -DVTK_DIR:PATH=/usr/lib"
+        use libxml2 && CMAKE_VARIABLES="${CMAKE_VARIABLES} -DGDCM_USE_SYSTEM_LIBXML2:BOOL=ON"
 	
 	if use test; then
 	  	CMAKE_VARIABLES="${CMAKE_VARIABLES} -DGDCM_BUILD_TESTING:BOOL=ON"

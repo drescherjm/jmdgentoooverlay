@@ -16,7 +16,7 @@ sh /root/shell-scripts/run_on_all_no_pass.sh rsync -ax --delete --progress rsync
 
 sh run_on_all_no_pass.sh emerge -uDvNFp world >> /root/fetch.txt
 sh run_on_all_no_pass.sh emerge -uDvNFp system >> /root/fetch.txt
-sh run_on_all_no_pass.sh emerge -ep world >> /root/fetch.txt
+sh run_on_all_no_pass.sh emerge -eFp world >> /root/fetch.txt
 
 sh /root/shell-scripts/run_on_all_no_pass.sh /root/shell-scripts/glsa-fix.sh
 

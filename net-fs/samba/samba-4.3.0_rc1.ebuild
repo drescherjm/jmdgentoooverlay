@@ -115,6 +115,7 @@ src_configure() {
 		--nopyc \
 		--nopyo \
 		--bundled-libraries=NONE \
+		--builtin-libraries=NONE \
 		$(use_with addns dnsupdate) \
 		$(use_with acl acl-support) \
 		$(use_with ads) \

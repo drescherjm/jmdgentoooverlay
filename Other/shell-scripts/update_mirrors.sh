@@ -6,6 +6,4 @@ sed -i '/GENTOO_MIRRORS/d' /etc/portage/make.conf
 
 #GENTOO_MIRRORS="http://gentoo.mirrors.pair.com/ ftp://gentoo.mirrors.pair.com/ http://gentoo.cites.uiuc.edu/pub/gentoo/ http://mirror.datapipe.net/gentoo"
 
-GENTOO_MIRRORS="ftp://gentoo.mirrors.pair.com/ http://gentoo.mirrors.tds.net/gentoo ftp://mirror.leaseweb.com/$
-
-
+echo GENTOO_MIRRORS=\"ftp://gentoo.mirrors.pair.com/ http://gentoo.mirrors.tds.net/gentoo ftp://mirror.leaseweb.com/gentoo/ http://gentoo.osuosl.org/\" >> /etc/portage/make.conf

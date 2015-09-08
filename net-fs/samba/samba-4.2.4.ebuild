@@ -10,7 +10,7 @@ inherit python-r1 waf-utils multilib linux-info systemd
 MY_PV="${PV/_rc/rc}"
 MY_P="${PN}-${MY_PV}"
 
-SRC_URI="https://download.samba.org/samba/ftp/rc/${MY_P}.tar.gz"
+SRC_URI="mirror://samba/stable/${MY_P}.tar.gz"
 KEYWORDS="~amd64 ~hppa ~x86"
 
 DESCRIPTION="Samba Suite Version 4"
@@ -36,10 +36,10 @@ CDEPEND="${PYTHON_DEPS}
 	sys-apps/attr
 	sys-libs/libcap
         >=sys-libs/ntdb-1.0[python,${PYTHON_USEDEP}]
-	!sys-libs/tdb
-	!sys-libs/ldb
-	!sys-libs/tevent
-	!sys-libs/talloc
+	>=sys-libs/tdb-1.3.6[python,${PYTHON_USEDEP}]
+	>=sys-libs/ldb-1.1.20
+	>=sys-libs/tevent-0.9.25
+	>=sys-libs/talloc-2.1.2[python,${PYTHON_USEDEP}]
 	sys-libs/zlib
 	virtual/pam
 	acl? ( virtual/acl )
@@ -114,6 +114,7 @@ src_configure() {
 		--disable-rpath-install \
 		--nopyc \
 		--nopyo \
+		--bundled-libraries=NONE \
 		$(use_with addns dnsupdate) \
 		$(use_with acl acl-support) \
 		$(use_with ads) \
@@ -128,6 +129,7 @@ src_configure() {
 		$(use_with ldap) \
 		--with-pam \
 		--with-pam_smbpass \
+		--bundled-libraries={!talloc,!tevent,!ldb} \
 		$(use_with quota quotas) \
 		$(use_with syslog) \
 		$(use_with winbind)

@@ -1,9 +1,10 @@
+#echo GENTOO_MIRRORS=\"ftp://gentoo.mirrors.pair.com/ http://gentoo.mirrors.tds.net/gentoo ftp://mirror.leaseweb.com/gentoo/ http://gentoo.osuosl.org/\" >> /etc/portage/make.conf
 #!/bin/sh
 
 sed -i '/GENTOO_MIRRORS/d' /etc/portage/make.conf
 
-#echo "GENTOO_MIRRORS=\"http://gentoo.mirrors.pair.com/ ftp://gentoo.mirrors.pair.com/ http://mirror.mcs.anl.gov/pub/gentoo/ http://mirror.lug.udel.edu/pub/gentoo/ ftp://mirror.mcs.anl.gov/pub/gentoo/\"" >> /etc/portage/make.conf
+#echo GENTOO_MIRRORS=\"ftp://gentoo.mirrors.pair.com/ http://gentoo.mirrors.tds.net/gentoo ftp://mirror.leaseweb.com/gentoo/ http://gentoo.osuosl.org/\" >> /etc/portage/make.conf
 
-#GENTOO_MIRRORS="http://gentoo.mirrors.pair.com/ ftp://gentoo.mirrors.pair.com/ http://gentoo.cites.uiuc.edu/pub/gentoo/ http://mirror.datapipe.net/gentoo"
+echo GENTOO_MIRRORS="http://gentoo.mirrors.pair.com/ http://mirror.leaseweb.com/gentoo/ http://mirrors.rit.edu/gentoo/ ftp://gentoo.mirrors.pair.com/" >> /etc/portage/make.conf
 
-echo GENTOO_MIRRORS=\"ftp://gentoo.mirrors.pair.com/ http://gentoo.mirrors.tds.net/gentoo ftp://mirror.leaseweb.com/gentoo/ http://gentoo.osuosl.org/\" >> /etc/portage/make.conf
+

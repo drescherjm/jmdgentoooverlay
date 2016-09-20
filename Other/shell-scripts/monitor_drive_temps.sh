@@ -166,7 +166,9 @@ if [ ${warn} -gt 0 ] || [ ${crit} -gt 0 ]; then
 
         log_echo "CRITICAL: There are ${crit} drives are are over their threshold temperatures on the second try. The system will shutdown to reduce the chance of damage to the drives."
         sync;sync
-        ${SHUTDOWN} -h 0
+        ${SHUTDOWN} -h 0 
+	sleep 30s
+	${SHUTDOWN} -h 0
       fi
     fi
   else

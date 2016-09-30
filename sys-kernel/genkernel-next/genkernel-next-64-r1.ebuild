@@ -5,7 +5,7 @@
 EAPI=6
 
 if [[ "${PV}" != "9999" ]]; then
-	SRC_URI="https://github.com/drescherjm/genkernel-next/archive/v${PVR}.tar.gz -> ${PN}-${PVR}.tar.gz"
+	SRC_URI="https://github.com/drescherjm/genkernel-next/archive/v${PVR}.tar.gz -> ${PF}.tar.gz"
 	RESTRICT="mirror"
 	KEYWORDS="~alpha amd64 ~arm ~ia64 ppc ~ppc64 x86"
 else

@@ -1,5 +1,5 @@
 EAPI=5
-inherit webapp depend.php eutils
+inherit webapp  eutils
 
 DESCRIPTION="Web based (PHP Script) bacula status viewer."
 HOMEPAGE="http://www.bacula-web.org"

@@ -1,5 +1,5 @@
 EAPI=2
-inherit webapp depend.php eutils
+inherit webapp eutils
 
 MY_PV=${PV/_beta/-b}
 MY_P=bacula-${MY_PV}

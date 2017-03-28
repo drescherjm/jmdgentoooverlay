@@ -31,7 +31,7 @@ fi
 
 cd ${DISTDIR}
 
-wget --timeout=2 -t 2 -c -i ${tempfile}
+wget  --no-dns-cache  --timeout=5 -t 2 -c -i ${tempfile}
 
 if [ -e ${tempfile} ]; then
   rm ${tempfile}

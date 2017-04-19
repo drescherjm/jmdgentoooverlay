@@ -18,7 +18,7 @@ DEPEND=""
 RDEPEND="dev-lang/perl
         dev-perl/Readonly
         dev-perl/List-MoreUtils
-	dev-perl/Nagios-Plugin"
+	dev-perl/Monitoring-Plugin"
 
 S="${WORKDIR}/${MY_P}"
 

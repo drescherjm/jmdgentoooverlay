@@ -1,10 +1,9 @@
-#!/sbin/runscript
-# Copyright 1999-2013 Gentoo Foundation
+#!/sbin/openrc-run
+# Copyright 1999-2016 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License, v2 or later
-# $Header: /var/cvsroot/gentoo-x86/net-fs/samba/files/4.1/samba4.initd-r1,v 1.2 2013/10/29 13:54:28 polynomial-c Exp $
 
 extra_started_commands="reload"
-piddir="/var/run"
+piddir="/run/samba"
 
 depend() {
 	after slapd

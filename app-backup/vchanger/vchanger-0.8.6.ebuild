@@ -2,7 +2,7 @@
 # Distributed under the terms of the GNU General Public License v2
 # $Header: $
 
-EAPI="2"
+EAPI="3"
 
 DESCRIPTION="Vchanger emulates a magazine-based tape autoloader using disk partitions on fixed or removable disk drives as virtual magazines and files on those partitions as virtual tape volumes."
 HOMEPAGE="http://sourceforge.net/projects/vchanger/"

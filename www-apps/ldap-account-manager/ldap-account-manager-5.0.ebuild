@@ -2,7 +2,9 @@
 # Distributed under the terms of the GNU General Public License v2
 # $Header:
 
-inherit webapp depend.php
+EAPI="3"
+
+inherit webapp
 
 DESCRIPTION="PHP based tool for managing various account types (Unix, Samba, Kolab, ...) in an LDAP directory."
 HOMEPAGE="http://lam.sf.net"
@@ -12,20 +14,21 @@ KEYWORDS="~amd64 ~ppc ~x86"
 
 IUSE=""
 
-DEPEND=">=dev-lang/php-5.3.2"
+DEPEND="virtual/httpd-php
+	|| ( <dev-lang/php-5.3[pcre] >=dev-lang/php-5.3 )"
 RDEPEND="www-servers/apache"
 
 pkg_setup() {
-        has_php
+#        has_php
         webapp_pkg_setup
 
 	# Make sure php was built with the necessary USE flags.
 	require_php_with_use ldap xml mhash zip
 }
 
-src_compile() {
-        has_php
-}
+#src_compile() {
+#        has_php
+#}
 
 # Webserver user and group, here for Apache by default
 HTTPD_USER="${HTTPD_USER:-apache}"

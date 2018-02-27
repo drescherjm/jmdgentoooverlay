@@ -2,7 +2,7 @@
 # Distributed under the terms of the GNU General Public License v2
 # $Header: $
 
-EAPI="3"
+EAPI="6"
 
 DESCRIPTION="Vchanger emulates a magazine-based tape autoloader using disk partitions on fixed or removable disk drives as virtual magazines and files on those partitions as virtual tape volumes."
 HOMEPAGE="http://sourceforge.net/projects/vchanger/"
@@ -17,6 +17,11 @@ DEPEND=""
 RDEPEND="${DEPEND}"
 
 S=${WORKDIR}/${PN}
+
+PATCHES=(
+	"${FILESDIR}"/${PV}-fix-label-order.patch
+	"${FILESDIR}"/${PV}-fix-label-order-doc.patch
+)
 
 src_install() {
 	emake DESTDIR=${D} install

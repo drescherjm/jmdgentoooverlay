@@ -1,0 +1,36 @@
+From 256bb9bda3632265b803df3e6e19edc159c741e1 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Wanderlei=20H=C3=BCttel?= <wanderlei.huttel@gmail.com>
+Date: Thu, 11 Aug 2016 08:18:10 -0300
+Subject: [PATCH] A little modification to create more standard labels
+
+---
+ src/diskchanger.cpp | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/src/diskchanger.cpp b/src/diskchanger.cpp
+index 9ec678b..a4da259 100644
+--- a/src/diskchanger.cpp
++++ b/src/diskchanger.cpp
+@@ -713,7 +713,7 @@ int DiskChanger::CreateVolumes(int bay, int count, int start, const char *label_
+    tStrip(tRemoveEOL(label_prefix));
+    if (label_prefix.empty()) {
+       /* Default prefix is storage-name_magazine-number */
+-      tFormat(label_prefix, "%s_%d", conf.storage_name.c_str(), bay);
++      tFormat(label_prefix, "%s_%d_", conf.storage_name.c_str(), bay);
+    }
+    if (start < 0) {
+       /* Find highest uniqueness number for this filename prefix */
+@@ -724,11 +724,11 @@ int DiskChanger::CreateVolumes(int bay, int count, int start, const char *label_
+       start = i;
+    }
+    for (i = 0; i < count; i++) {
+-      tFormat(label, "%s_%d", label_prefix.c_str(), start);
++      tFormat(label, "%s%04d", label_prefix.c_str(), start);
+       if (!magazine[bay].empty()) {
+          while (magazine[bay].GetVolumeSlot(label) >= 0) {
+             ++start;
+-            tFormat(label, "%s_%d", label_prefix.c_str(), start);
++            tFormat(label, "%s%04d", label_prefix.c_str(), start);
+          }
+       }
+       fprintf(stdout, "creating label '%s'\n", label.c_str());

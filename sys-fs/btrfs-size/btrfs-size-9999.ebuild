@@ -1,11 +1,11 @@
-EAPI=5
+EAPI=7
 
-inherit git-2
+inherit git-r3
 
 if [ "${PV}" = "9999" ]; then
         EGIT_REPO_URI="https://github.com/agronick/btrfs-size.git"
         KEYWORDS=""
-        inherit git-2
+        inherit git-r3
 #else
 #        SRC_URI="https://github.com/drescherjm/btrfs-snapshot-rotation/archive/1.0.0.zip"
 fi

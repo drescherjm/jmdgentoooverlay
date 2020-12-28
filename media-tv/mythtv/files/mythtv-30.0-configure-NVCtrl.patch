@@ -1,0 +1,19 @@
+diff --git a/mythtv/configure b/mythtv/configure
+index a80828efc7..4f526864a5 100755
+--- a/mythtv/configure
++++ b/mythtv/configure
+@@ -6651,6 +6651,14 @@ if enabled x11; then
+ 			# This is hopefully temporary.
+ 			disable xnvctrl_external
+ 			;;
++                    *gentoo*)
++                        if [ -e "/usr/bin/nvidia-settings" ]
++                        then
++                            require XNVctrl "X11/Xlib.h NVCtrl/NVCtrl.h NVCtrl/NVCtrlLib.h" XNVCTRLIsNvScreen -lXNVCtrl || disable xnvctrl
++                        else
++                            disable xnvctrl_external
++                        fi
++                        ;;
+ 		    *)
+                         require XNVctrl "X11/Xlib.h NVCtrl/NVCtrl.h NVCtrl/NVCtrlLib.h" XNVCTRLIsNvScreen -lXNVCtrl || disable xnvctrl
+                         ;;

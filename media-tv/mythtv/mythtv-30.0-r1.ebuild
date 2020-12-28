@@ -1,17 +1,17 @@
-# Copyright 1999-2017 Gentoo Foundation
+# Copyright 1999-2019 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=7
 PYTHON_COMPAT=( python2_7 )
 
-# git diff --relative=mythtv v0.27.6.. > ~/mythtv-0.27.6/patches/mythtv.patch
-BACKPORTS="b46a64f0859113cea7654c25944564a587a579d1"
+# Latest fixes/30 - Thu Jul 25 11:44:28 2019 +0200
+BACKPORTS="e094a020179aba2d955a21b8fd067231a87e3334"
 MY_P=${P%_p*}
 MY_PV=${PV%_p*}
 
 inherit flag-o-matic python-single-r1 qmake-utils user readme.gentoo-r1 systemd vcs-snapshot
 
-MYTHTV_BRANCH="fixes/29"
+MYTHTV_BRANCH="fixes/30"
 
 DESCRIPTION="Homebrew PVR project"
 HOMEPAGE="https://www.mythtv.org"
@@ -23,11 +23,11 @@ SLOT="0/${PV}"
 
 IUSE_INPUT_DEVICES="input_devices_joystick"
 IUSE="alsa altivec autostart bluray cec crystalhd debug dvb dvd egl fftw +hls \
-	ieee1394 jack lcd libass lirc mythlogserver perl pulseaudio python systemd +theora \
-	vaapi vdpau +vorbis +wrapper +xml xmltv +xvid zeroconf ${IUSE_INPUT_DEVICES}"
+	ieee1394 jack lcd libass lirc perl pulseaudio python systemd uk_tuning_workaround \
+	vaapi vdpau +wrapper +xml xmltv +xvid zeroconf ${IUSE_INPUT_DEVICES}"
 REQUIRED_USE="${PYTHON_REQUIRED_USE}
 	bluray? ( xml )
-	theora? ( vorbis )"
+"
 
 COMMON="
 	dev-libs/glib:2
@@ -45,8 +45,7 @@ COMMON="
 	media-libs/freetype:2
 	media-libs/taglib
 	>=media-sound/lame-3.93.1
-	sys-libs/zlib
-	virtual/mysql
+	sys-libs/zlib[minizip]
 	virtual/opengl
 	x11-libs/libX11
 	x11-libs/libXext
@@ -55,6 +54,12 @@ COMMON="
 	x11-libs/libXrandr
 	x11-libs/libXxf86vm
 	x11-misc/wmctrl
+
+	>=media-libs/libbluray-0.9.3
+	media-libs/libsamplerate
+	media-libs/libhdhomerun
+	dev-libs/lzo
+
 	alsa? ( >=media-libs/alsa-lib-1.0.24 )
 	bluray? (
 		dev-libs/libcdio:=
@@ -102,10 +107,8 @@ COMMON="
 		dev-python/requests-cache
 	)
 	systemd? ( sys-apps/systemd:= )
-	theora? ( media-libs/libtheora media-libs/libogg )
 	vaapi? ( x11-libs/libva:=[opengl] )
 	vdpau? ( x11-libs/libvdpau )
-	vorbis? ( >=media-libs/libvorbis-1.0 media-libs/libogg )
 	xml? ( >=dev-libs/libxml2-2.6.0 )
 	xvid? ( >=media-libs/xvid-1.1.0 )
 	zeroconf? (
@@ -164,6 +167,12 @@ pkg_setup() {
 src_prepare() {
 	default
 
+	if use uk_tuning_workaround ; then
+		einfo "UK tuning failures workaround patch"
+		eapply -p2 "${FILESDIR}/disable_avformatdecoder_return_FAIL_DEBUGONLY_v30.patch"
+	fi
+
+
 	# Perl bits need to go into vender_perl and not site_perl
 	sed -e "s:pure_install:pure_install INSTALLDIRS=vendor:" \
 		-i "${S}"/bindings/perl/Makefile
@@ -201,10 +210,9 @@ src_configure() {
 	myconf="${myconf} --enable-xv"
 	myconf="${myconf} --enable-x11"
 	myconf="${myconf} --enable-nonfree"
+	myconf="${myconf} --enable-libmp3lame" # lame is not optional it is required for some broadcasts for silence detection of commercials
 	use cec || myconf="${myconf} --disable-libcec"
 	use zeroconf || myconf="${myconf} --disable-libdns-sd"
-	myconf="${myconf} $(use_enable theora libtheora)"
-	myconf="${myconf} $(use_enable vorbis libvorbis)"
 
 	if use hls; then
 		myconf="${myconf} --enable-libx264"
@@ -265,9 +273,6 @@ src_configure() {
 
 	myconf="${myconf} $(use_enable systemd systemd_notify)"
 	myconf="${myconf} $(use_enable systemd systemd_journal)"
-	use systemd || myconf="${myconf} $(use_enable mythlogserver)"
-
-	chmod +x ./external/FFmpeg/version.sh
 
 	einfo "Running ./configure ${myconf}"
 	./configure \
@@ -359,7 +364,9 @@ pkg_info() {
 }
 
 pkg_config() {
-	echo "Creating mythtv MySQL user and mythconverg database if it does not"
-	echo "already exist. You will be prompted for your MySQL root password."
-	"${EROOT}"/usr/bin/mysql -u root -p < "${EROOT}"/usr/share/mythtv/database/mc.sql
+	if [[ -e "${EROOT}"/usr/bin/mysql ]]; then
+		echo "Creating mythtv MySQL user and mythconverg database if it does not"
+		echo "already exist. You will be prompted for your MySQL root password."
+		"${EROOT}"/usr/bin/mysql -u root -p < "${EROOT}"/usr/share/mythtv/database/mc.sql
+	fi
 }

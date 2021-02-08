@@ -23,7 +23,7 @@
 #	  WARNING md0 status=[UUU_U], recovery=46.4%, finish=123.0min
 
 use strict;
-use lib "/usr/lib/nagios/plugins";
+use lib "/usr/lib64/nagios/plugins";
 use utils qw(%ERRORS);
 
 # die with an error if we're not on Linux

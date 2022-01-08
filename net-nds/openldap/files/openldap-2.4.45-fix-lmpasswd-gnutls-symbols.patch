@@ -18,20 +18,20 @@ X-Debian-Bug: http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=245341
 +static int gcrypt_init = 0;
 +
 +typedef const void* des_key;
-+typedef unsigned char des_cblock[8];
-+typedef des_cblock des_data_block;
-+typedef int des_key_schedule; /* unused */
-+typedef des_key_schedule des_context; /* unused */
++typedef unsigned char DES_cblock[8];
++typedef DES_cblock des_data_block;
++typedef int DES_key_schedule; /* unused */
++typedef DES_key_schedule des_context; /* unused */
 +#define des_failed(encrypted) 0
 +#define des_finish(key, schedule) 
 +
-+#define des_set_key_unchecked( key, key_sched ) \
++#define DES_set_key_unchecked( key, key_sched ) \
 +  gcry_cipher_setkey( hd, key, 8 )
 +
-+#define des_ecb_encrypt( input, output, key_sched, enc ) \
++#define DES_ecb_encrypt( input, output, key_sched, enc ) \
 +  gcry_cipher_encrypt( hd, *output, 8, *input, 8 )
 +
-+#define des_set_odd_parity( key ) do {} while(0)
++#define DES_set_odd_parity( key ) do {} while(0)
 +
  #endif
  

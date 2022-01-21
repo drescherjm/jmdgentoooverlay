@@ -68,7 +68,7 @@ COMMON_DEPEND="
 	>=net-libs/gnutls-3.4.7[${MULTILIB_USEDEP}]
 	net-libs/libnsl:=[${MULTILIB_USEDEP}]
 	sys-libs/e2fsprogs-libs[${MULTILIB_USEDEP}]
-	>=sys-libs/ldb-2.2.1[ldap(+)?,${MULTILIB_USEDEP}]
+	>=sys-libs/ldb-2.2.3[ldap(+)?,${MULTILIB_USEDEP}]
 	<sys-libs/ldb-2.3.0[ldap(+)?,${MULTILIB_USEDEP}]
 	sys-libs/libcap[${MULTILIB_USEDEP}]
 	sys-libs/liburing:=[${MULTILIB_USEDEP}]

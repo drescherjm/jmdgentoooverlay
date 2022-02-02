@@ -1,13 +1,24 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE pkgmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
 <pkgmetadata>
-<herd>itk</herd>
-<use>
-        <flag name="shared">Build shared libraries</flag>
-        <flag name="patented">Compile patented algorithms</flag>
-        <flag name="numpy">Include support for dev-python/numpy in the old python bindings</flag>
-        <flag name="oldpython">Build the old ITK python bindings</flag>
-        <flag name="python">Build the WrapITK python bindings</flag>
-</use>
+	<maintainer type="project">
+		<email>maintainer-wanted@gentoo.org</email>
+	</maintainer>
+	<maintainer type="project">
+		<email>sci-biology@gentoo.org</email>
+		<name>Gentoo Biology Project</name>
+	</maintainer>
+	<longdescription lang="en">
+		Insight Segmentation and Registration Toolkit (ITK) is a library
+		that provides developers with an extensive suite of tools for image
+		analysis.
+	</longdescription>
+		<use>
+		<flag name="itkv4-compat">Compatibility for applications using ITKv4 API</flag>
+		<flag name="review">Enable compilation of methods under review</flag>
+		<flag name="vtkglue">PLEASE FIX MY DESCRIPTION</flag>
+	</use>
+	<upstream>
+		<remote-id type="sourceforge">itk</remote-id>
+	</upstream>
 </pkgmetadata>
-

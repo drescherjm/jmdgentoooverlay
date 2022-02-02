@@ -12,15 +12,13 @@ if [ -z "${SERVERS}" ]; then
 fi
 
 if [ -z "${SERVERS}" ]; then
-   SERVERS="datastore0 datastore1 datastore2 datastore3 datastore4 fileserver dev6 sysserv0 tempdata0"
+   SERVERS="datastore5 datastore4 fileserver sysserv0"
 fi
 
-for HOST in ${SERVERS} ${SERVERS_EXTRA}
+for HOST in ${SERVERS[*]} ${SERVERS_EXTRA[*]}
 do
-
-echo "Connecting to $HOST"
-ssh -o PasswordAuthentication=no $HOST -l root ${COMMAND}
-echo "Finished job on $HOST"
-
+	echo "Connecting to $HOST"
+	ssh -o PasswordAuthentication=no $HOST -l root ${COMMAND}
+	echo "Finished job on $HOST"
 done
 fi

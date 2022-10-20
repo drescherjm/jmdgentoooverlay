@@ -1,4 +1,4 @@
-EAPI=5
+EAPI=6
 
 if [ "${PV}" = "9999" ]; then
         EGIT_REPO_URI="http://github.com/drescherjm/btrfs-snapshot-rotation.git"

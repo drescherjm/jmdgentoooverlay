@@ -1,4 +1,4 @@
-EAPI=5
+EAPI=6
 inherit webapp  eutils
 
 DESCRIPTION="Web based (PHP Script) bacula status viewer."

@@ -53,7 +53,7 @@
   Stable for amd64, wrt bug #512912
 
   18 Jun 2014; Michał Górny <mgorny@gentoo.org> tevent-0.9.21-r1.ebuild:
-  Update dependencies to require guaranteed EAPI=5 or multilib ebuilds, bug
+  Update dependencies to require guaranteed EAPI=6 or multilib ebuilds, bug
   #513718.
 
   10 Jun 2014; Mike Frysinger <vapier@gentoo.org> tevent-0.9.19.ebuild,

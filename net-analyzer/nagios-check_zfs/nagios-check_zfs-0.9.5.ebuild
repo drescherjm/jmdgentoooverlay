@@ -1,4 +1,4 @@
-EAPI=5
+EAPI=6
 
 inherit multilib eutils
 

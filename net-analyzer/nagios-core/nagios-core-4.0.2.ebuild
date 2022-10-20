@@ -2,7 +2,7 @@
 # Distributed under the terms of the GNU General Public License v2
 # $Header: /var/cvsroot/gentoo-x86/net-analyzer/nagios-core/nagios-core-3.3.1.ebuild,v 1.8 2012/09/06 01:02:43 blueness Exp $
 
-EAPI="2"
+EAPI=6
 
 inherit depend.apache eutils multilib toolchain-funcs user
 

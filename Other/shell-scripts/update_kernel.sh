@@ -3,6 +3,7 @@ mount /boot
 
 if [ ! -f /usr/src/linux/.config ] ; then
 	zcat /proc/config.gz > /usr/src/linux/.config
+        zcat /proc/config.gz > /usr/share/genkernel/arch/x86_64/generated-config
 fi
 
 # Now add the date and machine name to the local version

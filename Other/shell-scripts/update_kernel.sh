@@ -3,6 +3,7 @@ mount /boot
 
 if [ ! -f /usr/src/linux/.config ] ; then
 	zcat /proc/config.gz > /usr/src/linux/.config
+        zcat /proc/config.gz > /usr/share/genkernel/arch/x86_64/generated-config
 fi
 
 local_version="$(date +%Y%m%d-%H%M)-$(uname -n)"

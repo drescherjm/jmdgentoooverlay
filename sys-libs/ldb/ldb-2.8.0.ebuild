@@ -1,9 +1,9 @@
-# Copyright 1999-2023 Gentoo Authors
+# Copyright 1999-2024 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
 
-PYTHON_COMPAT=( python3_{9..11} )
+PYTHON_COMPAT=( python3_{10..11} )
 PYTHON_REQ_USE="threads(+)"
 inherit python-single-r1 waf-utils multilib-minimal
 
@@ -17,13 +17,13 @@ KEYWORDS="~alpha ~amd64 ~arm ~arm64 ~hppa ~ia64 ~loong ~mips ~ppc ~ppc64 ~riscv 
 IUSE="doc ldap +lmdb python test"
 
 REQUIRED_USE="${PYTHON_REQUIRED_USE}
-	test? ( lmdb python )"
+	test? ( lmdb )"
 
 RESTRICT="!test? ( test )"
 
-TALLOC_VERSION="2.4.0"
-TDB_VERSION="1.4.8"
-TEVENT_VERSION="0.14.1"
+TALLOC_VERSION="2.4.1"
+TDB_VERSION="1.4.9"
+TEVENT_VERSION="0.15.0"
 
 RDEPEND="
 	dev-libs/libbsd[${MULTILIB_USEDEP}]
@@ -48,7 +48,7 @@ DEPEND="
 BDEPEND="${PYTHON_DEPS}
 	dev-libs/libxslt
 	virtual/pkgconfig
-	doc? ( app-doc/doxygen )
+	doc? ( app-text/doxygen )
 "
 
 WAF_BINARY="${S}/buildtools/bin/waf"
@@ -98,6 +98,12 @@ src_prepare() {
 	default
 
 	check_samba_dep_versions
+
+	if use test && ! use python ; then
+		# We want to be able to run tests w/o Python as it makes
+		# automated testing much easier (as USE=python isn't default-enabled).
+		truncate -s0 tests/python/{repack,index,api,crash}.py || die
+	fi
 
 	multilib_copy_sources
 }

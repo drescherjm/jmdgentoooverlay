@@ -1,6 +1,6 @@
-EAPI=6
+EAPI=8
 
-inherit multilib eutils
+inherit multilib
 
 MY_PV="${PV/_rc/rc}"
 MY_P="${PN#nagios-}_v${MY_PV}"

@@ -1,6 +1,6 @@
-EAPI=6
+EAPI=8
 
-inherit multilib eutils
+inherit multilib
 
 MY_PV="${PV/_rc/rc}"
 MY_P="${PN#nagios-}_v${MY_PV}"
@@ -19,6 +19,10 @@ RDEPEND="dev-lang/perl
          app-admin/sudo"
 
 S="${WORKDIR}/${MY_P}"
+
+PATCHES=(
+  ${FILESDIR}/zfs_0.6.4-zpool_list.patch
+)
 
 
 src_compile() {
@@ -60,6 +64,6 @@ src_unpack() {
         mkdir -p "${S}"
 	cp "${DISTDIR}/${A}" "${S}"
         cd "${S}"
-        epatch ${FILESDIR}/zfs_0.6.4-zpool_list.patch
+  #      epatch ${FILESDIR}/zfs_0.6.4-zpool_list.patch
 
 }

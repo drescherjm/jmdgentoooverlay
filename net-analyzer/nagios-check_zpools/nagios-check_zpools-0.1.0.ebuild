@@ -1,5 +1,9 @@
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 EAPI=8
+=======
+EAPI=7
+>>>>>>> Stashed changes
 =======
 EAPI=7
 >>>>>>> Stashed changes

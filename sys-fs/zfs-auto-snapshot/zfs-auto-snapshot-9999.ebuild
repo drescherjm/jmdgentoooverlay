@@ -2,15 +2,7 @@
 # Distributed under the terms of the GNU General Public License v2
 # $Header: $
 
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
 EAPI=8
-=======
-EAPI=7
->>>>>>> Stashed changes
-=======
-EAPI=7
->>>>>>> Stashed changes
 
 EGIT_REPO_URI="https://github.com/zfsonlinux/${PN}.git"
 
